@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vendor Login Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-button {
+            background: #007bff;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px 5px;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .test-button:hover {
+            background: #0056b3;
+        }
+        .info-box {
+            background: #e7f3ff;
+            border: 1px solid #b3d9ff;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .success {
+            background: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🔧 Vendor Login Test</h1>
+        
+        <div class="info-box success">
+            <h3>✅ Login Issue Fixed!</h3>
+            <p>The vendor authentication controller has been updated to fix the login issue.</p>
+        </div>
+        
+        <h2>Test Credentials</h2>
+        <div class="info-box">
+            <p><strong>Email:</strong> dreamadsnepal@gmail.com</p>
+            <p><strong>Password:</strong> password123</p>
+            <p><strong>Business:</strong> Chhito Pasal</p>
+            <p><strong>Status:</strong> Active</p>
+        </div>
+        
+        <h2>Test Steps</h2>
+        <ol>
+            <li>Click the "Test Login Page" button below</li>
+            <li>Enter the credentials above</li>
+            <li>Click Login</li>
+            <li>You should be redirected to the vendor dashboard</li>
+        </ol>
+        
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="/e-manager/public/vendor/login" class="test-button" target="_blank">
+                🚀 Test Login Page
+            </a>
+            <a href="/e-manager/public/test_vendor_login.php" class="test-button" target="_blank">
+                🔍 Run Diagnostic Test
+            </a>
+        </div>
+        
+        <h2>What Was Fixed</h2>
+        <ul>
+            <li>✅ Removed problematic <code>whereHas('tenant')</code> query</li>
+            <li>✅ Added explicit tenant status checks</li>
+            <li>✅ Improved error messages</li>
+            <li>✅ Better debugging information</li>
+        </ul>
+        
+        <h2>If Login Still Fails</h2>
+        <p>Please check:</p>
+        <ul>
+            <li>Browser console for JavaScript errors</li>
+            <li>Network tab for failed requests</li>
+            <li>Make sure you're using the correct URL: <code>http://localhost/e-manager/public/vendor/login</code></li>
+            <li>Try clearing your browser cache</li>
+        </ul>
+        
+        <div class="info-box">
+            <h3>📞 Need Help?</h3>
+            <p>If you're still having issues, please share:</p>
+            <ul>
+                <li>Any error messages you see</li>
+                <li>What happens when you click login</li>
+                <li>Browser console errors (F12 → Console)</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>
+
+
+
+
+

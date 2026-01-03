@@ -1,0 +1,6 @@
+@extends('welcome')
+
+
+
+
+

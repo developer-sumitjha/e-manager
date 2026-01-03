@@ -1,0 +1,210 @@
+// Tailwind CSS v4 is handled by @tailwindcss/vite plugin in vite.config.js
+// No need to import Tailwind here - it's automatically processed by Vite
+
+// Fonts
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+// Variables
+@import 'variables';
+
+// Bootstrap
+@import 'bootstrap/scss/bootstrap';
+
+// Smooth Transitions for All Elements (DealDeck Style)
+* {
+  transition: all 0.25s ease-in-out;
+}
+
+// Global DealDeck Styling
+body {
+  font-family: 'Poppins', 'Inter', 'Nunito Sans', sans-serif;
+  background-color: #F5F7FB;
+  color: #1C1E21;
+}
+
+// DealDeck Card Base
+.dealdeck-card {
+  background: #FFFFFF;
+  border-radius: 16px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+  padding: 1.25rem;
+  border: 1px solid #E8EAF1;
+}
+
+// DealDeck Button Base
+.dealdeck-button {
+  background: #5B61F4;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 12px;
+  font-weight: 500;
+  transition: all 0.25s ease-in-out;
+  border: none;
+  cursor: pointer;
+}
+
+.dealdeck-button:hover {
+  background: #4A50E8;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 15px rgba(91, 97, 244, 0.4);
+}
+
+// DealDeck Sidebar
+.dealdeck-sidebar {
+  background: #FFFFFF;
+  border-radius: 0 16px 16px 0;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  width: 280px;
+  position: fixed;
+  left: 0;
+  top: 0;
+  height: 100vh;
+  z-index: 50;
+}
+
+// DealDeck Navigation Links
+.dealdeck-nav-link {
+  display: block;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  color: #7A7A7A;
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.25s ease-in-out;
+  margin: 0.125rem 0.5rem;
+}
+
+.dealdeck-nav-link:hover {
+  background: #EEF0FE;
+  color: #5B61F4;
+  transform: translateX(4px);
+}
+
+.dealdeck-nav-link.active {
+  background: #EEF0FE;
+  color: #5B61F4;
+  font-weight: 600;
+}
+
+// DealDeck Stat Cards
+.dealdeck-stat-card {
+  background: #FFFFFF;
+  border-radius: 16px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+  padding: 1.5rem;
+  border: 1px solid #E8EAF1;
+  transition: all 0.25s ease-in-out;
+}
+
+.dealdeck-stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+// DealDeck Badges
+.dealdeck-badge-success {
+  background: #00B074;
+  color: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.dealdeck-badge-danger {
+  background: #E63946;
+  color: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.dealdeck-badge-warning {
+  background: #FFB703;
+  color: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+// DealDeck Topbar
+.dealdeck-topbar {
+  background: #FFFFFF;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  border-radius: 0 0 16px 16px;
+  padding: 1rem 1.5rem;
+}
+
+// DealDeck Search Input
+.dealdeck-search {
+  background: #F3F4F6;
+  border: 1px solid #E5E7EB;
+  border-radius: 12px;
+  padding: 0.5rem 0.75rem 0.5rem 2.5rem;
+  color: #1C1E21;
+  transition: all 0.25s ease-in-out;
+}
+
+.dealdeck-search:focus {
+  outline: none;
+  border-color: #5B61F4;
+  background: #FFFFFF;
+  box-shadow: 0 0 0 3px rgba(91, 97, 244, 0.1);
+}
+
+// Custom DealDeck Components
+@layer components {
+  .dealdeck-card {
+    @apply bg-card rounded-xl shadow-card p-6 border border-borderLight;
+  }
+  
+  .dealdeck-button {
+    @apply bg-primary text-white px-4 py-2 rounded-lg hover:bg-primaryDark transition-all duration-200 shadow-button hover:shadow-button-hover;
+  }
+  
+  .dealdeck-button-outline {
+    @apply border border-primary text-primary bg-transparent px-4 py-2 rounded-lg hover:bg-primary hover:text-white transition-all duration-200;
+  }
+  
+  .dealdeck-sidebar {
+    @apply bg-card shadow-sidebar w-sidebar fixed left-0 top-0 h-screen z-50;
+  }
+  
+  .dealdeck-nav-link {
+    @apply block px-4 py-3 rounded-lg text-textSecondary hover:bg-primaryLight hover:text-primary transition-all duration-200 font-medium;
+  }
+  
+  .dealdeck-nav-link-active {
+    @apply bg-primaryLight text-primary font-semibold;
+  }
+  
+  .dealdeck-stat-card {
+    @apply bg-card rounded-xl shadow-card p-6 border border-borderLight hover:shadow-card-hover transition-all duration-200;
+  }
+  
+  .dealdeck-stat-value {
+    @apply text-3xl font-bold text-textPrimary;
+  }
+  
+  .dealdeck-stat-label {
+    @apply text-sm text-textSecondary font-medium uppercase tracking-wide;
+  }
+  
+  .dealdeck-badge-success {
+    @apply bg-success text-white px-2 py-1 rounded-lg text-xs font-semibold;
+  }
+  
+  .dealdeck-badge-danger {
+    @apply bg-danger text-white px-2 py-1 rounded-lg text-xs font-semibold;
+  }
+  
+  .dealdeck-badge-warning {
+    @apply bg-warning text-white px-2 py-1 rounded-lg text-xs font-semibold;
+  }
+  
+  .dealdeck-badge-info {
+    @apply bg-info text-white px-2 py-1 rounded-lg text-xs font-semibold;
+  }
+}
