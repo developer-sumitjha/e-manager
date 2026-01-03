@@ -27,7 +27,7 @@ class ProductController extends Controller
         }
 
         // Filter by status (Active, Inactive, Out of Stock)
-        if ($request->has('filter')) {
+        if ($request->has('filter') && $request->filter != 'all') {
             switch ($request->filter) {
                 case 'active':
                     $query->where('is_active', true);
@@ -38,11 +38,13 @@ class ProductController extends Controller
                 case 'out_of_stock':
                     $query->where('stock', 0);
                     break;
+                case 'low-stock':
+                    $query->where('stock', '>', 0)
+                          ->where('stock', '<', 20);
+                    break;
             }
-        } else {
-            // Default to active products
-            $query->where('is_active', true);
         }
+        // Removed default filter - show all products by default
 
         // Legacy filters for backward compatibility
         if ($request->has('category') && $request->category != '') {
@@ -67,12 +69,15 @@ class ProductController extends Controller
 
         $products = $query->latest()->paginate(10);
         
-        // Get counts for filter tabs
-        $activeCount = Product::where('is_active', true)->count();
-        $inactiveCount = Product::where('is_active', false)->count();
-        $outOfStockCount = Product::where('stock', 0)->count();
+        // Get counts for filter tabs (using same base query to respect tenant scope)
+        $baseQuery = Product::query();
+        $activeCount = (clone $baseQuery)->where('is_active', true)->count();
+        $inactiveCount = (clone $baseQuery)->where('is_active', false)->count();
+        $outOfStockCount = (clone $baseQuery)->where('stock', 0)->count();
+        $lowStockCount = (clone $baseQuery)->where('stock', '>', 0)->where('stock', '<', 20)->count();
+        $totalCount = $baseQuery->count();
         
-        return view('admin.products.index', compact('products', 'activeCount', 'inactiveCount', 'outOfStockCount'));
+        return view('admin.products.index', compact('products', 'activeCount', 'inactiveCount', 'outOfStockCount', 'lowStockCount', 'totalCount'));
     }
 
     public function create()
@@ -90,18 +95,56 @@ class ProductController extends Controller
             'price' => 'required|numeric|min:0',
             'sale_price' => 'nullable|numeric|min:0',
             'sku' => 'nullable|string|unique:products,sku',
-            'stock' => 'required|integer|min:0',
+            'stock' => 'nullable|integer|min:0',
+            'stock_quantity' => 'nullable|integer|min:0',
+            'low_stock_threshold' => 'nullable|integer|min:0',
+            'track_inventory' => 'sometimes',
+            'allow_backorders' => 'sometimes',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120',
             'images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120',
             'video' => 'nullable|mimes:mp4,webm,ogg|max:51200', // 50MB max
             'primary_image_index' => 'nullable|integer|min:0',
             'is_active' => 'sometimes',
             'is_featured' => 'sometimes',
+            'meta_title' => 'nullable|string|max:255',
+            'meta_description' => 'nullable|string',
         ]);
 
         $validated['slug'] = Str::slug($validated['name']);
         $validated['is_active'] = $request->has('is_active');
         $validated['is_featured'] = $request->has('is_featured');
+        $validated['track_inventory'] = $request->has('track_inventory');
+        $validated['allow_backorders'] = $request->has('allow_backorders');
+        
+        // Handle stock fields - map stock_quantity to stock for backward compatibility
+        if (isset($validated['stock_quantity'])) {
+            $validated['stock'] = $validated['stock_quantity'];
+        } elseif (!isset($validated['stock'])) {
+            // Default to 0 if neither stock nor stock_quantity is provided
+            $validated['stock'] = 0;
+            $validated['stock_quantity'] = 0;
+        } else {
+            // If stock is provided but stock_quantity is not, sync them
+            $validated['stock_quantity'] = $validated['stock'];
+        }
+        
+        // Set default values for inventory fields
+        if (!isset($validated['low_stock_threshold'])) {
+            $validated['low_stock_threshold'] = 5;
+        }
+        
+        // Set stock_status based on stock quantity
+        if ($validated['track_inventory']) {
+            if ($validated['stock_quantity'] > 0) {
+                $validated['stock_status'] = 'in_stock';
+            } elseif ($validated['allow_backorders']) {
+                $validated['stock_status'] = 'on_backorder';
+            } else {
+                $validated['stock_status'] = 'out_of_stock';
+            }
+        } else {
+            $validated['stock_status'] = 'in_stock';
+        }
 
         // Auto-generate SKU if not provided
         if (empty($validated['sku'])) {

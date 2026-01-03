@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Order;
+use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 
@@ -77,7 +78,11 @@ class OrderController extends Controller
 
     public function create()
     {
-        return view('admin.orders.create');
+        // Load products for the dropdown (tenant scope is automatically applied)
+        $products = Product::orderBy('name')
+            ->get(['id', 'name', 'sku', 'price', 'sale_price']);
+        
+        return view('admin.orders.create', compact('products'));
     }
 
     public function store(Request $request)
@@ -99,6 +104,7 @@ class OrderController extends Controller
             'tax' => 'nullable|numeric|min:0',
             'total' => 'required|numeric|min:0',
             'items' => 'required|array|min:1',
+            'items.*.product_id' => 'nullable|exists:products,id',
             'items.*.product_name' => 'required|string|max:255',
             'items.*.quantity' => 'required|integer|min:1',
             'items.*.price' => 'required|numeric|min:0',
@@ -141,7 +147,7 @@ class OrderController extends Controller
             foreach ($validated['items'] as $item) {
                 \App\Models\OrderItem::create([
                     'order_id' => $order->id,
-                    'product_id' => null, // Manual order item
+                    'product_id' => $item['product_id'] ?? null, // Use product_id if provided
                     'product_name' => $item['product_name'],
                     'quantity' => $item['quantity'],
                     'price' => $item['price'],

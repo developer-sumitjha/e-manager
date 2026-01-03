@@ -111,7 +111,7 @@ Route::middleware(['auth', 'admin_employee', 'subscription.active'])->prefix('ad
     Route::resource('orders', OrderController::class)
         ->middleware(['plan.limit:orders', 'employee.can:orders']);
     Route::post('orders/bulk-action', [OrderController::class, 'bulkAction'])->name('orders.bulk-action');
-    Route::put('orders/{order}/status', [OrderController::class, 'updateStatus'])->name('orders.update-status');
+    Route::match(['put', 'post'], 'orders/{order}/status', [OrderController::class, 'updateStatus'])->name('orders.update-status');
     Route::get('orders/{order}/export', [OrderController::class, 'export'])->name('orders.export');
     
     // Pending Orders - Custom routes first (before resource routes)

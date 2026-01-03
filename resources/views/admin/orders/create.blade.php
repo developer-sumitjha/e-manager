@@ -79,8 +79,19 @@
                         <div class="order-item-row mb-3 p-3 border rounded" data-index="0">
                             <div class="row align-items-end">
                                 <div class="col-md-5">
-                                    <label class="form-label">Product Name *</label>
-                                    <input type="text" class="form-control" name="items[0][product_name]" required>
+                                    <label class="form-label">Product *</label>
+                                    <select class="form-select product-select" name="items[0][product_id]" 
+                                            data-index="0" onchange="updateProductPrice(this)" required>
+                                        <option value="">-- Select Product --</option>
+                                        @foreach($products as $product)
+                                        <option value="{{ $product->id }}" 
+                                                data-price="{{ $product->sale_price ?? $product->price }}"
+                                                data-name="{{ $product->name }}">
+                                            {{ $product->name }} (SKU: {{ $product->sku ?? 'N/A' }}) - Rs. {{ number_format($product->sale_price ?? $product->price, 2) }}
+                                        </option>
+                                        @endforeach
+                                    </select>
+                                    <input type="hidden" name="items[0][product_name]" class="product-name-input">
                                 </div>
                                 <div class="col-md-2">
                                     <label class="form-label">Quantity *</label>
@@ -239,14 +250,38 @@
 <script>
 let itemIndex = 1;
 
+// Store products data for JavaScript
+@php
+$productsArray = $products->map(function($product) {
+    return [
+        'id' => $product->id,
+        'name' => $product->name,
+        'sku' => $product->sku ?? 'N/A',
+        'price' => $product->sale_price ?? $product->price,
+    ];
+})->values()->toArray();
+@endphp
+const productsData = @json($productsArray);
+
 function addOrderItem() {
     const container = document.getElementById('orderItemsContainer');
+    const productOptions = productsData.map(product => 
+        `<option value="${product.id}" data-price="${product.price}" data-name="${product.name}">
+            ${product.name} (SKU: ${product.sku}) - Rs. ${parseFloat(product.price).toFixed(2)}
+        </option>`
+    ).join('');
+    
     const newItem = `
         <div class="order-item-row mb-3 p-3 border rounded" data-index="${itemIndex}">
             <div class="row align-items-end">
                 <div class="col-md-5">
-                    <label class="form-label">Product Name *</label>
-                    <input type="text" class="form-control" name="items[${itemIndex}][product_name]" required>
+                    <label class="form-label">Product *</label>
+                    <select class="form-select product-select" name="items[${itemIndex}][product_id]" 
+                            data-index="${itemIndex}" onchange="updateProductPrice(this)" required>
+                        <option value="">-- Select Product --</option>
+                        ${productOptions}
+                    </select>
+                    <input type="hidden" name="items[${itemIndex}][product_name]" class="product-name-input">
                 </div>
                 <div class="col-md-2">
                     <label class="form-label">Quantity *</label>
@@ -273,6 +308,28 @@ function addOrderItem() {
     container.insertAdjacentHTML('beforeend', newItem);
     itemIndex++;
     updateRemoveButtons();
+}
+
+function updateProductPrice(selectElement) {
+    const selectedOption = selectElement.options[selectElement.selectedIndex];
+    const price = selectedOption.getAttribute('data-price') || 0;
+    const productName = selectedOption.getAttribute('data-name') || '';
+    const row = selectElement.closest('.order-item-row');
+    
+    // Update price input
+    const priceInput = row.querySelector('.price-input');
+    if (priceInput) {
+        priceInput.value = parseFloat(price).toFixed(2);
+    }
+    
+    // Update product name hidden input
+    const nameInput = row.querySelector('.product-name-input');
+    if (nameInput) {
+        nameInput.value = productName;
+    }
+    
+    // Recalculate total
+    calculateTotal();
 }
 
 function removeOrderItem(button) {
@@ -323,6 +380,12 @@ function calculateTotal() {
 document.addEventListener('DOMContentLoaded', function() {
     calculateTotal();
     updateRemoveButtons();
+    
+    // Initialize product name for first row if product is selected
+    const firstProductSelect = document.querySelector('[name="items[0][product_id]"]');
+    if (firstProductSelect && firstProductSelect.value) {
+        updateProductPrice(firstProductSelect);
+    }
 });
 </script>
 @endpush

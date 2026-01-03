@@ -20,11 +20,13 @@
                         <select class="form-select @error('product_id') is-invalid @enderror" 
                                 id="product_id" name="product_id" required onchange="fetchProductStock()">
                             <option value="">-- Select a Product --</option>
-                            @foreach($products as $product)
+                            @forelse($products as $product)
                             <option value="{{ $product->id }}" {{ old('product_id') == $product->id ? 'selected' : '' }}>
-                                {{ $product->name }} (SKU: {{ $product->sku }}) - Current Stock: {{ $product->stock }}
+                                {{ $product->name }} (SKU: {{ $product->sku ?? 'N/A' }}) - Current Stock: {{ $product->display_stock ?? ($product->stock_quantity ?? $product->stock ?? 0) }}
                             </option>
-                            @endforeach
+                            @empty
+                            <option value="" disabled>No products available</option>
+                            @endforelse
                         </select>
                         @error('product_id')
                             <div class="invalid-feedback">{{ $message }}</div>

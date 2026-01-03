@@ -117,6 +117,9 @@
                         </div>
                     </div>
                     
+                    <!-- Hidden stock field for backward compatibility -->
+                    <input type="hidden" id="stock" name="stock" value="{{ old('stock', 0) }}">
+                    
                     <div id="inventory-fields" style="display: {{ old('track_inventory') ? 'block' : 'none' }};">
                         <div class="row">
                             <div class="col-md-6">
@@ -455,17 +458,40 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     initializeProductForm();
+    
+    // Ensure stock field is initialized on page load
+    const stockHiddenInput = document.getElementById('stock');
+    if (stockHiddenInput && !stockHiddenInput.value) {
+        stockHiddenInput.value = 0;
+    }
 });
 
 function initializeProductForm() {
     // Inventory toggle
     const trackInventoryCheckbox = document.getElementById('track_inventory');
     const inventoryFields = document.getElementById('inventory-fields');
+    const stockQuantityInput = document.getElementById('stock_quantity');
+    const stockHiddenInput = document.getElementById('stock');
     
     if (trackInventoryCheckbox) {
         trackInventoryCheckbox.addEventListener('change', function() {
             inventoryFields.style.display = this.checked ? 'block' : 'none';
+            // Sync stock field when inventory tracking is toggled
+            syncStockField();
         });
+    }
+    
+    // Sync stock_quantity to stock field (for backward compatibility)
+    function syncStockField() {
+        if (stockQuantityInput && stockHiddenInput) {
+            stockHiddenInput.value = stockQuantityInput.value || 0;
+        }
+    }
+    
+    if (stockQuantityInput) {
+        stockQuantityInput.addEventListener('input', syncStockField);
+        // Initial sync
+        syncStockField();
     }
     
     // Image preview
@@ -489,6 +515,19 @@ function initializeProductForm() {
     const productForm = document.getElementById('product-form');
     if (productForm) {
         productForm.addEventListener('submit', function(e) {
+            // Ensure stock field is always set before submission
+            syncStockField();
+            
+            // If track_inventory is not checked, set stock to 0
+            if (!trackInventoryCheckbox || !trackInventoryCheckbox.checked) {
+                if (stockHiddenInput) {
+                    stockHiddenInput.value = 0;
+                }
+                if (stockQuantityInput) {
+                    stockQuantityInput.value = 0;
+                }
+            }
+            
             if (!FormValidator.validateForm(this)) {
                 e.preventDefault();
             }

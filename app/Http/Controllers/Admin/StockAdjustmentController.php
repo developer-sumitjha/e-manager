@@ -52,8 +52,8 @@ class StockAdjustmentController extends Controller
             'this_month' => StockAdjustment::whereMonth('adjustment_date', now()->month)->count(),
         ];
 
-        // Get products for filter
-        $products = Product::orderBy('name')->get(['id', 'name']);
+        // Get products for filter (tenant scope is automatically applied)
+        $products = Product::orderBy('name')->get(['id', 'name', 'sku']);
 
         return view('admin.stock-adjustments.index', compact('adjustments', 'stats', 'products'));
     }
@@ -63,9 +63,16 @@ class StockAdjustmentController extends Controller
      */
     public function create()
     {
-        $products = Product::where('is_active', true)
-            ->orderBy('name')
-            ->get(['id', 'name', 'sku', 'stock']);
+        // Get products with stock information - include both stock and stock_quantity for compatibility
+        $products = Product::orderBy('name')
+            ->get(['id', 'name', 'sku', 'stock', 'stock_quantity', 'track_inventory'])
+            ->map(function ($product) {
+                // Use stock_quantity if track_inventory is enabled, otherwise use stock
+                $product->display_stock = $product->track_inventory 
+                    ? ($product->stock_quantity ?? $product->stock ?? 0)
+                    : ($product->stock ?? 0);
+                return $product;
+            });
 
         $reasons = [
             'damaged' => 'Damaged Goods',
@@ -104,8 +111,10 @@ class StockAdjustmentController extends Controller
             // Get the product
             $product = Product::findOrFail($validated['product_id']);
 
-            // Store old stock
-            $oldStock = $product->stock;
+            // Get the correct stock value - use stock_quantity if track_inventory is enabled
+            $oldStock = $product->track_inventory 
+                ? ($product->stock_quantity ?? $product->stock ?? 0)
+                : ($product->stock ?? 0);
 
             // Calculate new stock
             if ($validated['type'] === 'increase') {
@@ -140,8 +149,12 @@ class StockAdjustmentController extends Controller
                 'adjustment_date' => $validated['adjustment_date'],
             ]);
 
-            // Update product stock
-            $product->update(['stock' => $newStock]);
+            // Update product stock - update both stock and stock_quantity for compatibility
+            $updateData = ['stock' => $newStock];
+            if ($product->track_inventory) {
+                $updateData['stock_quantity'] = $newStock;
+            }
+            $product->update($updateData);
 
             DB::commit();
 
@@ -222,13 +235,22 @@ class StockAdjustmentController extends Controller
             $product = $stockAdjustment->product;
 
             // Reverse the stock change
+            $currentStock = $product->track_inventory 
+                ? ($product->stock_quantity ?? $product->stock ?? 0)
+                : ($product->stock ?? 0);
+            
             if ($stockAdjustment->type === 'increase') {
-                $product->stock -= $stockAdjustment->quantity;
+                $newStock = $currentStock - $stockAdjustment->quantity;
             } else {
-                $product->stock += $stockAdjustment->quantity;
+                $newStock = $currentStock + $stockAdjustment->quantity;
             }
 
-            $product->save();
+            // Update both stock and stock_quantity for compatibility
+            $updateData = ['stock' => $newStock];
+            if ($product->track_inventory) {
+                $updateData['stock_quantity'] = $newStock;
+            }
+            $product->update($updateData);
             $stockAdjustment->delete();
 
             DB::commit();
@@ -252,12 +274,17 @@ class StockAdjustmentController extends Controller
     public function getProductStock($productId)
     {
         $product = Product::findOrFail($productId);
+        
+        // Get the correct stock value - use stock_quantity if track_inventory is enabled
+        $stock = $product->track_inventory 
+            ? ($product->stock_quantity ?? $product->stock ?? 0)
+            : ($product->stock ?? 0);
 
         return response()->json([
             'success' => true,
-            'stock' => $product->stock,
+            'stock' => $stock,
             'name' => $product->name,
-            'sku' => $product->sku,
+            'sku' => $product->sku ?? 'N/A',
         ]);
     }
 }

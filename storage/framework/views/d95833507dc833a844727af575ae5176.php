@@ -1,17 +1,15 @@
-@extends('admin.layouts.app')
+<?php $__env->startSection('title', 'Order Details'); ?>
+<?php $__env->startSection('page-title', 'Order Details'); ?>
+<?php $__env->startSection('page-subtitle', 'View and manage order information'); ?>
 
-@section('title', 'Order Details')
-@section('page-title', 'Order Details')
-@section('page-subtitle', 'View and manage order information')
-
-@section('breadcrumb')
+<?php $__env->startSection('breadcrumb'); ?>
     <div class="breadcrumb-item">
-        <a href="{{ route('admin.orders.index') }}" class="breadcrumb-link">Orders</a>
+        <a href="<?php echo e(route('admin.orders.index')); ?>" class="breadcrumb-link">Orders</a>
     </div>
-    <div class="breadcrumb-item active">Order #{{ $order->order_number }}</div>
-@endsection
+    <div class="breadcrumb-item active">Order #<?php echo e($order->order_number); ?></div>
+<?php $__env->stopSection(); ?>
 
-@section('content')
+<?php $__env->startSection('content'); ?>
 <div class="row">
     <!-- Order Information -->
     <div class="col-xl-8 mb-4">
@@ -19,15 +17,17 @@
             <div class="card-header">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <h5 class="card-title mb-0">Order #{{ $order->order_number }}</h5>
-                        <small class="text-muted">Created {{ $order->created_at->format('M j, Y \a\t g:i A') }}</small>
+                        <h5 class="card-title mb-0">Order #<?php echo e($order->order_number); ?></h5>
+                        <small class="text-muted">Created <?php echo e($order->created_at->format('M j, Y \a\t g:i A')); ?></small>
                     </div>
-                    <div class="d-flex gap-2" data-payment-status="{{ $order->payment_status }}">
-                        <span class="badge badge-{{ $order->status === 'completed' ? 'success' : ($order->status === 'pending' ? 'warning' : ($order->status === 'cancelled' ? 'danger' : 'info')) }}">
-                            {{ ucfirst($order->status) }}
+                    <div class="d-flex gap-2" data-payment-status="<?php echo e($order->payment_status); ?>">
+                        <span class="badge badge-<?php echo e($order->status === 'completed' ? 'success' : ($order->status === 'pending' ? 'warning' : ($order->status === 'cancelled' ? 'danger' : 'info'))); ?>">
+                            <?php echo e(ucfirst($order->status)); ?>
+
                         </span>
-                        <span class="badge badge-{{ $order->payment_status === 'paid' ? 'success' : ($order->payment_status === 'refunded' ? 'warning' : 'danger') }}">
-                            {{ ucfirst($order->payment_status) }}
+                        <span class="badge badge-<?php echo e($order->payment_status === 'paid' ? 'success' : ($order->payment_status === 'refunded' ? 'warning' : 'danger')); ?>">
+                            <?php echo e(ucfirst($order->payment_status)); ?>
+
                         </span>
                     </div>
                 </div>
@@ -46,55 +46,55 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach($order->orderItems as $item)
+                            <?php $__currentLoopData = $order->orderItems; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $item): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                             <tr>
                                 <td>
                                     <div class="d-flex align-items-center">
-                                        @if($item->product && $item->product->primary_image_url)
-                                            <img src="{{ $item->product->primary_image_url }}" 
-                                                 alt="{{ $item->product->name }}" 
+                                        <?php if($item->product && $item->product->primary_image_url): ?>
+                                            <img src="<?php echo e($item->product->primary_image_url); ?>" 
+                                                 alt="<?php echo e($item->product->name); ?>" 
                                                  class="product-thumb me-3">
-                                        @else
+                                        <?php else: ?>
                                             <div class="product-thumb me-3">
                                                 <i class="fas fa-image text-muted"></i>
                                             </div>
-                                        @endif
+                                        <?php endif; ?>
                                         <div>
-                                            <div class="fw-semibold">{{ $item->product_name ?? $item->product->name ?? 'N/A' }}</div>
-                                            @if($item->product)
-                                                <small class="text-muted">SKU: {{ $item->product->sku ?? 'N/A' }}</small>
-                                            @endif
+                                            <div class="fw-semibold"><?php echo e($item->product_name ?? $item->product->name ?? 'N/A'); ?></div>
+                                            <?php if($item->product): ?>
+                                                <small class="text-muted">SKU: <?php echo e($item->product->sku ?? 'N/A'); ?></small>
+                                            <?php endif; ?>
                                         </div>
                                     </div>
                                 </td>
-                                <td>Rs. {{ number_format($item->price, 2) }}</td>
+                                <td>Rs. <?php echo e(number_format($item->price, 2)); ?></td>
                                 <td>
-                                    <span class="badge badge-info">{{ $item->quantity }}</span>
+                                    <span class="badge badge-info"><?php echo e($item->quantity); ?></span>
                                 </td>
-                                <td class="fw-semibold">Rs. {{ number_format($item->total, 2) }}</td>
+                                <td class="fw-semibold">Rs. <?php echo e(number_format($item->total, 2)); ?></td>
                             </tr>
-                            @endforeach
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                         </tbody>
                         <tfoot>
                             <tr>
                                 <td colspan="3" class="text-end fw-semibold">Subtotal:</td>
-                                <td class="fw-semibold">Rs. {{ number_format($order->subtotal, 2) }}</td>
+                                <td class="fw-semibold">Rs. <?php echo e(number_format($order->subtotal, 2)); ?></td>
                             </tr>
-                            @if($order->tax > 0)
+                            <?php if($order->tax > 0): ?>
                             <tr>
                                 <td colspan="3" class="text-end">Tax:</td>
-                                <td>Rs. {{ number_format($order->tax, 2) }}</td>
+                                <td>Rs. <?php echo e(number_format($order->tax, 2)); ?></td>
                             </tr>
-                            @endif
-                            @if($order->shipping > 0)
+                            <?php endif; ?>
+                            <?php if($order->shipping > 0): ?>
                             <tr>
                                 <td colspan="3" class="text-end">Shipping:</td>
-                                <td>Rs. {{ number_format($order->shipping, 2) }}</td>
+                                <td>Rs. <?php echo e(number_format($order->shipping, 2)); ?></td>
                             </tr>
-                            @endif
+                            <?php endif; ?>
                             <tr class="table-active">
                                 <td colspan="3" class="text-end fw-bold">Total:</td>
-                                <td class="fw-bold">Rs. {{ number_format($order->total, 2) }}</td>
+                                <td class="fw-bold">Rs. <?php echo e(number_format($order->total, 2)); ?></td>
                             </tr>
                         </tfoot>
                     </table>
@@ -103,16 +103,16 @@
         </div>
 
         <!-- Order Notes -->
-        @if($order->notes)
+        <?php if($order->notes): ?>
         <div class="card mt-4">
             <div class="card-header">
                 <h6 class="card-title mb-0">Order Notes</h6>
             </div>
             <div class="card-body">
-                <p class="mb-0">{{ $order->notes }}</p>
+                <p class="mb-0"><?php echo e($order->notes); ?></p>
             </div>
         </div>
-        @endif
+        <?php endif; ?>
     </div>
 
     <!-- Sidebar Information -->
@@ -126,23 +126,24 @@
                 <div class="d-flex align-items-center mb-3">
                     <div class="avatar-lg me-3">
                         <div class="avatar-initials">
-                            {{ substr($order->user->name ?? 'G', 0, 1) }}
+                            <?php echo e(substr($order->user->name ?? 'G', 0, 1)); ?>
+
                         </div>
                     </div>
                     <div>
-                        <div class="fw-semibold">{{ $order->user->name ?? 'Guest' }}</div>
-                        <small class="text-muted">{{ $order->user->email ?? 'N/A' }}</small>
+                        <div class="fw-semibold"><?php echo e($order->user->name ?? 'Guest'); ?></div>
+                        <small class="text-muted"><?php echo e($order->user->email ?? 'N/A'); ?></small>
                     </div>
                 </div>
                 
                 <div class="row g-2">
                     <div class="col-6">
                         <small class="text-muted">Phone</small>
-                        <div class="fw-semibold">{{ $order->user->phone ?? 'N/A' }}</div>
+                        <div class="fw-semibold"><?php echo e($order->user->phone ?? 'N/A'); ?></div>
                     </div>
                     <div class="col-6">
                         <small class="text-muted">Role</small>
-                        <div class="fw-semibold">{{ ucfirst($order->user->role ?? 'Guest') }}</div>
+                        <div class="fw-semibold"><?php echo e(ucfirst($order->user->role ?? 'Guest')); ?></div>
                     </div>
                 </div>
             </div>
@@ -157,50 +158,50 @@
                 <div class="row g-3">
                     <div class="col-12">
                         <small class="text-muted">Order Date</small>
-                        <div class="fw-semibold">{{ $order->created_at->format('M j, Y H:i') }}</div>
+                        <div class="fw-semibold"><?php echo e($order->created_at->format('M j, Y H:i')); ?></div>
                     </div>
                     <div class="col-12">
                         <small class="text-muted">Last Updated</small>
-                        <div class="fw-semibold">{{ $order->updated_at->format('M j, Y H:i') }}</div>
+                        <div class="fw-semibold"><?php echo e($order->updated_at->format('M j, Y H:i')); ?></div>
                     </div>
                     <div class="col-12">
                         <small class="text-muted">Payment Method</small>
-                        <div class="fw-semibold">{{ ucfirst(str_replace('_', ' ', $order->payment_method ?? 'N/A')) }}</div>
+                        <div class="fw-semibold"><?php echo e(ucfirst(str_replace('_', ' ', $order->payment_method ?? 'N/A'))); ?></div>
                     </div>
-                    @if($order->is_manual)
+                    <?php if($order->is_manual): ?>
                     <div class="col-12">
                         <small class="text-muted">Order Type</small>
                         <div class="fw-semibold">
                             <span class="badge badge-info">Manual Order</span>
                         </div>
                     </div>
-                    @endif
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
 
         <!-- Shipping Address -->
-        @if($order->shipping_address || $order->receiver_name)
+        <?php if($order->shipping_address || $order->receiver_name): ?>
         <div class="card mb-4">
             <div class="card-header">
                 <h6 class="card-title mb-0">Shipping Address</h6>
             </div>
             <div class="card-body">
-                @if($order->receiver_name)
-                <div class="fw-semibold mb-2">{{ $order->receiver_name }}</div>
-                @endif
-                @if($order->receiver_phone)
-                <div class="text-muted mb-2">{{ $order->receiver_phone }}</div>
-                @endif
-                @if($order->shipping_address)
-                <div class="text-muted">{{ $order->shipping_address }}</div>
-                @endif
-                @if($order->receiver_city)
-                <div class="text-muted">{{ $order->receiver_city }}{{ $order->receiver_area ? ', ' . $order->receiver_area : '' }}</div>
-                @endif
+                <?php if($order->receiver_name): ?>
+                <div class="fw-semibold mb-2"><?php echo e($order->receiver_name); ?></div>
+                <?php endif; ?>
+                <?php if($order->receiver_phone): ?>
+                <div class="text-muted mb-2"><?php echo e($order->receiver_phone); ?></div>
+                <?php endif; ?>
+                <?php if($order->shipping_address): ?>
+                <div class="text-muted"><?php echo e($order->shipping_address); ?></div>
+                <?php endif; ?>
+                <?php if($order->receiver_city): ?>
+                <div class="text-muted"><?php echo e($order->receiver_city); ?><?php echo e($order->receiver_area ? ', ' . $order->receiver_area : ''); ?></div>
+                <?php endif; ?>
             </div>
         </div>
-        @endif
+        <?php endif; ?>
 
         <!-- Quick Actions -->
         <div class="card">
@@ -209,7 +210,7 @@
             </div>
             <div class="card-body">
                 <div class="d-grid gap-2">
-                    <a href="{{ route('admin.orders.edit', $order) }}" class="btn btn-warning">
+                    <a href="<?php echo e(route('admin.orders.edit', $order)); ?>" class="btn btn-warning">
                         <i class="fas fa-edit"></i> Edit Order
                     </a>
                     <button class="btn btn-outline-primary" onclick="printOrder()">
@@ -223,15 +224,15 @@
                             <i class="fas fa-cog"></i> Change Status
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end" style="min-width: 200px;">
-                            <li><a class="dropdown-item change-status-btn" href="#" data-status="confirmed" data-id="{{ $order->id }}">Confirm</a></li>
-                            <li><a class="dropdown-item change-status-btn" href="#" data-status="processing" data-id="{{ $order->id }}">Processing</a></li>
-                            <li><a class="dropdown-item change-status-btn" href="#" data-status="shipped" data-id="{{ $order->id }}">Shipped</a></li>
-                            <li><a class="dropdown-item change-status-btn" href="#" data-status="completed" data-id="{{ $order->id }}">Delivered</a></li>
+                            <li><a class="dropdown-item change-status-btn" href="#" data-status="confirmed" data-id="<?php echo e($order->id); ?>">Confirm</a></li>
+                            <li><a class="dropdown-item change-status-btn" href="#" data-status="processing" data-id="<?php echo e($order->id); ?>">Processing</a></li>
+                            <li><a class="dropdown-item change-status-btn" href="#" data-status="shipped" data-id="<?php echo e($order->id); ?>">Shipped</a></li>
+                            <li><a class="dropdown-item change-status-btn" href="#" data-status="completed" data-id="<?php echo e($order->id); ?>">Delivered</a></li>
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item text-danger change-status-btn" href="#" data-status="cancelled" data-id="{{ $order->id }}">Cancel</a></li>
+                            <li><a class="dropdown-item text-danger change-status-btn" href="#" data-status="cancelled" data-id="<?php echo e($order->id); ?>">Cancel</a></li>
                         </ul>
                     </div>
-                    <a href="{{ route('admin.orders.index') }}" class="btn btn-secondary">
+                    <a href="<?php echo e(route('admin.orders.index')); ?>" class="btn btn-secondary">
                         <i class="fas fa-arrow-left"></i> Back to Orders
                     </a>
                 </div>
@@ -240,9 +241,9 @@
     </div>
 </div>
 
-@endsection
+<?php $__env->stopSection(); ?>
 
-@push('styles')
+<?php $__env->startPush('styles'); ?>
 <style>
 /* Product Thumbnail */
 .product-thumb {
@@ -362,9 +363,9 @@
     }
 }
 </style>
-@endpush
+<?php $__env->stopPush(); ?>
 
-@push('scripts')
+<?php $__env->startPush('scripts'); ?>
 <script>
 // Fallback notification function if showNotification doesn't exist
 if (typeof showNotification === 'undefined') {
@@ -397,7 +398,7 @@ function printOrder() {
 
 function exportOrder() {
     // Implementation for PDF export
-    window.open(`{{ route('admin.orders.show', $order) }}?export=pdf`, '_blank');
+    window.open(`<?php echo e(route('admin.orders.show', $order)); ?>?export=pdf`, '_blank');
 }
 
 // Initialize event listeners on page load
@@ -429,5 +430,6 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
-<script src="{{ asset('js/orders.js') }}"></script>
-@endpush
+<script src="<?php echo e(asset('js/orders.js')); ?>"></script>
+<?php $__env->stopPush(); ?>
+<?php echo $__env->make('admin.layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH /Applications/XAMPP/xamppfiles/htdocs/e-manager/resources/views/admin/orders/show.blade.php ENDPATH**/ ?>

@@ -173,36 +173,63 @@ function initStatusChangeHandlers() {
     });
 }
 
-function changeStatus(orderId, status) {
+function changeStatus(orderId, status, paymentStatus = null) {
+    if (!orderId || !status) {
+        console.error('Order ID or status is missing', { orderId, status });
+        showNotification('Error: Missing order ID or status', 'error');
+        return;
+    }
+
     if (!confirm(`Are you sure you want to change this order status to "${status}"?`)) {
         return;
     }
 
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+    if (!csrfToken) {
+        showNotification('CSRF token not found. Please refresh the page.', 'error');
+        return;
+    }
+
+    // Get payment status from data attribute or use default
+    const paymentStatusValue = paymentStatus || document.querySelector('[data-payment-status]')?.getAttribute('data-payment-status') || 'unpaid';
+
+    // Use POST with method spoofing for better compatibility
     const formData = new FormData();
-    formData.append('_token', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
+    formData.append('_method', 'PUT');
+    formData.append('_token', csrfToken);
     formData.append('status', status);
-    formData.append('payment_status', 'unpaid'); // Default payment status
+    formData.append('payment_status', paymentStatusValue);
 
     fetch(`/admin/orders/${orderId}/status`, {
-        method: 'PUT',
-        body: formData,
+        method: 'POST',
         headers: {
+            'Accept': 'application/json',
             'X-Requested-With': 'XMLHttpRequest'
-        }
+        },
+        body: formData
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            return response.text().then(text => {
+                throw new Error(`HTTP error! status: ${response.status}, body: ${text}`);
+            });
+        }
+        return response.json();
+    })
     .then(data => {
         if (data.success) {
             showNotification('Order status updated successfully', 'success');
             // Reload the page to show updated status
-            window.location.reload();
+            setTimeout(() => {
+                window.location.reload();
+            }, 1500);
         } else {
             showNotification(data.message || 'Failed to update order status', 'error');
         }
     })
     .catch(error => {
-        console.error('Error:', error);
-        showNotification('An error occurred while updating the order status', 'error');
+        console.error('Error updating order status:', error);
+        showNotification('An error occurred while updating the order status: ' + error.message, 'error');
     });
 }
 
