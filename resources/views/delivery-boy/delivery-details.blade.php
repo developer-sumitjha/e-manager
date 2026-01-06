@@ -75,9 +75,26 @@
                     </tbody>
                     <tfoot>
                         <tr>
-                            <td colspan="3" class="text-end"><strong>Total:</strong></td>
+                            <td colspan="3" class="text-end"><strong>Items Total:</strong></td>
+                            <td><strong>₨{{ number_format($manualDelivery->order->items_total, 2) }}</strong></td>
+                        </tr>
+                        @if($manualDelivery->order->shipping_cost > 0 || $manualDelivery->order->tax_amount > 0)
+                        <tr>
+                            <td colspan="3" class="text-end">
+                                @if($manualDelivery->order->shipping_cost > 0)
+                                    <small>Shipping: ₨{{ number_format($manualDelivery->order->shipping_cost ?? $manualDelivery->order->shipping ?? 0, 2) }}</small><br>
+                                @endif
+                                @if($manualDelivery->order->tax_amount > 0)
+                                    <small>Tax: ₨{{ number_format($manualDelivery->order->tax_amount ?? $manualDelivery->order->tax ?? 0, 2) }}</small>
+                                @endif
+                            </td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td colspan="3" class="text-end"><strong>Order Total:</strong></td>
                             <td><strong>₨{{ number_format($manualDelivery->order->total, 2) }}</strong></td>
                         </tr>
+                        @endif
                     </tfoot>
                 </table>
             </div>
@@ -111,7 +128,16 @@
                             <div class="form-check">
                                 <input class="form-check-input" type="checkbox" id="cod_collected" name="cod_collected" value="1">
                                 <label class="form-check-label" for="cod_collected">
-                                    COD Amount Collected (₨{{ number_format($manualDelivery->cod_amount, 2) }})
+                                    @php
+                                        // Calculate COD amount from order items if stored value is 0 or order is COD
+                                        $codAmount = $manualDelivery->cod_amount ?? 0;
+                                        if (($codAmount == 0 || $codAmount == null) && $manualDelivery->order && $manualDelivery->order->payment_method === 'cod') {
+                                            $codAmount = $manualDelivery->order->orderItems->sum(function($item) {
+                                                return ($item->quantity ?? 0) * ($item->price ?? 0);
+                                            });
+                                        }
+                                    @endphp
+                                    COD Amount Collected (₨{{ number_format($codAmount, 2) }})
                                 </label>
                             </div>
                         </div>
@@ -198,7 +224,16 @@
             <div class="card-body">
                 <div class="mb-2">
                     <strong>COD Amount:</strong><br>
-                    <span class="h4 text-danger">₨{{ number_format($manualDelivery->cod_amount, 2) }}</span>
+                    @php
+                        // Calculate COD amount from order items if stored value is 0 or order is COD
+                        $codAmount = $manualDelivery->cod_amount ?? 0;
+                        if (($codAmount == 0 || $codAmount == null) && $manualDelivery->order && $manualDelivery->order->payment_method === 'cod') {
+                            $codAmount = $manualDelivery->order->orderItems->sum(function($item) {
+                                return ($item->quantity ?? 0) * ($item->price ?? 0);
+                            });
+                        }
+                    @endphp
+                    <span class="h4 text-danger">₨{{ number_format($codAmount, 2) }}</span>
                 </div>
                 <div class="mb-2">
                     <strong>COD Collected:</strong><br>

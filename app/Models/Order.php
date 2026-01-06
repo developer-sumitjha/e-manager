@@ -118,4 +118,31 @@ class Order extends Model
     {
         return $this->hasOne(GaaubesiShipment::class);
     }
+
+    /**
+     * Get the sum of all order items (actual items total)
+     * This calculates the total from order items, not from the stored subtotal
+     */
+    public function getItemsTotalAttribute()
+    {
+        // Ensure order items are loaded
+        if (!$this->relationLoaded('orderItems')) {
+            $this->load('orderItems');
+        }
+        
+        return $this->orderItems->sum(function($item) {
+            return ($item->quantity ?? 0) * ($item->price ?? 0);
+        });
+    }
+
+    /**
+     * Get the effective subtotal (use stored subtotal if available, otherwise calculate from items)
+     */
+    public function getEffectiveSubtotalAttribute()
+    {
+        if ($this->subtotal && $this->subtotal > 0) {
+            return $this->subtotal;
+        }
+        return $this->items_total;
+    }
 }

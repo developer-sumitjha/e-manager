@@ -365,6 +365,7 @@
 @endpush
 
 @push('scripts')
+<script src="{{ asset('js/orders.js') }}"></script>
 <script>
 // Fallback notification function if showNotification doesn't exist
 if (typeof showNotification === 'undefined') {
@@ -400,8 +401,28 @@ function exportOrder() {
     window.open(`{{ route('admin.orders.show', $order) }}?export=pdf`, '_blank');
 }
 
+// Store the route URL template for status updates
+const orderStatusUpdateUrlTemplate = '{{ route("admin.orders.update-status", $order->id) }}';
+// Extract the base URL pattern by replacing the order ID with a placeholder
+const orderIdPattern = /\/\d+\/status$/;
+const orderStatusUpdateUrlBase = orderStatusUpdateUrlTemplate.replace(orderIdPattern, '/:id/status');
+
 // Initialize event listeners on page load
 document.addEventListener('DOMContentLoaded', function() {
+    // Ensure changeStatus function is available (from orders.js)
+    if (typeof changeStatus === 'undefined') {
+        console.error('changeStatus function is not defined. Make sure orders.js is loaded.');
+        return;
+    }
+    
+    // Override changeStatus to use the correct URL
+    const originalChangeStatus = window.changeStatus;
+    window.changeStatus = function(orderId, status, paymentStatus) {
+        // Use Laravel route helper URL - replace the placeholder with actual order ID
+        const url = orderStatusUpdateUrlBase.replace(':id', orderId);
+        return originalChangeStatus.call(this, orderId, status, paymentStatus, url);
+    };
+    
     // Add event listeners for status change buttons
     document.querySelectorAll('.change-status-btn').forEach(button => {
         button.addEventListener('click', function(e) {
@@ -414,9 +435,14 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('Status change request:', { id, status, paymentStatus });
             
             if (status && id) {
-                changeStatus(id, status, paymentStatus);
+                try {
+                    changeStatus(id, status, paymentStatus);
+                } catch (error) {
+                    console.error('Error calling changeStatus:', error);
+                    alert('Error: ' + error.message);
+                }
             } else {
-                console.error('Status or ID attribute not found on button', { status, id });
+                console.error('Status or ID attribute not found on button', { status, id, button: this });
                 alert('Error: Status or Order ID not found. Please try again.');
             }
             // Close the dropdown
@@ -428,6 +454,4 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
-
-<script src="{{ asset('js/orders.js') }}"></script>
 @endpush

@@ -242,6 +242,14 @@
             • Click <strong>"Create Orders"</strong> when done - orders will be saved as pending
         </div>
 
+        @if($products->isEmpty())
+        <div class="alert alert-warning mt-3">
+            <i class="fas fa-exclamation-triangle"></i> 
+            <strong>No Active Products Found!</strong> 
+            Please <a href="{{ route('admin.products.create') }}" class="alert-link">create at least one active product</a> before creating bulk orders.
+        </div>
+        @endif
+
         <form id="bulkOrderForm">
             @csrf
             
@@ -286,9 +294,11 @@
                                                 style="flex: 1;" 
                                                 required>
                                             <option value="">Select Product</option>
-                                            @foreach($products as $product)
+                                            @forelse($products as $product)
                                                 <option value="{{ $product->id }}">{{ $product->name }} - Rs. {{ number_format($product->sale_price ?? $product->price, 0) }}</option>
-                                            @endforeach
+                                            @empty
+                                                <option value="" disabled>No products available. Please create products first.</option>
+                                            @endforelse
                                         </select>
                                     </div>
                                 </div>
@@ -357,6 +367,38 @@
 
 @push('scripts')
 <script>
+// Convert products to JavaScript array
+@php
+$productsArray = $products->map(function($product) {
+    return [
+        'id' => (int)$product->id,
+        'name' => (string)$product->name,
+        'price' => number_format($product->sale_price ?? $product->price, 0)
+    ];
+})->values()->toArray();
+@endphp
+const products = @json($productsArray);
+
+// Debug: Log products to console
+console.log('Products loaded:', products);
+console.log('Products count:', products.length);
+if (products.length === 0) {
+    console.warn('⚠️ No products found! Please create active products first.');
+}
+
+// Function to generate product options HTML
+function generateProductOptions() {
+    let options = '<option value="">Select Product</option>';
+    if (products && products.length > 0) {
+        products.forEach(function(product) {
+            options += `<option value="${product.id}">${product.name} - Rs. ${product.price}</option>`;
+        });
+    } else {
+        options += '<option value="" disabled>No products available</option>';
+    }
+    return options;
+}
+
 let rowCounter = 1;
 
 function addRow() {
@@ -390,10 +432,7 @@ function addRow() {
                             class="excel-select" 
                             style="flex: 1;" 
                             required>
-                        <option value="">Select Product</option>
-                        @foreach($products as $product)
-                            <option value="{{ $product->id }}">{{ $product->name }} - Rs. {{ number_format($product->sale_price ?? $product->price, 0) }}</option>
-                        @endforeach
+                        ${generateProductOptions()}
                     </select>
                 </div>
             </div>
@@ -468,10 +507,7 @@ function addProduct(rowNum) {
                 class="excel-select" 
                 style="flex: 1;" 
                 required>
-            <option value="">Select Product</option>
-            @foreach($products as $product)
-                <option value="{{ $product->id }}">{{ $product->name }} - Rs. {{ number_format($product->sale_price ?? $product->price, 0) }}</option>
-            @endforeach
+            ${generateProductOptions()}
         </select>
         <button type="button" class="btn-remove-product" onclick="this.parentElement.remove(); removeProductQuantity(${rowNum}, ${productCount})">
             <i class="fas fa-times"></i>

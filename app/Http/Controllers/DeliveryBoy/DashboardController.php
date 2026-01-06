@@ -30,17 +30,31 @@ class DashboardController extends Controller
 
         // Get assigned deliveries
         $assignedDeliveries = $deliveryBoy->manualDeliveries()
-            ->with(['order.user', 'order.orderItems.product'])
+            ->with(['order.user', 'order.orderItems'])
             ->where('status', 'assigned')
             ->orderBy('assigned_at', 'desc')
             ->get();
+        
+        // Sync COD amounts for assigned deliveries (in case order total changed)
+        foreach ($assignedDeliveries as $delivery) {
+            $delivery->syncCodAmount();
+            // Refresh the model to get updated cod_amount
+            $delivery->refresh();
+        }
 
         // Get picked up deliveries
         $pickedUpDeliveries = $deliveryBoy->manualDeliveries()
-            ->with(['order.user', 'order.orderItems.product'])
+            ->with(['order.user', 'order.orderItems'])
             ->whereIn('status', ['picked_up', 'in_transit'])
             ->orderBy('picked_up_at', 'desc')
             ->get();
+        
+        // Sync COD amounts for picked up deliveries
+        foreach ($pickedUpDeliveries as $delivery) {
+            $delivery->syncCodAmount();
+            // Refresh the model to get updated cod_amount
+            $delivery->refresh();
+        }
 
         // Get recent completed deliveries
         $recentCompletedDeliveries = $deliveryBoy->completedDeliveries()
@@ -103,7 +117,13 @@ class DashboardController extends Controller
             abort(403, 'Unauthorized access');
         }
 
-        $manualDelivery->load(['order.user', 'order.orderItems.product', 'activities']);
+        $manualDelivery->load(['order.user', 'order.orderItems', 'activities']);
+        
+        // Always sync COD amount with current order items total
+        $manualDelivery->syncCodAmount();
+        
+        // Refresh the model to get updated cod_amount
+        $manualDelivery->refresh();
 
         return view('delivery-boy.delivery-details', compact('manualDelivery', 'deliveryBoy'));
     }

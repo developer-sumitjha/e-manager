@@ -34,7 +34,7 @@
                     <td>{{ $activity->description }}</td>
                     <td>
                         @if($activity->manualDelivery)
-                            <a href="{{ route('delivery-boy.delivery.show', $activity->manualDelivery) }}">
+                            <a href="{{ route('delivery-boy.delivery-details', $activity->manualDelivery) }}">
                                 {{ $activity->manualDelivery->order->order_number }}
                             </a>
                         @else

@@ -68,11 +68,11 @@
                         <small class="text-muted">{{ $delivery->order->user->phone }}</small>
                     </td>
                     <td>{{ Str::limit($delivery->order->shipping_address ?? 'N/A', 40) }}</td>
-                    <td><strong class="text-danger">₨{{ number_format($delivery->cod_amount, 2) }}</strong></td>
+                    <td><strong class="text-danger">₨{{ number_format($delivery->effective_cod_amount, 2) }}</strong></td>
                     <td><span class="badge {{ $delivery->getStatusBadgeClass() }}">{{ strtoupper(str_replace('_', ' ', $delivery->status)) }}</span></td>
                     <td>{{ $delivery->assigned_at->format('M d, Y h:i A') }}</td>
                     <td>
-                        <a href="{{ route('delivery-boy.delivery.show', $delivery) }}" class="btn btn-sm btn-outline-primary">
+                        <a href="{{ route('delivery-boy.delivery-details', $delivery) }}" class="btn btn-sm btn-outline-primary">
                             <i class="fas fa-eye"></i> View
                         </a>
                     </td>

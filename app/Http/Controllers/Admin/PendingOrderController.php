@@ -9,6 +9,7 @@ use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
 class PendingOrderController extends Controller
@@ -147,48 +148,59 @@ class PendingOrderController extends Controller
         return redirect()->route('admin.pending-orders.index')->with('success', 'Manual order created successfully.');
     }
 
-    public function show(Order $order)
+    public function show(Order $pending_order)
     {
-        $order->load(['user', 'orderItems.product']);
-        return view('admin.pending-orders.show', compact('order'));
+        $pending_order->load(['user', 'orderItems.product']);
+        return view('admin.pending-orders.show', compact('pending_order'));
     }
 
-    public function edit(Order $order)
+    public function edit(Order $pending_order)
     {
         $users = User::where('role', 'user')->get();
         $products = Product::where('is_active', true)->get();
-        $order->load(['user', 'orderItems.product']);
-        return view('admin.pending-orders.edit', compact('order', 'users', 'products'));
+        $pending_order->load(['user', 'orderItems.product']);
+        return view('admin.pending-orders.edit', compact('pending_order', 'users', 'products'));
     }
 
-    public function update(Request $request, Order $order)
+    public function update(Request $request, Order $pending_order)
     {
         $validated = $request->validate([
             'customer_name' => 'required|string|max:255',
             'customer_phone' => 'required|string|max:20',
             'shipping_address' => 'required|string',
-            'payment_method' => 'required|in:cash_on_delivery,paid',
+            'payment_method' => 'required|in:cash_on_delivery,paid,bank_transfer,khalti,esewa,cod',
             'total_amount' => 'required|numeric|min:0',
             'status' => 'required|in:pending,processing,completed,cancelled',
             'notes' => 'nullable|string'
         ]);
 
-        $order->update([
+        $pending_order->update([
             'total' => $validated['total_amount'],
             'status' => $validated['status'],
-            'payment_status' => $validated['payment_method'] === 'paid' ? 'paid' : 'unpaid',
+            'payment_status' => in_array($validated['payment_method'], ['paid', 'bank_transfer', 'khalti', 'esewa']) ? 'paid' : 'unpaid',
             'payment_method' => $validated['payment_method'],
             'shipping_address' => $validated['shipping_address'],
+            'receiver_full_address' => $validated['shipping_address'],
+            'receiver_name' => $validated['customer_name'],
+            'receiver_phone' => $validated['customer_phone'],
             'notes' => $validated['notes'] ?? ''
         ]);
+        
+        // Update user if exists
+        if ($pending_order->user) {
+            $pending_order->user->update([
+                'name' => $validated['customer_name'],
+                'phone' => $validated['customer_phone'],
+            ]);
+        }
 
         return redirect()->route('admin.pending-orders.index')->with('success', 'Order updated successfully.');
     }
 
-    public function destroy(Order $order)
+    public function destroy(Order $pending_order)
     {
-        $order->orderItems()->delete();
-        $order->delete();
+        $pending_order->orderItems()->delete();
+        $pending_order->delete();
 
         if (request()->ajax()) {
             return response()->json(['success' => true, 'message' => 'Order deleted successfully.']);
@@ -197,14 +209,20 @@ class PendingOrderController extends Controller
         return redirect()->route('admin.pending-orders.index')->with('success', 'Order deleted successfully.');
     }
 
-    public function confirm(Order $pending_order)
+    public function confirm(Request $request, Order $pending_order)
     {
+        // Force JSON response for AJAX requests
+        if ($request->ajax() || $request->wantsJson()) {
+            $request->headers->set('Accept', 'application/json');
+        }
+        
         try {
             \Log::info('Confirm order request received', [
                 'order_id' => $pending_order->id,
                 'order_number' => $pending_order->order_number,
                 'current_status' => $pending_order->status,
-                'is_ajax' => request()->ajax()
+                'is_ajax' => request()->ajax(),
+                'request_data' => $request->all()
             ]);
 
             if ($pending_order->status !== 'pending') {
@@ -219,12 +237,60 @@ class PendingOrderController extends Controller
                 ], 400);
             }
 
-            $result = $pending_order->update(['status' => 'confirmed']);
+            // Validate shipping and tax amounts
+            $validated = $request->validate([
+                'shipping_cost' => 'nullable|numeric|min:0',
+                'tax_amount' => 'nullable|numeric|min:0',
+            ], [], [
+                'shipping_cost' => 'shipping cost',
+                'tax_amount' => 'tax amount'
+            ]);
+
+            $shippingCost = $validated['shipping_cost'] ?? 0;
+            $taxAmount = $validated['tax_amount'] ?? 0;
+            
+            // Ensure order items are loaded
+            if (!$pending_order->relationLoaded('orderItems')) {
+                $pending_order->load('orderItems');
+            }
+            
+            // Calculate subtotal from order items
+            $subtotal = $pending_order->orderItems->sum(function($item) {
+                return ($item->quantity ?? 0) * ($item->price ?? 0);
+            });
+            
+            // Calculate new total
+            $newTotal = $subtotal + $shippingCost + $taxAmount;
+
+            // Update order with shipping, tax, and recalculated total
+            // Use existing columns: shipping and tax (these definitely exist)
+            $updateData = [
+                'status' => 'confirmed',
+                'subtotal' => $subtotal,
+                'shipping' => $shippingCost,
+                'tax' => $taxAmount,
+                'total' => $newTotal,
+            ];
+            
+            // Try to also update shipping_cost and tax_amount if they exist
+            // But don't fail if they don't exist
+            $columns = Schema::getColumnListing('orders');
+            if (in_array('shipping_cost', $columns)) {
+                $updateData['shipping_cost'] = $shippingCost;
+            }
+            if (in_array('tax_amount', $columns)) {
+                $updateData['tax_amount'] = $taxAmount;
+            }
+            
+            $result = $pending_order->update($updateData);
             
             \Log::info('Order status update result', [
                 'order_id' => $pending_order->id,
                 'update_result' => $result,
-                'new_status' => $pending_order->fresh()->status
+                'new_status' => $pending_order->fresh()->status,
+                'shipping_cost' => $shippingCost,
+                'tax_amount' => $taxAmount,
+                'new_total' => $newTotal
             ]);
 
             \Log::info('Order confirmed successfully', ['order_id' => $pending_order->id, 'order_number' => $pending_order->order_number]);
@@ -239,6 +305,17 @@ class PendingOrderController extends Controller
             }
 
             return redirect()->route('admin.pending-orders.index')->with('success', 'Order confirmed successfully.');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            \Log::error('Validation error confirming order', [
+                'order_id' => $pending_order->id ?? 'unknown',
+                'errors' => $e->errors()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422);
         } catch (\Exception $e) {
             \Log::error('Error confirming order', [
                 'order_id' => $pending_order->id ?? 'unknown',
@@ -248,14 +325,15 @@ class PendingOrderController extends Controller
                 'trace' => $e->getTraceAsString()
             ]);
 
-            if (request()->ajax()) {
+            // Always return JSON for AJAX/JSON requests
+            if (request()->ajax() || request()->wantsJson() || request()->expectsJson()) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Error: ' . $e->getMessage(),
-                    'error_details' => [
+                    'error_details' => config('app.debug') ? [
                         'file' => $e->getFile(),
                         'line' => $e->getLine()
-                    ]
+                    ] : []
                 ], 500);
             }
 
@@ -375,7 +453,14 @@ class PendingOrderController extends Controller
     public function createBulk()
     {
         $users = User::where('role', 'user')->get();
-        $products = Product::where('is_active', true)->get();
+        // Get products - tenant scope is automatically applied via BelongsToTenant trait
+        $products = Product::where('is_active', true)
+                          ->orderBy('name')
+                          ->get(['id', 'name', 'price', 'sale_price', 'is_active']);
+        
+        // Debug: Log product count
+        \Log::info('Bulk Order Create - Products count: ' . $products->count());
+        
         return view('admin.pending-orders.create-bulk', compact('users', 'products'));
     }
 

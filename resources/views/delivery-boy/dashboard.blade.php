@@ -252,7 +252,7 @@
             </div>
             <div class="detail-item">
                 <i class="fas fa-money-bill"></i>
-                <span>COD: Rs. {{ number_format($delivery->cod_amount, 0) }}</span>
+                <span>COD: Rs. {{ number_format($delivery->cod_amount ?? 0, 0) }}</span>
             </div>
         </div>
 
@@ -297,7 +297,7 @@
             </div>
             <div class="detail-item">
                 <i class="fas fa-money-bill-wave"></i>
-                <span>Rs. {{ number_format($delivery->cod_amount, 0) }}</span>
+                <span>Rs. {{ number_format($delivery->cod_amount ?? 0, 0) }}</span>
             </div>
         </div>
     </div>

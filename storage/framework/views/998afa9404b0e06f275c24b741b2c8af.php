@@ -7,67 +7,17 @@
 <?php $__env->stopSection(); ?>
 
 <?php $__env->startSection('content'); ?>
-<!-- Hero Section -->
-<div class="hero-section mb-5">
-    <div class="row align-items-center">
-        <div class="col-lg-8">
-            <div class="hero-content">
-                <h1 class="hero-title text-gradient">Welcome back, <?php echo e(auth()->user()->first_name ?? 'Admin'); ?>!</h1>
-                <p class="hero-subtitle">Here's a comprehensive overview of your business performance and key metrics.</p>
-                <div class="hero-stats">
-                    <div class="hero-stat">
-                        <span class="hero-stat-value" data-count="<?php echo e($stats['total_orders'] ?? 0); ?>">0</span>
-                        <span class="hero-stat-label">Total Orders</span>
-                    </div>
-                    <div class="hero-stat">
-                        <span class="hero-stat-value" data-count="<?php echo e($stats['total_revenue'] ?? 0); ?>">Rs. 0</span>
-                        <span class="hero-stat-label">Revenue</span>
-                    </div>
-                    <div class="hero-stat">
-                        <span class="hero-stat-value" data-count="<?php echo e($stats['total_customers'] ?? 0); ?>">0</span>
-                        <span class="hero-stat-label">Customers</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-4">
-            <div class="hero-graphic">
-                <div class="graphic-container">
-                    <svg width="300" height="200" viewBox="0 0 300 200" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <defs>
-                            <linearGradient id="heroGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                                <stop offset="0%" style="stop-color:#6366f1;stop-opacity:1" />
-                                <stop offset="100%" style="stop-color:#06b6d4;stop-opacity:1" />
-                            </linearGradient>
-                        </defs>
-                        <!-- Background circles -->
-                        <circle cx="50" cy="50" r="40" fill="url(#heroGradient)" opacity="0.1"/>
-                        <circle cx="250" cy="150" r="60" fill="url(#heroGradient)" opacity="0.1"/>
-                        <!-- Main chart area -->
-                        <rect x="20" y="80" width="260" height="100" rx="12" fill="url(#heroGradient)" opacity="0.05" stroke="url(#heroGradient)" stroke-width="2"/>
-                        <!-- Chart bars -->
-                        <rect x="40" y="120" width="20" height="60" fill="url(#heroGradient)" opacity="0.8"/>
-                        <rect x="70" y="100" width="20" height="80" fill="url(#heroGradient)" opacity="0.8"/>
-                        <rect x="100" y="90" width="20" height="90" fill="url(#heroGradient)" opacity="0.8"/>
-                        <rect x="130" y="110" width="20" height="70" fill="url(#heroGradient)" opacity="0.8"/>
-                        <rect x="160" y="85" width="20" height="95" fill="url(#heroGradient)" opacity="0.8"/>
-                        <rect x="190" y="95" width="20" height="85" fill="url(#heroGradient)" opacity="0.8"/>
-                        <rect x="220" y="105" width="20" height="75" fill="url(#heroGradient)" opacity="0.8"/>
-                        <!-- Trend line -->
-                        <path d="M40 140 L70 120 L100 110 L130 130 L160 105 L190 115 L220 125 L250 135" stroke="url(#heroGradient)" stroke-width="3" fill="none" opacity="0.8"/>
-                    </svg>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
 <!-- Stats Grid -->
 <div class="stats-grid mb-5">
     <div class="stat-card fade-in">
         <div class="stat-card-header">
             <div class="stat-icon">
-                <i class="fas fa-shopping-cart"></i>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"></path>
+                    <rect x="9" y="3" width="6" height="4" rx="1"></rect>
+                    <path d="M9 12h6"></path>
+                    <path d="M9 16h6"></path>
+                </svg>
             </div>
             <div class="stat-trend" data-trend="<?php echo e($stats['orders_trend'] ?? 0); ?>">
                 <i class="fas fa-arrow-up" style="display: none;"></i>
@@ -86,7 +36,10 @@
     <div class="stat-card fade-in" style="animation-delay: 0.1s">
         <div class="stat-card-header">
             <div class="stat-icon">
-                <i class="fas fa-dollar-sign"></i>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="1" x2="12" y2="23"></line>
+                    <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                </svg>
             </div>
             <div class="stat-trend" data-trend="<?php echo e($stats['revenue_trend'] ?? 0); ?>">
                 <i class="fas fa-arrow-up" style="display: none;"></i>
@@ -105,7 +58,11 @@
     <div class="stat-card fade-in" style="animation-delay: 0.2s">
         <div class="stat-card-header">
             <div class="stat-icon">
-                <i class="fas fa-box"></i>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                    <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                    <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                </svg>
             </div>
             <div class="stat-trend" data-trend="<?php echo e($stats['products_trend'] ?? 0); ?>">
                 <i class="fas fa-arrow-up" style="display: none;"></i>
@@ -124,7 +81,12 @@
     <div class="stat-card fade-in" style="animation-delay: 0.3s">
         <div class="stat-card-header">
             <div class="stat-icon">
-                <i class="fas fa-users"></i>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
             </div>
             <div class="stat-trend" data-trend="<?php echo e($stats['customers_trend'] ?? 0); ?>">
                 <i class="fas fa-arrow-up" style="display: none;"></i>
@@ -141,47 +103,9 @@
     </div>
 </div>
 
-<!-- Charts Section -->
+<!-- Recent Orders Section - Full Width -->
 <div class="row mb-5">
-    <div class="col-xl-8 mb-4">
-        <div class="card chart-card">
-            <div class="card-header">
-                <div class="card-title-section">
-                    <h5 class="card-title">Sales Overview</h5>
-                    <p class="card-subtitle">Revenue trends over time</p>
-                </div>
-                <div class="card-actions">
-                    <div class="btn-group" role="group">
-                        <button type="button" class="btn btn-sm btn-outline-primary active" data-period="7d">7 Days</button>
-                        <button type="button" class="btn btn-sm btn-outline-primary" data-period="30d">30 Days</button>
-                        <button type="button" class="btn btn-sm btn-outline-primary" data-period="90d">90 Days</button>
-                    </div>
-                </div>
-            </div>
-            <div class="card-body">
-                <canvas id="salesChart" height="100"></canvas>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-xl-4 mb-4">
-        <div class="card chart-card">
-            <div class="card-header">
-                <div class="card-title-section">
-                    <h5 class="card-title">Order Status</h5>
-                    <p class="card-subtitle">Distribution by status</p>
-                </div>
-            </div>
-            <div class="card-body">
-                <canvas id="orderStatusChart" height="200"></canvas>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Recent Activity Section -->
-<div class="row mb-5">
-    <div class="col-xl-8 mb-4">
+    <div class="col-12 mb-4">
         <div class="card">
             <div class="card-header">
                 <div class="card-title-section">
@@ -267,7 +191,48 @@
             </div>
         </div>
     </div>
+</div>
 
+<!-- Charts Section -->
+<div class="row mb-5">
+    <div class="col-xl-8 mb-4">
+        <div class="card chart-card">
+            <div class="card-header">
+                <div class="card-title-section">
+                    <h5 class="card-title">Sales Overview</h5>
+                    <p class="card-subtitle">Revenue trends over time</p>
+                </div>
+                <div class="card-actions">
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-sm btn-outline-primary active" data-period="7d">7 Days</button>
+                        <button type="button" class="btn btn-sm btn-outline-primary" data-period="30d">30 Days</button>
+                        <button type="button" class="btn btn-sm btn-outline-primary" data-period="90d">90 Days</button>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <canvas id="salesChart" height="100"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-4 mb-4">
+        <div class="card chart-card">
+            <div class="card-header">
+                <div class="card-title-section">
+                    <h5 class="card-title">Order Status</h5>
+                    <p class="card-subtitle">Distribution by status</p>
+                </div>
+            </div>
+            <div class="card-body">
+                <canvas id="orderStatusChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Top Products Section -->
+<div class="row mb-5">
     <div class="col-xl-4 mb-4">
         <div class="card">
             <div class="card-header">
@@ -374,68 +339,79 @@
 </div>
 
 <?php $__env->startPush('styles'); ?>
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-/* Hero Section */
-.hero-section {
-    background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(6, 182, 212, 0.1));
-    border: 1px solid rgba(99, 102, 241, 0.2);
-    border-radius: var(--radius-2xl);
-    padding: var(--space-2xl);
-    margin-bottom: var(--space-xl);
-    position: relative;
-    overflow: hidden;
+/* Black and White Theme Dashboard Styles */
+* {
+    box-sizing: border-box;
 }
 
-.hero-section::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    right: -50%;
-    width: 200%;
-    height: 200%;
-    background: radial-gradient(circle, rgba(99, 102, 241, 0.05) 0%, transparent 70%);
-    animation: float 6s ease-in-out infinite;
+body {
+    font-family: 'Open Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #ffffff;
+    color: #000000;
+}
+
+/* Hero Section - Black and White Style */
+.hero-section {
+    background: #ffffff;
+    border: 1px solid #000000;
+    border-radius: 12px;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .hero-title {
-    font-size: 3rem;
-    font-weight: 800;
-    margin-bottom: var(--space-md);
-    line-height: 1.1;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #000000;
+    margin-bottom: 0.5rem;
+    line-height: 1.2;
+}
+
+.text-gradient {
+    color: #000000;
+    background: none;
+    -webkit-background-clip: unset;
+    -webkit-text-fill-color: #000000;
+    background-clip: unset;
 }
 
 .hero-subtitle {
-    font-size: 1.25rem;
-    color: var(--text-muted);
-    margin-bottom: var(--space-xl);
+    font-size: 0.875rem;
+    color: #666666;
+    margin-bottom: 1rem;
     line-height: 1.6;
+    font-weight: 400;
 }
 
 .hero-stats {
     display: flex;
-    gap: var(--space-xl);
+    gap: 1.5rem;
     flex-wrap: wrap;
 }
 
 .hero-stat {
-    text-align: center;
+    text-align: left;
 }
 
 .hero-stat-value {
     display: block;
-    font-size: 2rem;
+    font-size: 1.25rem;
     font-weight: 700;
-    color: var(--primary);
-    line-height: 1;
+    color: #000000;
+    line-height: 1.2;
 }
 
 .hero-stat-label {
     display: block;
-    font-size: 0.875rem;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    margin-top: var(--space-xs);
+    font-size: 0.75rem;
+    color: #666666;
+    font-weight: 500;
+    margin-top: 0.25rem;
+    text-transform: none;
+    letter-spacing: 0;
 }
 
 .hero-graphic {
@@ -446,79 +422,98 @@
 
 .graphic-container {
     position: relative;
-    animation: float 4s ease-in-out infinite;
 }
 
-/* Stats Grid */
+/* Stats Grid - Black and White Card Style */
 .stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: var(--space-lg);
+    display: grid !important;
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    width: 100%;
+}
+
+.stats-grid .stat-card {
+    min-width: 0;
+    width: 100%;
 }
 
 .stat-card {
-    background: linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.9));
-    border: 1px solid rgba(99, 102, 241, 0.1);
-    border-radius: var(--radius-xl);
-    padding: var(--space-lg);
+    background: #ffffff;
+    border: 1px solid #000000;
+    border-radius: 12px;
+    padding: 1rem;
+    transition: all 0.2s ease;
     position: relative;
-    overflow: hidden;
-    transition: all var(--transition-normal);
+    overflow: visible;
 }
 
 .stat-card:hover {
-    transform: translateY(-4px);
-    box-shadow: var(--shadow-2xl);
-    border-color: rgba(99, 102, 241, 0.3);
-}
-
-.stat-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, var(--primary), var(--secondary));
+    border-color: #333333;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
 .stat-card-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: var(--space-md);
+    margin-bottom: 0.75rem;
 }
 
 .stat-icon {
-    width: 48px;
-    height: 48px;
-    background: linear-gradient(135deg, var(--primary), var(--secondary));
-    border-radius: var(--radius-lg);
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: white;
-    font-size: 1.25rem;
+    color: #000000;
+    background: #ffffff;
+    border: 1px solid #000000;
+    font-size: 1rem;
+    font-weight: 300;
+    flex-shrink: 0;
+}
+
+/* All stat icons use white background with black border */
+.stat-card .stat-icon {
+    background: #ffffff;
+    color: #000000;
+    border: 1px solid #000000;
+    font-weight: 300;
+}
+
+.stat-icon svg {
+    width: 20px;
+    height: 20px;
+    color: #000000;
+    stroke: #000000;
+    opacity: 0.8;
 }
 
 .stat-trend {
     display: flex;
     align-items: center;
-    gap: var(--space-xs);
-    padding: var(--space-xs) var(--space-sm);
-    border-radius: var(--radius-lg);
+    gap: 0.25rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
     font-size: 0.75rem;
     font-weight: 600;
 }
 
 .stat-trend.positive {
-    background: rgba(34, 197, 94, 0.1);
-    color: var(--success);
+    background: #f0f0f0;
+    color: #000000;
+}
+
+.stat-trend.negative {
+    background: #e0e0e0;
+    color: #000000;
 }
 
 .stat-trend.neutral {
-    background: rgba(148, 163, 184, 0.1);
-    color: var(--text-muted);
+    background: #f5f5f5;
+    color: #666666;
 }
 
 .stat-content {
@@ -526,29 +521,41 @@
 }
 
 .stat-value {
-    font-size: 2.5rem;
+    font-size: 1.5rem;
     font-weight: 700;
-    color: var(--text-primary);
-    line-height: 1;
-    margin-bottom: var(--space-xs);
+    color: #000000;
+    line-height: 1.2;
+    margin-bottom: 0.25rem;
 }
 
 .stat-label {
-    font-size: 0.875rem;
-    color: var(--text-muted);
+    font-size: 0.8125rem;
+    color: #666666;
     font-weight: 500;
-    margin-bottom: var(--space-xs);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+    margin-bottom: 0.25rem;
+    text-transform: none;
+    letter-spacing: 0;
 }
 
 .stat-description {
-    font-size: 0.75rem;
-    color: var(--text-muted);
+    font-size: 0.6875rem;
+    color: #999999;
+    font-weight: 400;
 }
 
-/* Chart Cards */
+/* Chart Cards - Black and White Style */
+.chart-card {
+    background: #ffffff;
+    border: 1px solid #000000;
+    border-radius: 12px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
 .chart-card .card-header {
+    background: #ffffff;
+    border-bottom: 1px solid #000000;
+    padding: 0.875rem 1rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -557,12 +564,41 @@
 .card-title-section h5 {
     margin: 0;
     font-weight: 600;
+    font-size: 0.9375rem;
+    color: #000000;
 }
 
 .card-subtitle {
+    margin: 0.25rem 0 0 0;
+    color: #666666;
+    font-size: 0.8125rem;
+    font-weight: 400;
+}
+
+.card-body {
+    padding: 1rem;
+}
+
+/* Cards - General */
+.card {
+    background: #ffffff;
+    border: 1px solid #000000;
+    border-radius: 12px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+.card-header {
+    background: #ffffff;
+    border-bottom: 1px solid #000000;
+    padding: 1.25rem 1.5rem;
+}
+
+.card-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #000000;
     margin: 0;
-    color: var(--text-muted);
-    font-size: 0.875rem;
 }
 
 /* Avatar */
@@ -574,84 +610,290 @@
 .avatar-initials {
     width: 100%;
     height: 100%;
-    background: linear-gradient(135deg, var(--primary), var(--secondary));
-    border-radius: var(--radius-md);
+    background: #000000;
+    border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: white;
+    color: #ffffff;
     font-weight: 600;
     font-size: 0.75rem;
 }
 
-/* Empty State */
-.empty-state {
-    padding: var(--space-2xl);
+/* Tables */
+.table {
+    color: #000000;
 }
 
-/* Quick Actions */
+.table thead th {
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: #666666;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 2px solid #000000;
+    padding: 0.75rem 1rem;
+    background: #ffffff;
+}
+
+.table tbody td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.table-hover tbody tr:hover {
+    background: #f5f5f5;
+}
+
+/* Badges - Black and White */
+.badge {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border-radius: 6px;
+    border: 1px solid #000000;
+}
+
+.badge-success {
+    background: #ffffff !important;
+    color: #000000 !important;
+    border-color: #000000 !important;
+}
+
+.badge-warning {
+    background: #f5f5f5 !important;
+    color: #000000 !important;
+    border-color: #000000 !important;
+}
+
+.badge-secondary {
+    background: #ffffff !important;
+    color: #666666 !important;
+    border-color: #666666 !important;
+}
+
+/* Buttons - Black and White */
+.btn {
+    border-radius: 8px;
+    font-weight: 500;
+    padding: 0.625rem 1.25rem;
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
+    border-width: 1.5px;
+}
+
+.btn-sm {
+    padding: 0.5rem 1rem;
+    font-size: 0.8125rem;
+}
+
+.btn-outline-primary {
+    color: #000000;
+    border-color: #000000;
+    background: #ffffff;
+}
+
+.btn-outline-primary:hover,
+.btn-outline-primary.active {
+    background: #000000;
+    border-color: #000000;
+    color: #ffffff;
+}
+
+.btn-outline-secondary {
+    color: #666666;
+    border-color: #666666;
+    background: #ffffff;
+}
+
+.btn-outline-secondary:hover {
+    background: #666666;
+    border-color: #666666;
+    color: #ffffff;
+}
+
+/* Quick Actions - Black and White */
 .quick-action-card {
     display: flex;
     align-items: center;
-    gap: var(--space-md);
-    padding: var(--space-lg);
-    background: linear-gradient(135deg, rgba(30, 41, 59, 0.5), rgba(15, 23, 42, 0.5));
-    border: 1px solid rgba(99, 102, 241, 0.1);
-    border-radius: var(--radius-lg);
+    gap: 1rem;
+    padding: 1.25rem;
+    background: #ffffff;
+    border: 1px solid #000000;
+    border-radius: 12px;
     text-decoration: none;
-    color: var(--text-primary);
-    transition: all var(--transition-normal);
+    color: #000000;
+    transition: all 0.2s ease;
     height: 100%;
 }
 
 .quick-action-card:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-lg);
-    border-color: rgba(99, 102, 241, 0.3);
-    color: var(--text-primary);
+    border-color: #333333;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    color: #000000;
+    text-decoration: none;
 }
 
 .quick-action-icon {
     width: 48px;
     height: 48px;
-    background: linear-gradient(135deg, var(--primary), var(--secondary));
-    border-radius: var(--radius-lg);
+    background: #000000;
+    border-radius: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: white;
+    color: #ffffff;
     font-size: 1.25rem;
+    flex-shrink: 0;
 }
 
 .quick-action-content h6 {
-    margin: 0 0 var(--space-xs) 0;
+    margin: 0 0 0.25rem 0;
     font-weight: 600;
+    font-size: 0.9375rem;
+    color: #000000;
 }
 
 .quick-action-content p {
     margin: 0;
-    color: var(--text-muted);
+    color: #666666;
+    font-size: 0.8125rem;
+    font-weight: 400;
+}
+
+/* Product Items - Black and White */
+.product-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.product-item:last-child {
+    border-bottom: none;
+}
+
+.product-image {
+    width: 48px;
+    height: 48px;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #f5f5f5;
+    border: 1px solid #000000;
+    flex-shrink: 0;
+}
+
+.product-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.placeholder-image {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #999999;
+}
+
+.product-details {
+    flex: 1;
+}
+
+.product-name {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: #000000;
+    margin: 0 0 0.25rem 0;
+}
+
+.product-stats {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.8125rem;
+    color: #666666;
+}
+
+.sales-count {
+    font-weight: 500;
+}
+
+.product-price {
+    font-weight: 600;
+    color: #000000;
+}
+
+/* Empty State - Black and White */
+.empty-state {
+    padding: 3rem 1rem;
+    text-align: center;
+}
+
+.empty-state i {
+    color: #999999;
+    margin-bottom: 1rem;
+}
+
+.empty-state h6 {
+    color: #666666;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.empty-state p {
+    color: #999999;
     font-size: 0.875rem;
+    margin: 0;
+}
+
+/* Text Colors - Black and White */
+.text-muted {
+    color: #666666 !important;
+}
+
+.fw-semibold {
+    font-weight: 600;
 }
 
 /* Responsive */
+@media (max-width: 1200px) {
+    .stats-grid {
+        grid-template-columns: repeat(4, 1fr) !important;
+    }
+}
+
+@media (max-width: 992px) {
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+}
+
 @media (max-width: 768px) {
     .hero-title {
-        font-size: 2rem;
+        font-size: 1.5rem;
     }
     
     .hero-stats {
-        gap: var(--space-lg);
-    }
-    
-    .stats-grid {
-        grid-template-columns: 1fr;
+        gap: 1rem;
     }
     
     .chart-card .card-header {
         flex-direction: column;
         align-items: flex-start;
-        gap: var(--space-md);
+        gap: 1rem;
+    }
+    
+    .hero-section {
+        padding: 1.5rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .stats-grid {
+        grid-template-columns: 1fr;
     }
 }
 </style>
@@ -751,12 +993,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     label: 'Revenue (Rs.)',
                     data: effectiveSalesData,
                     tension: 0.4,
-                    borderColor: '#6366f1',
-                    backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
                     fill: true,
                     pointRadius: 4,
                     pointHoverRadius: 6,
-                    pointBackgroundColor: '#6366f1',
+                    pointBackgroundColor: '#3b82f6',
                     pointBorderColor: '#ffffff',
                     pointBorderWidth: 2
                 }]
@@ -772,18 +1014,21 @@ document.addEventListener('DOMContentLoaded', function() {
                 scales: {
                     x: {
                         grid: {
-                            color: 'rgba(148, 163, 184, 0.1)'
+                            color: 'rgba(0, 0, 0, 0.05)'
                         },
                         ticks: {
-                            color: '#94a3b8'
+                            color: '#666666'
                         }
                     },
                     y: {
                         grid: {
-                            color: 'rgba(148, 163, 184, 0.1)'
+                            color: 'rgba(0, 0, 0, 0.05)'
                         },
                         ticks: {
-                            color: '#94a3b8'
+                            color: '#666666',
+                            callback: function(value) {
+                                return 'Rs. ' + value.toLocaleString();
+                            }
                         }
                     }
                 }
@@ -801,19 +1046,28 @@ document.addEventListener('DOMContentLoaded', function() {
             const statusLabels = Object.keys(statusData);
             const statusValues = Object.values(statusData);
             
+            // Map status to colors
+            const statusColors = {
+                'pending': '#f59e0b',      // Amber/Orange
+                'processing': '#3b82f6',   // Blue
+                'completed': '#10b981',    // Green
+                'cancelled': '#ef4444',    // Red
+                'confirmed': '#8b5cf6',    // Purple
+                'shipped': '#06b6d4'       // Cyan
+            };
+            
+            const statusBackgroundColors = statusLabels.map(label => {
+                return statusColors[label.toLowerCase()] || '#94a3b8'; // Default gray
+            });
+            
             new Chart(ctxStatus, {
             type: 'doughnut',
             data: {
                 labels: statusLabels.map(label => label.charAt(0).toUpperCase() + label.slice(1)),
                 datasets: [{
                     data: statusValues,
-                    backgroundColor: [
-                        '#f59e0b',
-                        '#06b6d4',
-                        '#22c55e',
-                        '#ef4444'
-                    ],
-                    borderColor: 'rgba(15, 23, 42, 0.8)',
+                    backgroundColor: statusBackgroundColors,
+                    borderColor: '#ffffff',
                     borderWidth: 2
                 }]
             },
@@ -824,7 +1078,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     legend: {
                         position: 'bottom',
                         labels: {
-                            color: '#cbd5e1',
+                            color: '#000000',
                             padding: 20,
                             usePointStyle: true
                         }

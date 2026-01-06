@@ -10,7 +10,7 @@
     <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
     
     <!-- Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -30,8 +30,8 @@
     <!-- Professional Modern Color Theme Styles -->
     <style>
         .theme-dealdeck {
-            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #cbd5e1 100%) !important;
-            font-family: 'Inter', 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+            background: #ffffff !important;
+            font-family: 'Open Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
         }
         
         /* Add fade-in animation to all cards */
@@ -40,55 +40,57 @@
             animation: fadeInUp 0.8s ease-out;
         }
         
-        /* Add floating animation to sidebar */
+        /* Sidebar - no animation */
         .theme-dealdeck .sidebar {
-            animation: float 8s ease-in-out infinite;
+            /* Animation removed */
         }
         
-        /* Enhanced scrollbar with professional colors */
+        /* Black and white scrollbar */
         .theme-dealdeck ::-webkit-scrollbar {
             width: 10px;
         }
         
         .theme-dealdeck ::-webkit-scrollbar-track {
-            background: rgba(243, 244, 246, 0.8);
+            background: #f5f5f5;
             border-radius: 5px;
         }
         
         .theme-dealdeck ::-webkit-scrollbar-thumb {
-            background: linear-gradient(135deg, #2563EB, #7C3AED);
+            background: #000000;
             border-radius: 5px;
-            border: 2px solid rgba(255, 255, 255, 0.3);
+            border: 2px solid #ffffff;
         }
         
         .theme-dealdeck ::-webkit-scrollbar-thumb:hover {
-            background: linear-gradient(135deg, #1D4ED8, #6D28D9);
+            background: #333333;
         }
         
-        /* Add professional glow to active elements */
+        /* Black and white active elements */
         .theme-dealdeck .nav-link.active {
-            box-shadow: 0 0 30px rgba(37, 99, 235, 0.4) !important;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2) !important;
         }
         
-        /* Enhanced focus states */
+        /* Black and white focus states */
         .theme-dealdeck input:focus,
         .theme-dealdeck button:focus {
             outline: none !important;
-            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15) !important;
+            box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.1) !important;
+            border-color: #000000 !important;
         }
         
-        /* Add professional gradient text effect to important elements */
+        /* Black and white theme for page title */
         .theme-dealdeck .page-title {
-            background: linear-gradient(135deg, #2563EB, #7C3AED, #0891B2);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            color: #000000 !important;
+            background: none !important;
+            -webkit-background-clip: unset !important;
+            -webkit-text-fill-color: #000000 !important;
+            background-clip: unset !important;
         }
         
-        /* Professional button hover effects */
+        /* Black and white button */
         .theme-dealdeck .btn-primary {
-            background: linear-gradient(135deg, #2563EB 0%, #7C3AED 100%) !important;
-            border: none !important;
+            background: #000000 !important;
+            border: 1px solid #000000 !important;
             color: #ffffff !important;
             border-radius: 12px !important;
             font-weight: 500 !important;
@@ -97,8 +99,10 @@
         }
         
         .theme-dealdeck .btn-primary:hover {
+            background: #333333 !important;
+            border-color: #333333 !important;
             transform: translateY(-2px) !important;
-            box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.4), 0 10px 10px -5px rgba(37, 99, 235, 0.04) !important;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2) !important;
         }
         
         /* Professional card styling */
@@ -112,8 +116,8 @@
         
         .theme-dealdeck .card:hover {
             transform: translateY(-2px) !important;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
-            border-color: #2563EB !important;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15) !important;
+            border-color: #000000 !important;
         }
         
         /* Professional stat card styling */
@@ -128,27 +132,28 @@
         
         .theme-dealdeck .stat-card:hover {
             transform: translateY(-4px) !important;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
-            border-color: #2563EB !important;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15) !important;
+            border-color: #000000 !important;
         }
         
-        /* Professional hero section */
+        /* Black and white hero section */
         .theme-dealdeck .hero-section {
-            background: linear-gradient(135deg, #EFF6FF 0%, #F3F0FF 100%) !important;
+            background: #ffffff !important;
+            border: 1px solid #000000 !important;
             border-radius: 20px !important;
             padding: 32px !important;
             margin-bottom: 32px !important;
         }
         
         .theme-dealdeck .hero-title {
-            color: #1F2937 !important;
+            color: #000000 !important;
             font-weight: 700 !important;
             font-size: 2.5rem !important;
             margin-bottom: 16px !important;
         }
         
         .theme-dealdeck .hero-subtitle {
-            color: #6B7280 !important;
+            color: #666666 !important;
             font-size: 1.125rem !important;
             margin-bottom: 24px !important;
         }
@@ -156,7 +161,7 @@
         .theme-dealdeck .hero-stat-value {
             font-size: 2rem !important;
             font-weight: 700 !important;
-            color: #2563EB !important;
+            color: #000000 !important;
             margin-bottom: 4px !important;
         }
         
@@ -216,8 +221,8 @@
         
         .theme-dealdeck .form-control:focus {
             outline: none !important;
-            border-color: #2563EB !important;
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1) !important;
+            border-color: #000000 !important;
+            box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1) !important;
             transform: translateY(-1px) !important;
         }
         
@@ -234,8 +239,8 @@
         
         .theme-dealdeck .form-select:focus {
             outline: none !important;
-            border-color: #2563EB !important;
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1) !important;
+            border-color: #000000 !important;
+            box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1) !important;
             transform: translateY(-1px) !important;
         }
         
@@ -257,28 +262,33 @@
         }
         
         .theme-dealdeck .badge-primary {
-            background: linear-gradient(135deg, #2563EB 0%, #7C3AED 100%) !important;
+            background: #000000 !important;
             color: #ffffff !important;
+            border: 1px solid #000000 !important;
         }
         
         .theme-dealdeck .badge-success {
-            background: linear-gradient(135deg, #10B981 0%, #0891B2 100%) !important;
-            color: #ffffff !important;
+            background: #ffffff !important;
+            color: #000000 !important;
+            border: 1px solid #000000 !important;
         }
         
         .theme-dealdeck .badge-warning {
-            background: linear-gradient(135deg, #F59E0B 0%, #EF4444 100%) !important;
-            color: #ffffff !important;
+            background: #f5f5f5 !important;
+            color: #000000 !important;
+            border: 1px solid #000000 !important;
         }
         
         .theme-dealdeck .badge-danger {
-            background: linear-gradient(135deg, #EF4444 0%, #F59E0B 100%) !important;
-            color: #ffffff !important;
+            background: #ffffff !important;
+            color: #000000 !important;
+            border: 1px solid #000000 !important;
         }
         
         .theme-dealdeck .badge-secondary {
-            background: #F3F4F6 !important;
-            color: #6B7280 !important;
+            background: #ffffff !important;
+            color: #666666 !important;
+            border: 1px solid #666666 !important;
         }
         
         /* Professional alert styling */
@@ -331,18 +341,18 @@
         }
         
         .theme-dealdeck .page-link:hover {
-            background: #EFF6FF !important;
-            color: #2563EB !important;
-            border-color: #2563EB !important;
+            background: #f5f5f5 !important;
+            color: #000000 !important;
+            border-color: #000000 !important;
             transform: translateY(-1px) !important;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
         }
         
         .theme-dealdeck .page-item.active .page-link {
-            background: linear-gradient(135deg, #2563EB 0%, #7C3AED 100%) !important;
+            background: #000000 !important;
             color: #ffffff !important;
-            border-color: #2563EB !important;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+            border-color: #000000 !important;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
         }
         
         /* Professional modal styling */
@@ -354,8 +364,8 @@
         }
         
         .theme-dealdeck .modal-header {
-            background: linear-gradient(135deg, #EFF6FF 0%, #F3F0FF 100%) !important;
-            border-bottom: 1px solid #e5e7eb !important;
+            background: #ffffff !important;
+            border-bottom: 1px solid #000000 !important;
             border-radius: 20px 20px 0 0 !important;
         }
         
@@ -478,6 +488,10 @@
                             <a href="{{ route('admin.manual-delivery.index') }}" class="nav-link {{ request()->routeIs('admin.manual-delivery.index') ? 'active' : '' }}">
                                 <i class="nav-icon fas fa-chart-line"></i>
                                 <span class="nav-text">Dashboard</span>
+                            </a>
+                            <a href="{{ route('admin.manual-delivery.allocation') }}" class="nav-link {{ request()->routeIs('admin.manual-delivery.allocation') ? 'active' : '' }}">
+                                <i class="nav-icon fas fa-truck"></i>
+                                <span class="nav-text">Order Allocation</span>
                             </a>
                             <a href="{{ route('admin.manual-delivery.delivery-boys') }}" class="nav-link {{ request()->routeIs('admin.manual-delivery.delivery-boys') ? 'active' : '' }}">
                                 <i class="nav-icon fas fa-users"></i>

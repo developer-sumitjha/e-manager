@@ -446,10 +446,10 @@
                     </td>
                     <td>
                         <div class="d-flex flex-wrap">
-                            <a href="#" class="action-btn view">
+                            <a href="{{ route('admin.manual-delivery.show', $delivery) }}" class="action-btn view">
                                 <i class="fas fa-eye"></i> View
                             </a>
-                            <a href="#" class="action-btn edit">
+                            <a href="{{ route('admin.manual-delivery.edit', $delivery) }}" class="action-btn edit">
                                 <i class="fas fa-edit"></i> Edit
                             </a>
                             <button type="button" class="action-btn delete" onclick="deleteDelivery({{ $delivery->id }})">

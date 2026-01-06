@@ -82,4 +82,73 @@ class ManualDelivery extends Model
     {
         return in_array($this->status, ['assigned', 'picked_up', 'in_transit']);
     }
+
+    /**
+     * Get the effective COD amount based on current order items total
+     * This ensures COD amount always matches the sum of order items
+     */
+    public function getEffectiveCodAmountAttribute()
+    {
+        // Ensure order is loaded
+        if (!$this->relationLoaded('order')) {
+            $this->load('order');
+        }
+        
+        // If order doesn't exist or payment method is not COD, return 0
+        if (!$this->order || $this->order->payment_method !== 'cod') {
+            return 0;
+        }
+        
+        // Ensure order items are loaded
+        if (!$this->order->relationLoaded('orderItems')) {
+            $this->order->load('orderItems');
+        }
+        
+        // Calculate items total from order items
+        $itemsTotal = $this->order->orderItems->sum(function($item) {
+            return ($item->quantity ?? 0) * ($item->price ?? 0);
+        });
+        
+        return $itemsTotal;
+    }
+
+    /**
+     * Sync COD amount with order items total
+     * Call this method to update stored cod_amount to match current order items sum
+     */
+    public function syncCodAmount()
+    {
+        // Ensure order is loaded
+        if (!$this->relationLoaded('order')) {
+            $this->load('order');
+        }
+        
+        if (!$this->order) {
+            return;
+        }
+        
+        // Ensure order items are loaded
+        if (!$this->order->relationLoaded('orderItems')) {
+            $this->order->load('orderItems');
+        }
+        
+        // Only calculate COD if payment method is COD
+        if ($this->order->payment_method !== 'cod') {
+            // If not COD, set to 0
+            if ($this->cod_amount != 0) {
+                $this->cod_amount = 0;
+                $this->save();
+            }
+            return;
+        }
+        
+        // Calculate COD from actual order items sum
+        $itemsTotal = $this->order->orderItems->sum(function($item) {
+            return ($item->quantity ?? 0) * ($item->price ?? 0);
+        });
+        
+        // Always update to ensure it's correct (even if same, in case of data inconsistency)
+        $this->cod_amount = $itemsTotal;
+        $this->save();
+    }
 }

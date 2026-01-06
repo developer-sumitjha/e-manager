@@ -176,128 +176,177 @@
 </div>
 @endsection
 
-@section('scripts')
+@push('scripts')
 <script>
-$(document).ready(function() {
+document.addEventListener('DOMContentLoaded', function() {
     // Select all functionality
-    $('#selectAll').on('change', function() {
-        $('.order-checkbox').prop('checked', $(this).prop('checked'));
-        updateSelectedCount();
+    const selectAll = document.getElementById('selectAll');
+    const orderCheckboxes = document.querySelectorAll('.order-checkbox');
+    
+    if (selectAll) {
+        selectAll.addEventListener('change', function() {
+            orderCheckboxes.forEach(checkbox => {
+                checkbox.checked = this.checked;
+            });
+            updateSelectedCount();
+        });
+    }
+    
+    orderCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            updateSelectedCount();
+        });
     });
     
-    $('.order-checkbox').on('change', function() {
-        updateSelectedCount();
-    });
+    // Allocate single order form
+    const allocateForm = document.getElementById('allocateForm');
+    if (allocateForm) {
+        allocateForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            
+            fetch('{{ route("admin.manual-delivery.allocate") }}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    'Accept': 'application/json'
+                },
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification(data.message, 'success');
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('allocateModal'));
+                    if (modal) {
+                        modal.hide();
+                    }
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    showNotification(data.message || 'Failed to allocate order', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('An error occurred while allocating the order', 'error');
+            });
+        });
+    }
+    
+    // Bulk allocate form
+    const bulkAllocateForm = document.getElementById('bulkAllocateForm');
+    if (bulkAllocateForm) {
+        bulkAllocateForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const orderIds = getSelectedOrderIds();
+            const deliveryBoyId = document.getElementById('bulk_delivery_boy_id').value;
+            
+            if (orderIds.length === 0) {
+                showNotification('Please select at least one order', 'error');
+                return;
+            }
+            
+            fetch('{{ route("admin.manual-delivery.bulk-allocate") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    order_ids: orderIds,
+                    delivery_boy_id: deliveryBoyId
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification(data.message, 'success');
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('bulkAllocateModal'));
+                    if (modal) {
+                        modal.hide();
+                    }
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    showNotification(data.message || 'Failed to allocate orders', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('An error occurred while allocating orders', 'error');
+            });
+        });
+    }
 });
 
 function updateSelectedCount() {
-    const count = $('.order-checkbox:checked').length;
-    $('#selectedCount').text(count);
+    const checkedBoxes = document.querySelectorAll('.order-checkbox:checked');
+    const count = checkedBoxes.length;
+    const selectedCountElement = document.getElementById('selectedCount');
+    if (selectedCountElement) {
+        selectedCountElement.textContent = count;
+    }
 }
 
 function allocateOrder(orderId) {
-    $('#order_id').val(orderId);
-    $('#allocateModal').modal('show');
+    const orderIdInput = document.getElementById('order_id');
+    if (orderIdInput) {
+        orderIdInput.value = orderId;
+    }
+    
+    const modalElement = document.getElementById('allocateModal');
+    if (modalElement) {
+        const modal = new bootstrap.Modal(modalElement);
+        modal.show();
+    }
 }
 
 function bulkAllocate() {
     const selectedIds = getSelectedOrderIds();
     if (selectedIds.length === 0) {
-        alert('Please select at least one order');
+        showNotification('Please select at least one order', 'error');
         return;
     }
     updateSelectedCount();
-    $('#bulkAllocateModal').modal('show');
+    
+    const modalElement = document.getElementById('bulkAllocateModal');
+    if (modalElement) {
+        const modal = new bootstrap.Modal(modalElement);
+        modal.show();
+    }
 }
 
 function getSelectedOrderIds() {
-    return $('.order-checkbox:checked').map(function() {
-        return $(this).val();
-    }).get();
+    const checkedBoxes = document.querySelectorAll('.order-checkbox:checked');
+    return Array.from(checkedBoxes).map(checkbox => checkbox.value);
 }
-
-// Allocate single order
-$('#allocateForm').on('submit', function(e) {
-    e.preventDefault();
-    
-    const formData = $(this).serialize();
-    
-    fetch('{{ route("admin.manual-delivery.allocate") }}', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-        },
-        body: formData
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            showNotification(data.message, 'success');
-            $('#allocateModal').modal('hide');
-            setTimeout(() => location.reload(), 1500);
-        } else {
-            showNotification(data.message, 'error');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        showNotification('An error occurred', 'error');
-    });
-});
-
-// Bulk allocate
-$('#bulkAllocateForm').on('submit', function(e) {
-    e.preventDefault();
-    
-    const orderIds = getSelectedOrderIds();
-    const deliveryBoyId = $('#bulk_delivery_boy_id').val();
-    
-    fetch('{{ route("admin.manual-delivery.bulk-allocate") }}', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-        },
-        body: JSON.stringify({
-            order_ids: orderIds,
-            delivery_boy_id: deliveryBoyId
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            showNotification(data.message, 'success');
-            $('#bulkAllocateModal').modal('hide');
-            setTimeout(() => location.reload(), 1500);
-        } else {
-            showNotification(data.message, 'error');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        showNotification('An error occurred', 'error');
-    });
-});
 
 function showNotification(message, type) {
     const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
     const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
     
-    const alert = $(`
-        <div class="alert ${alertClass} alert-dismissible fade show position-fixed" 
-             style="top: 20px; right: 20px; z-index: 9999; min-width: 300px;">
-            <i class="fas ${icon} me-2"></i>
-            ${message}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    `);
+    const alert = document.createElement('div');
+    alert.className = `alert ${alertClass} alert-dismissible fade show position-fixed`;
+    alert.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    alert.innerHTML = `
+        <i class="fas ${icon} me-2"></i>
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
     
-    $('body').append(alert);
-    setTimeout(() => alert.alert('close'), 3000);
+    document.body.appendChild(alert);
+    
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+        if (alert.parentNode) {
+            alert.remove();
+        }
+    }, 5000);
 }
 </script>
-@endsection
+@endpush
 
 
 

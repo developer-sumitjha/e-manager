@@ -262,6 +262,66 @@
 </div>
 @endif
 
+<!-- Confirm Order Modal -->
+<div class="modal fade" id="confirmOrderModal" tabindex="-1" aria-labelledby="confirmOrderModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="confirmOrderModalLabel">
+                    <i class="fas fa-check-circle me-2"></i>Confirm Order
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <strong>Order Number:</strong> <span id="confirmOrderNumber">-</span>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="confirmShippingCost" class="form-label">Shipping Cost (₨) *</label>
+                    <input type="number" class="form-control" id="confirmShippingCost" 
+                           value="0.00" min="0" step="0.01" required>
+                    <small class="text-muted">Enter the shipping cost for this order</small>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="confirmTaxAmount" class="form-label">Tax Amount (₨) *</label>
+                    <input type="number" class="form-control" id="confirmTaxAmount" 
+                           value="0.00" min="0" step="0.01" required>
+                    <small class="text-muted">Enter the tax amount for this order</small>
+                </div>
+                
+                <div class="border-top pt-3 mt-3">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Subtotal:</span>
+                        <strong id="confirmSubtotal">₨0.00</strong>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Shipping:</span>
+                        <strong id="confirmShippingDisplay">₨0.00</strong>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Tax:</span>
+                        <strong id="confirmTaxDisplay">₨0.00</strong>
+                    </div>
+                    <div class="d-flex justify-content-between border-top pt-2">
+                        <strong>Total:</strong>
+                        <strong class="text-primary fs-5" id="confirmTotal">₨0.00</strong>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Cancel
+                </button>
+                <button type="button" class="btn btn-primary" id="confirmOrderSubmitBtn" onclick="submitConfirmOrder()">
+                    <i class="fas fa-check me-2"></i>Confirm Order
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @endsection
 
 @push('styles')
@@ -548,83 +608,7 @@ function performBulkAction(action, orderIds) {
     });
 }
 
-function confirmOrder(orderId) {
-    console.log('confirmOrder called with orderId:', orderId);
-    
-    if (confirm('Are you sure you want to confirm this order? It will be moved to Order Management.')) {
-        console.log('User confirmed, making AJAX request...');
-        
-        const csrfToken = document.querySelector('meta[name="csrf-token"]');
-        if (!csrfToken) {
-            console.error('CSRF token not found!');
-            alert('CSRF token not found. Please refresh the page.');
-            return;
-        }
-        
-        fetch(`{{ url('/admin/pending-orders') }}/${orderId}/confirm`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': csrfToken.getAttribute('content'),
-                'Accept': 'application/json'
-            }
-        })
-        .then(response => {
-            console.log('Response status:', response.status);
-            console.log('Response headers:', response.headers);
-            
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            
-            return response.json();
-        })
-        .then(data => {
-            console.log('Response data:', data);
-            
-            if (data.success) {
-                if (typeof showNotification === 'function') {
-                    showNotification('Order confirmed successfully!', 'success');
-                } else {
-                    alert('Order confirmed successfully!');
-                }
-                setTimeout(() => {
-                    window.location.reload();
-                }, 1500);
-            } else {
-                const message = data.message || 'Failed to confirm order';
-                console.error('Server returned error:', message);
-                
-                // Handle specific error cases
-                if (message.includes('non-pending')) {
-                    if (typeof showNotification === 'function') {
-                        showNotification('This order has already been processed. The page will refresh.', 'warning');
-                    } else {
-                        alert('This order has already been processed. The page will refresh.');
-                    }
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 2000);
-                } else {
-                    if (typeof showNotification === 'function') {
-                        showNotification(message, 'error');
-                    } else {
-                        alert('Error: ' + message);
-                    }
-                }
-            }
-        })
-        .catch(error => {
-            console.error('Fetch error:', error);
-            const errorMessage = 'An error occurred while confirming order: ' + error.message;
-            if (typeof showNotification === 'function') {
-                showNotification(errorMessage, 'error');
-            } else {
-                alert(errorMessage);
-            }
-        });
-    }
-}
+// Confirm Order Modal - replaced old confirmOrder function
 
 function rejectOrder(orderId) {
     if (confirm('Are you sure you want to reject this order? It will be moved to Rejected Orders list.')) {
@@ -679,5 +663,157 @@ function deleteOrder(orderId) {
         });
     }
 }
+
+// Confirm Order Modal
+let currentOrderId = null;
+
+@php
+    // Pass order data to JavaScript for subtotal calculation
+    $ordersData = [];
+    foreach($orders as $order) {
+        $subtotal = $order->orderItems->sum(function($item) {
+            return ($item->quantity ?? 0) * ($item->price ?? 0);
+        });
+        $ordersData[$order->id] = [
+            'subtotal' => $subtotal,
+            'order_number' => $order->order_number
+        ];
+    }
+@endphp
+
+const ordersData = @json($ordersData);
+
+function confirmOrder(orderId) {
+    currentOrderId = orderId;
+    
+    const orderData = ordersData[orderId] || { subtotal: 0, order_number: 'N/A' };
+    
+    // Set default values
+    document.getElementById('confirmOrderNumber').textContent = orderData.order_number;
+    document.getElementById('confirmSubtotal').textContent = '₨' + orderData.subtotal.toFixed(2);
+    document.getElementById('confirmShippingCost').value = '0.00';
+    document.getElementById('confirmTaxAmount').value = '0.00';
+    updateConfirmTotal();
+    
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('confirmOrderModal'));
+    modal.show();
+}
+
+function updateConfirmTotal() {
+    const subtotalText = document.getElementById('confirmSubtotal').textContent.replace(/[^\d.]/g, '');
+    const subtotal = parseFloat(subtotalText) || 0;
+    const shipping = parseFloat(document.getElementById('confirmShippingCost').value) || 0;
+    const tax = parseFloat(document.getElementById('confirmTaxAmount').value) || 0;
+    const total = subtotal + shipping + tax;
+    
+    document.getElementById('confirmShippingDisplay').textContent = '₨' + shipping.toFixed(2);
+    document.getElementById('confirmTaxDisplay').textContent = '₨' + tax.toFixed(2);
+    document.getElementById('confirmTotal').textContent = '₨' + total.toFixed(2);
+}
+
+function submitConfirmOrder() {
+    if (!currentOrderId) {
+        showNotification('Order ID not found', 'error');
+        return;
+    }
+    
+    const shippingCost = parseFloat(document.getElementById('confirmShippingCost').value) || 0;
+    const taxAmount = parseFloat(document.getElementById('confirmTaxAmount').value) || 0;
+    
+    const csrfToken = document.querySelector('meta[name="csrf-token"]');
+    if (!csrfToken) {
+        alert('CSRF token not found. Please refresh the page.');
+        return;
+    }
+    
+    // Disable submit button
+    const submitBtn = document.getElementById('confirmOrderSubmitBtn');
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Confirming...';
+    
+    const confirmUrl = `{{ route('admin.pending-orders.confirm', ['pending_order' => '__ID__']) }}`.replace('__ID__', currentOrderId);
+    
+    fetch(confirmUrl, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': csrfToken.getAttribute('content'),
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify({
+            shipping_cost: shippingCost,
+            tax_amount: taxAmount
+        })
+    })
+    .then(async response => {
+        // Check if response is JSON
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            // If not JSON, get text to see what we got
+            const text = await response.text();
+            console.error('Non-JSON response received:', text.substring(0, 200));
+            throw new Error(`Server returned non-JSON response. Status: ${response.status}`);
+        }
+        
+        if (!response.ok) {
+            // Try to parse error response
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+        }
+        
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            // Hide modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('confirmOrderModal'));
+            modal.hide();
+            
+            if (typeof showNotification === 'function') {
+                showNotification('Order confirmed successfully!', 'success');
+            } else {
+                alert('Order confirmed successfully!');
+            }
+            setTimeout(() => {
+                window.location.reload();
+            }, 1500);
+        } else {
+            const message = data.message || 'Failed to confirm order';
+            if (typeof showNotification === 'function') {
+                showNotification(message, 'error');
+            } else {
+                alert('Error: ' + message);
+            }
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-check"></i> Confirm Order';
+        }
+    })
+    .catch(error => {
+        console.error('Fetch error:', error);
+        const errorMessage = 'An error occurred while confirming order: ' + error.message;
+        if (typeof showNotification === 'function') {
+            showNotification(errorMessage, 'error');
+        } else {
+            alert(errorMessage);
+        }
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fas fa-check"></i> Confirm Order';
+    });
+}
+
+// Add event listeners for input changes
+document.addEventListener('DOMContentLoaded', function() {
+    const shippingInput = document.getElementById('confirmShippingCost');
+    const taxInput = document.getElementById('confirmTaxAmount');
+    
+    if (shippingInput) {
+        shippingInput.addEventListener('input', updateConfirmTotal);
+    }
+    if (taxInput) {
+        taxInput.addEventListener('input', updateConfirmTotal);
+    }
+});
 </script>
 @endpush

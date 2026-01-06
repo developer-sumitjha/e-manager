@@ -5,97 +5,65 @@
 
 @push('styles')
 <style>
-    /* Modern Shipment Management Styles */
+    /* Clean Shipment Management Styles - Matching Vendor Dashboard */
     .shipment-hero {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        border-radius: 24px;
-        padding: 3rem 2rem;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 2rem;
         margin-bottom: 2rem;
-        color: white;
-        position: relative;
-        overflow: hidden;
-        box-shadow: 0 20px 40px rgba(102, 126, 234, 0.3);
-    }
-
-    .shipment-hero::before {
-        content: '';
-        position: absolute;
-        top: -50%;
-        right: -20%;
-        width: 300px;
-        height: 300px;
-        background: rgba(255, 255, 255, 0.1);
-        border-radius: 50%;
-        animation: float 6s ease-in-out infinite;
-    }
-
-    .shipment-hero::after {
-        content: '';
-        position: absolute;
-        bottom: -30%;
-        left: -10%;
-        width: 200px;
-        height: 200px;
-        background: rgba(255, 255, 255, 0.05);
-        border-radius: 50%;
-        animation: float 8s ease-in-out infinite reverse;
-    }
-
-    @keyframes float {
-        0%, 100% { transform: translateY(0px) rotate(0deg); }
-        50% { transform: translateY(-20px) rotate(180deg); }
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
     }
 
     .hero-content {
         position: relative;
-        z-index: 2;
     }
 
     .hero-title {
-        font-size: 3rem;
-        font-weight: 800;
-        margin-bottom: 1rem;
-        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: #1e293b;
     }
 
     .hero-subtitle {
-        font-size: 1.25rem;
-        opacity: 0.9;
-        margin-bottom: 2rem;
+        font-size: 0.875rem;
+        color: #64748b;
+        margin-bottom: 1.5rem;
         font-weight: 400;
     }
 
     .hero-stats {
         display: grid;
         grid-template-columns: repeat(4, 1fr);
-        gap: 2rem;
-        margin-top: 2rem;
+        gap: 1rem;
+        margin-top: 1.5rem;
     }
 
     .hero-stat {
         text-align: center;
         padding: 1.5rem;
-        background: rgba(255, 255, 255, 0.1);
-        border-radius: 16px;
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        transition: all 0.3s ease;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        transition: all 0.2s ease;
     }
 
     .hero-stat:hover {
-        transform: translateY(-5px);
-        background: rgba(255, 255, 255, 0.15);
+        border-color: #cbd5e1;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
     }
 
     .hero-stat-value {
-        font-size: 2rem;
+        font-size: 1.875rem;
         font-weight: 700;
-        margin-bottom: 0.5rem;
+        margin-bottom: 0.25rem;
+        color: #1e293b;
     }
 
     .hero-stat-label {
         font-size: 0.875rem;
-        opacity: 0.8;
+        color: #64748b;
         font-weight: 500;
     }
 
@@ -103,86 +71,68 @@
     .action-cards-grid {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
-        gap: 2rem;
-        margin-bottom: 3rem;
+        gap: 1.5rem;
+        margin-bottom: 2rem;
     }
 
     .action-card {
-        background: white;
-        border-radius: 20px;
-        padding: 2rem;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-        border: 1px solid rgba(0, 0, 0, 0.05);
-        transition: all 0.3s ease;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        transition: all 0.2s ease;
         cursor: pointer;
-        position: relative;
-        overflow: hidden;
-    }
-
-    .action-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 4px;
-        background: linear-gradient(135deg, #667eea, #764ba2);
-        transform: scaleX(0);
-        transition: transform 0.3s ease;
     }
 
     .action-card:hover {
-        transform: translateY(-8px);
-        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
-    }
-
-    .action-card:hover::before {
-        transform: scaleX(1);
+        border-color: #cbd5e1;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
     }
 
     .action-card-icon {
-        width: 4rem;
-        height: 4rem;
-        border-radius: 16px;
+        width: 48px;
+        height: 48px;
+        border-radius: 10px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 1.5rem;
+        font-size: 1.25rem;
         color: white;
-        margin-bottom: 1.5rem;
-        background: linear-gradient(135deg, #667eea, #764ba2);
+        margin-bottom: 1rem;
+        background: #3b82f6;
     }
 
     .action-card-title {
-        font-size: 1.25rem;
+        font-size: 1.125rem;
         font-weight: 600;
-        color: #1f2937;
+        color: #1e293b;
         margin-bottom: 0.5rem;
     }
 
     .action-card-description {
-        color: #6b7280;
+        color: #64748b;
         font-size: 0.875rem;
         line-height: 1.5;
     }
 
     /* Allotment Section */
     .allotment-section {
-        background: white;
-        border-radius: 20px;
-        padding: 2rem;
-        margin-bottom: 2rem;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-        border: 1px solid rgba(0, 0, 0, 0.05);
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
     }
 
     .section-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 2rem;
+        margin-bottom: 1.5rem;
         padding-bottom: 1rem;
-        border-bottom: 2px solid #f3f4f6;
+        border-bottom: 1px solid #e2e8f0;
     }
 
     .section-title {
@@ -192,37 +142,36 @@
     }
 
     .section-icon {
-        width: 3rem;
-        height: 3rem;
-        border-radius: 12px;
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
         display: flex;
         align-items: center;
         justify-content: center;
         font-size: 1.25rem;
         color: white;
-        background: linear-gradient(135deg, #667eea, #764ba2);
+        background: #3b82f6;
     }
 
     .section-main-title {
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: #1f2937;
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: #1e293b;
         margin-bottom: 0.25rem;
     }
 
     .section-description {
-        color: #6b7280;
+        color: #64748b;
         font-size: 0.875rem;
     }
 
     .pending-count {
-        background: linear-gradient(135deg, #f59e0b, #f97316);
-        color: white;
-        padding: 0.75rem 1.5rem;
-        border-radius: 12px;
+        background: #fef3c7;
+        color: #92400e;
+        padding: 0.375rem 0.75rem;
+        border-radius: 6px;
         font-weight: 600;
-        font-size: 0.875rem;
-        box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+        font-size: 0.75rem;
     }
 
     /* Allotment Actions */
@@ -230,10 +179,10 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        background: #f8fafc;
-        padding: 1.5rem;
-        border-radius: 16px;
-        margin-bottom: 2rem;
+        background: #f1f5f9;
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 1.5rem;
     }
 
     .bulk-allotment {
@@ -245,59 +194,62 @@
     .bulk-checkbox {
         width: 1.25rem;
         height: 1.25rem;
-        border-radius: 6px;
-        border: 2px solid #d1d5db;
+        border-radius: 4px;
+        border: 2px solid #cbd5e1;
         background: white;
         cursor: pointer;
     }
 
     .bulk-checkbox:checked {
-        background: linear-gradient(135deg, #667eea, #764ba2);
-        border-color: #667eea;
+        background: #3b82f6;
+        border-color: #3b82f6;
     }
 
     .bulk-text {
         font-weight: 600;
-        color: #374151;
+        color: #1e293b;
         cursor: pointer;
+        font-size: 0.875rem;
     }
 
     .allotment-buttons {
         display: flex;
-        gap: 1rem;
+        gap: 0.75rem;
     }
 
     .btn-allotment {
-        padding: 0.75rem 1.5rem;
-        border-radius: 12px;
-        font-weight: 600;
+        padding: 0.625rem 1.25rem;
+        border-radius: 8px;
+        font-weight: 500;
         font-size: 0.875rem;
-        border: none;
+        border: 1.5px solid;
         cursor: pointer;
-        transition: all 0.3s ease;
+        transition: all 0.2s ease;
         display: flex;
         align-items: center;
         gap: 0.5rem;
     }
 
     .btn-manual {
-        background: linear-gradient(135deg, #10b981, #059669);
+        background: #10b981;
         color: white;
+        border-color: #10b981;
     }
 
     .btn-manual:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
+        background: #059669;
+        border-color: #059669;
     }
 
     .btn-logistics {
-        background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+        background: #3b82f6;
         color: white;
+        border-color: #3b82f6;
     }
 
     .btn-logistics:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
+        background: #2563eb;
+        border-color: #2563eb;
     }
 
     /* Orders List */
@@ -307,11 +259,11 @@
     }
 
     .order-item {
-        background: white;
-        border-radius: 16px;
-        padding: 1.5rem;
-        border: 1px solid #e5e7eb;
-        transition: all 0.3s ease;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 1.25rem;
+        transition: all 0.2s ease;
         display: grid;
         grid-template-columns: auto 1fr auto auto;
         gap: 1.5rem;
@@ -319,9 +271,8 @@
     }
 
     .order-item:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-        border-color: #667eea;
+        border-color: #cbd5e1;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
     }
 
     .order-checkbox {
@@ -332,15 +283,15 @@
     .order-select-checkbox {
         width: 1.25rem;
         height: 1.25rem;
-        border-radius: 6px;
-        border: 2px solid #d1d5db;
+        border-radius: 4px;
+        border: 2px solid #cbd5e1;
         background: white;
         cursor: pointer;
     }
 
     .order-select-checkbox:checked {
-        background: linear-gradient(135deg, #667eea, #764ba2);
-        border-color: #667eea;
+        background: #3b82f6;
+        border-color: #3b82f6;
     }
 
     .order-info {
@@ -350,13 +301,13 @@
     }
 
     .order-id {
-        font-weight: 700;
-        color: #1f2937;
+        font-weight: 600;
+        color: #1e293b;
         font-size: 1rem;
     }
 
     .order-customer {
-        color: #6b7280;
+        color: #64748b;
         font-size: 0.875rem;
     }
 
@@ -368,13 +319,13 @@
     }
 
     .order-amount {
-        font-weight: 700;
+        font-weight: 600;
         color: #059669;
         font-size: 1rem;
     }
 
     .order-date {
-        color: #6b7280;
+        color: #64748b;
         font-size: 0.875rem;
     }
 
@@ -384,93 +335,95 @@
     }
 
     .btn-quick {
-        padding: 0.5rem 1rem;
+        padding: 0.5rem 0.75rem;
         border-radius: 8px;
         font-size: 0.75rem;
-        font-weight: 600;
-        border: 1px solid;
+        font-weight: 500;
+        border: 1.5px solid;
         cursor: pointer;
-        transition: all 0.3s ease;
+        transition: all 0.2s ease;
         display: flex;
         align-items: center;
         gap: 0.25rem;
     }
 
     .btn-quick-manual {
-        background: rgba(16, 185, 129, 0.1);
-        color: #059669;
-        border-color: rgba(16, 185, 129, 0.3);
+        background: #d1fae5;
+        color: #065f46;
+        border-color: #a7f3d0;
     }
 
     .btn-quick-manual:hover {
-        background: #059669;
+        background: #10b981;
         color: white;
+        border-color: #10b981;
     }
 
     .btn-quick-logistics {
-        background: rgba(59, 130, 246, 0.1);
-        color: #1d4ed8;
-        border-color: rgba(59, 130, 246, 0.3);
+        background: #dbeafe;
+        color: #1e40af;
+        border-color: #93c5fd;
     }
 
     .btn-quick-logistics:hover {
-        background: #1d4ed8;
+        background: #3b82f6;
         color: white;
+        border-color: #3b82f6;
     }
 
     /* Empty State */
     .empty-state {
         text-align: center;
-        padding: 4rem 2rem;
-        background: white;
-        border-radius: 20px;
-        border: 2px dashed #e5e7eb;
+        padding: 3rem 2rem;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
     }
 
     .empty-icon {
-        width: 5rem;
-        height: 5rem;
+        width: 4rem;
+        height: 4rem;
         border-radius: 50%;
-        background: linear-gradient(135deg, #10b981, #059669);
+        background: #d1fae5;
         display: flex;
         align-items: center;
         justify-content: center;
         margin: 0 auto 1.5rem;
-        font-size: 2rem;
-        color: white;
+        font-size: 1.5rem;
+        color: #065f46;
     }
 
     .empty-state h3 {
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: #1f2937;
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #1e293b;
         margin-bottom: 0.5rem;
     }
 
     .empty-state p {
-        color: #6b7280;
-        font-size: 1rem;
+        color: #64748b;
+        font-size: 0.875rem;
     }
 
     /* Recent Shipments */
     .recent-shipments-section {
-        background: white;
-        border-radius: 20px;
-        padding: 2rem;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-        border: 1px solid rgba(0, 0, 0, 0.05);
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
     }
 
     .view-all-link {
-        color: #667eea;
+        color: #3b82f6;
         text-decoration: none;
-        font-weight: 600;
+        font-weight: 500;
         font-size: 0.875rem;
-        transition: color 0.3s ease;
+        transition: color 0.2s ease;
     }
 
     .view-all-link:hover {
-        color: #764ba2;
+        color: #2563eb;
     }
 
     .shipments-list {
@@ -479,11 +432,11 @@
     }
 
     .shipment-item {
-        background: #f8fafc;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
         border-radius: 12px;
-        padding: 1.5rem;
-        border: 1px solid #e5e7eb;
-        transition: all 0.3s ease;
+        padding: 1.25rem;
+        transition: all 0.2s ease;
         display: grid;
         grid-template-columns: 1fr auto auto;
         gap: 1.5rem;
@@ -491,8 +444,8 @@
     }
 
     .shipment-item:hover {
-        background: white;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        border-color: #cbd5e1;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
     }
 
     .shipment-info {
@@ -502,13 +455,13 @@
     }
 
     .shipment-tracking {
-        font-weight: 700;
-        color: #1f2937;
+        font-weight: 600;
+        color: #1e293b;
         font-size: 1rem;
     }
 
     .shipment-order {
-        color: #6b7280;
+        color: #64748b;
         font-size: 0.875rem;
     }
 
@@ -520,7 +473,7 @@
     }
 
     .method-badge {
-        padding: 0.25rem 0.75rem;
+        padding: 0.375rem 0.75rem;
         border-radius: 6px;
         font-size: 0.75rem;
         font-weight: 600;
@@ -528,17 +481,17 @@
     }
 
     .method-manual {
-        background: rgba(16, 185, 129, 0.1);
-        color: #059669;
+        background: #d1fae5;
+        color: #065f46;
     }
 
     .method-logistics {
-        background: rgba(59, 130, 246, 0.1);
-        color: #1d4ed8;
+        background: #dbeafe;
+        color: #1e40af;
     }
 
     .status-badge {
-        padding: 0.25rem 0.75rem;
+        padding: 0.375rem 0.75rem;
         border-radius: 6px;
         font-size: 0.75rem;
         font-weight: 600;
@@ -546,18 +499,18 @@
     }
 
     .status-pending {
-        background: rgba(245, 158, 11, 0.1);
-        color: #d97706;
+        background: #fef3c7;
+        color: #92400e;
     }
 
     .status-shipped {
-        background: rgba(59, 130, 246, 0.1);
-        color: #1d4ed8;
+        background: #dbeafe;
+        color: #1e40af;
     }
 
     .status-delivered {
-        background: rgba(16, 185, 129, 0.1);
-        color: #059669;
+        background: #d1fae5;
+        color: #065f46;
     }
 
     .shipment-actions {
@@ -568,19 +521,20 @@
     .btn-view {
         padding: 0.5rem;
         border-radius: 8px;
-        background: rgba(102, 126, 234, 0.1);
-        color: #667eea;
-        border: 1px solid rgba(102, 126, 234, 0.3);
+        background: #dbeafe;
+        color: #1e40af;
+        border: 1px solid #93c5fd;
         cursor: pointer;
-        transition: all 0.3s ease;
+        transition: all 0.2s ease;
         display: flex;
         align-items: center;
         justify-content: center;
     }
 
     .btn-view:hover {
-        background: #667eea;
+        background: #3b82f6;
         color: white;
+        border-color: #3b82f6;
     }
 
     /* Responsive Design */
@@ -596,11 +550,11 @@
 
     @media (max-width: 768px) {
         .shipment-hero {
-            padding: 2rem 1rem;
+            padding: 1.5rem;
         }
         
         .hero-title {
-            font-size: 2rem;
+            font-size: 1.25rem;
         }
         
         .hero-stats {
@@ -638,20 +592,20 @@
 
     @media (max-width: 480px) {
         .hero-title {
-            font-size: 1.5rem;
+            font-size: 1.125rem;
         }
         
         .hero-subtitle {
-            font-size: 1rem;
+            font-size: 0.8125rem;
         }
         
         .action-card {
-            padding: 1.5rem;
+            padding: 1.25rem;
         }
         
         .allotment-section,
         .recent-shipments-section {
-            padding: 1.5rem;
+            padding: 1.25rem;
         }
     }
 </style>

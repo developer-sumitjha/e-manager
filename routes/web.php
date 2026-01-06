@@ -164,10 +164,15 @@ Route::middleware(['auth', 'admin_employee', 'subscription.active'])->prefix('ad
     Route::get('manual-delivery/activities', [App\Http\Controllers\Admin\ManualDeliveryController::class, 'activities'])->name('manual-delivery.activities');
     Route::get('manual-delivery/performance', [App\Http\Controllers\Admin\ManualDeliveryController::class, 'performance'])->name('manual-delivery.performance');
     
-    // Order Allocation
+    // Order Allocation (must come before parameterized routes)
     Route::get('manual-delivery/allocation', [App\Http\Controllers\Admin\ManualDeliveryController::class, 'allocation'])->name('manual-delivery.allocation');
     Route::post('manual-delivery/allocate', [App\Http\Controllers\Admin\ManualDeliveryController::class, 'allocateOrder'])->name('manual-delivery.allocate');
     Route::post('manual-delivery/bulk-allocate', [App\Http\Controllers\Admin\ManualDeliveryController::class, 'bulkAllocate'])->name('manual-delivery.bulk-allocate');
+    
+    // Parameterized routes (must come after specific routes)
+    Route::get('manual-delivery/{manualDelivery}', [App\Http\Controllers\Admin\ManualDeliveryController::class, 'show'])->name('manual-delivery.show');
+    Route::get('manual-delivery/{manualDelivery}/edit', [App\Http\Controllers\Admin\ManualDeliveryController::class, 'edit'])->name('manual-delivery.edit');
+    Route::put('manual-delivery/{manualDelivery}', [App\Http\Controllers\Admin\ManualDeliveryController::class, 'update'])->name('manual-delivery.update');
     
     // Delivery Boy Wise Views
     Route::get('manual-delivery/delivery-boy-wise', [App\Http\Controllers\Admin\ManualDeliveryController::class, 'deliveryBoyWise'])->name('manual-delivery.delivery-boy-wise');
@@ -541,7 +546,7 @@ Route::prefix('delivery-boy')->name('delivery-boy.')->group(function () {
     Route::middleware(['delivery_boy', 'subscription.active'])->group(function () {
         Route::get('dashboard', [App\Http\Controllers\DeliveryBoy\DashboardController::class, 'index'])->name('dashboard');
         Route::get('deliveries', [App\Http\Controllers\DeliveryBoy\DashboardController::class, 'deliveries'])->name('deliveries');
-        Route::get('deliveries/{manualDelivery}', [App\Http\Controllers\DeliveryBoy\DashboardController::class, 'showDelivery'])->name('delivery.show');
+        Route::get('deliveries/{manualDelivery}', [App\Http\Controllers\DeliveryBoy\DashboardController::class, 'showDelivery'])->name('delivery-details');
         Route::post('deliveries/{manualDelivery}/update-status', [App\Http\Controllers\DeliveryBoy\DashboardController::class, 'updateStatus'])->name('delivery.update-status');
         Route::get('profile', [App\Http\Controllers\DeliveryBoy\DashboardController::class, 'profile'])->name('profile');
         Route::put('profile', [App\Http\Controllers\DeliveryBoy\DashboardController::class, 'updateProfile'])->name('profile.update');

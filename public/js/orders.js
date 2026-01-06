@@ -173,7 +173,7 @@ function initStatusChangeHandlers() {
     });
 }
 
-function changeStatus(orderId, status, paymentStatus = null) {
+function changeStatus(orderId, status, paymentStatus = null, customUrl = null) {
     if (!orderId || !status) {
         console.error('Order ID or status is missing', { orderId, status });
         showNotification('Error: Missing order ID or status', 'error');
@@ -200,7 +200,22 @@ function changeStatus(orderId, status, paymentStatus = null) {
     formData.append('status', status);
     formData.append('payment_status', paymentStatusValue);
 
-    fetch(`/admin/orders/${orderId}/status`, {
+    // Use custom URL if provided, otherwise construct it
+    let statusUrl;
+    if (customUrl) {
+        statusUrl = customUrl;
+    } else {
+        // Get the base URL from the current page
+        const baseUrl = window.location.origin;
+        const pathname = window.location.pathname;
+        // Extract the base path (e.g., /e-manager/public)
+        const basePath = pathname.split('/admin')[0] || '';
+        statusUrl = `${baseUrl}${basePath}/admin/orders/${orderId}/status`;
+    }
+    
+    console.log('Updating order status:', { orderId, status, paymentStatus: paymentStatusValue, url: statusUrl });
+    
+    fetch(statusUrl, {
         method: 'POST',
         headers: {
             'Accept': 'application/json',
@@ -209,9 +224,22 @@ function changeStatus(orderId, status, paymentStatus = null) {
         body: formData
     })
     .then(response => {
-        if (!response.ok) {
+        // Check if response is JSON
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
             return response.text().then(text => {
-                throw new Error(`HTTP error! status: ${response.status}, body: ${text}`);
+                console.error('Non-JSON response:', text);
+                throw new Error(`Server returned non-JSON response. Status: ${response.status}`);
+            });
+        }
+        
+        if (!response.ok) {
+            return response.json().then(data => {
+                throw new Error(data.message || `HTTP error! status: ${response.status}`);
+            }).catch(() => {
+                return response.text().then(text => {
+                    throw new Error(`HTTP error! status: ${response.status}, body: ${text.substring(0, 200)}`);
+                });
             });
         }
         return response.json();
@@ -229,6 +257,13 @@ function changeStatus(orderId, status, paymentStatus = null) {
     })
     .catch(error => {
         console.error('Error updating order status:', error);
+        console.error('Error details:', {
+            orderId,
+            status,
+            paymentStatus: paymentStatusValue,
+            errorMessage: error.message,
+            errorStack: error.stack
+        });
         showNotification('An error occurred while updating the order status: ' + error.message, 'error');
     });
 }

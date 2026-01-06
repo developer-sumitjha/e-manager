@@ -346,14 +346,20 @@
         <h1>Manual Delivery System</h1>
         <p class="page-subtitle">Complete management of in-house delivery operations</p>
     </div>
-    <div class="summary-badges">
-        <div class="summary-badge">
-            <i class="fas fa-chart-line icon"></i>
-            <span>{{ $metrics['active_riders'] }} Active Riders</span>
-        </div>
-        <div class="summary-badge">
-            <i class="fas fa-eye icon"></i>
-            <span>{{ $metrics['success_rate'] }}% Success Rate</span>
+    <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+        <a href="{{ route('admin.manual-delivery.allocation') }}" class="btn btn-primary" style="padding: 0.75rem 1.5rem; border-radius: 0.75rem; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem;">
+            <i class="fas fa-truck"></i>
+            <span>Order Allocation</span>
+        </a>
+        <div class="summary-badges">
+            <div class="summary-badge">
+                <i class="fas fa-chart-line icon"></i>
+                <span>{{ $metrics['active_riders'] }} Active Riders</span>
+            </div>
+            <div class="summary-badge">
+                <i class="fas fa-eye icon"></i>
+                <span>{{ $metrics['success_rate'] }}% Success Rate</span>
+            </div>
         </div>
     </div>
 </div>
@@ -412,6 +418,10 @@
     <a href="{{ route('admin.manual-delivery.index', ['tab' => 'overview']) }}" class="sub-nav-tab {{ $activeTab == 'overview' ? 'active' : '' }}">
         <i class="fas fa-box icon"></i>
         <span>Overview</span>
+    </a>
+    <a href="{{ route('admin.manual-delivery.allocation') }}" class="sub-nav-tab {{ request()->routeIs('admin.manual-delivery.allocation') ? 'active' : '' }}">
+        <i class="fas fa-truck icon"></i>
+        <span>Order Allocation</span>
     </a>
     <a href="{{ route('admin.manual-delivery.deliveries') }}" class="sub-nav-tab">
         <i class="fas fa-map-marker-alt icon"></i>

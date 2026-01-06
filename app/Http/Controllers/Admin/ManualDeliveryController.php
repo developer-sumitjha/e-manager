@@ -254,6 +254,16 @@ class ManualDeliveryController extends Controller
             ], 400);
         }
         
+        // Load order items if not already loaded
+        if (!$order->relationLoaded('orderItems')) {
+            $order->load('orderItems');
+        }
+        
+        // Calculate COD amount from order items
+        $itemsTotal = $order->orderItems->sum(function($item) {
+            return ($item->quantity ?? 0) * ($item->price ?? 0);
+        });
+        
         // Create manual delivery
         $manualDelivery = ManualDelivery::create([
             'order_id' => $order->id,
@@ -261,9 +271,12 @@ class ManualDeliveryController extends Controller
             'assigned_by' => Auth::id(),
             'status' => 'assigned',
             'assigned_at' => now(),
-            'cod_amount' => $order->payment_method === 'cod' ? $order->total : 0,
+            'cod_amount' => $order->payment_method === 'cod' ? $itemsTotal : 0,
             'delivery_notes' => $validated['delivery_notes'] ?? null,
         ]);
+        
+        // Ensure COD amount is synced with order items total
+        $manualDelivery->syncCodAmount();
         
         // Update order status to processing
         $order->update(['status' => 'processing']);
@@ -298,14 +311,27 @@ class ManualDeliveryController extends Controller
             $order = Order::find($orderId);
             
             if ($order->status === 'confirmed' && !$order->manualDelivery && !$order->shipment && !$order->gaaubesiShipment) {
+                // Load order items if not already loaded
+                if (!$order->relationLoaded('orderItems')) {
+                    $order->load('orderItems');
+                }
+                
+                // Calculate COD amount from order items
+                $itemsTotal = $order->orderItems->sum(function($item) {
+                    return ($item->quantity ?? 0) * ($item->price ?? 0);
+                });
+                
                 $manualDelivery = ManualDelivery::create([
                     'order_id' => $order->id,
                     'delivery_boy_id' => $validated['delivery_boy_id'],
                     'assigned_by' => Auth::id(),
                     'status' => 'assigned',
                     'assigned_at' => now(),
-                    'cod_amount' => $order->payment_method === 'cod' ? $order->total : 0,
+                    'cod_amount' => $order->payment_method === 'cod' ? $itemsTotal : 0,
                 ]);
+                
+                // Ensure COD amount is synced with order items total
+                $manualDelivery->syncCodAmount();
                 
                 $order->update(['status' => 'processing']);
                 $allocatedCount++;
@@ -348,6 +374,76 @@ class ManualDeliveryController extends Controller
     }
     
     // Update delivery status (admin side)
+    // Show delivery details
+    public function show(ManualDelivery $manualDelivery)
+    {
+        $manualDelivery->load([
+            'order.user', 
+            'order.orderItems.product', 
+            'deliveryBoy', 
+            'assignedBy',
+            'activities'
+        ]);
+        
+        // Sync COD amount
+        $manualDelivery->syncCodAmount();
+        $manualDelivery->refresh();
+        
+        return view('admin.manual-delivery.show', compact('manualDelivery'));
+    }
+    
+    // Edit delivery (show edit form)
+    public function edit(ManualDelivery $manualDelivery)
+    {
+        $manualDelivery->load([
+            'order.user', 
+            'order.orderItems.product', 
+            'deliveryBoy', 
+            'assignedBy'
+        ]);
+        
+        $deliveryBoys = DeliveryBoy::whereIn('status', ['active', 'on_duty'])->get();
+        
+        return view('admin.manual-delivery.edit', compact('manualDelivery', 'deliveryBoys'));
+    }
+    
+    // Update delivery
+    public function update(Request $request, ManualDelivery $manualDelivery)
+    {
+        $validated = $request->validate([
+            'delivery_boy_id' => 'nullable|exists:delivery_boys,id',
+            'delivery_notes' => 'nullable|string',
+            'status' => 'required|in:assigned,picked_up,in_transit,delivered,cancelled,failed',
+            'cancellation_reason' => 'nullable|string|required_if:status,cancelled',
+        ]);
+        
+        $oldStatus = $manualDelivery->status;
+        $manualDelivery->fill($validated);
+        
+        // Update timestamps based on status
+        if ($validated['status'] === 'picked_up' && !$manualDelivery->picked_up_at) {
+            $manualDelivery->picked_up_at = now();
+        }
+        if ($validated['status'] === 'delivered' && !$manualDelivery->delivered_at) {
+            $manualDelivery->delivered_at = now();
+            $manualDelivery->order->update(['status' => 'completed']);
+        }
+        if ($validated['status'] === 'cancelled' && !$manualDelivery->cancelled_at) {
+            $manualDelivery->cancelled_at = now();
+            $manualDelivery->order->update(['status' => 'cancelled']);
+        }
+        
+        $manualDelivery->save();
+        
+        // Update delivery boy stats if status changed
+        if ($oldStatus !== $manualDelivery->status) {
+            $manualDelivery->deliveryBoy->updateStats();
+        }
+        
+        return redirect()->route('admin.manual-delivery.show', $manualDelivery)
+            ->with('success', 'Delivery updated successfully.');
+    }
+    
     public function updateDeliveryStatus(Request $request, ManualDelivery $manualDelivery)
     {
         $validated = $request->validate([
