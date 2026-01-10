@@ -260,11 +260,11 @@
                         </th>
                         <th>Order ID</th>
                         <th>Customer</th>
+                        <th>Address</th>
                         <th>Amount</th>
+                        <th>Products</th>
                         <th>Status</th>
-                        <th>Payment</th>
-                        <th>Date</th>
-                        <th width="120">Actions</th>
+                        <th width="140">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -285,18 +285,51 @@
                             <div class="d-flex align-items-center">
                                 <div class="avatar-sm me-2">
                                     <div class="avatar-initials">
-                                        {{ substr($order->user->name ?? 'G', 0, 1) }}
-                        </div>
-                    </div>
+                                        {{ substr($order->receiver_name ?? $order->user->name ?? 'G', 0, 1) }}
+                                    </div>
+                                </div>
                                 <div>
-                                    <div class="fw-semibold">{{ $order->user->name ?? 'Guest' }}</div>
-                                    <small class="text-muted">{{ $order->user->email ?? 'N/A' }}</small>
-                        </div>
-                    </div>
+                                    <div class="fw-semibold">{{ $order->receiver_name ?? $order->user->name ?? 'Guest' }}</div>
+                                    <small class="text-muted">{{ $order->receiver_phone ?? $order->user->phone ?? 'N/A' }}</small>
+                                </div>
+                            </div>
                         </td>
                         <td>
-                            <div class="fw-semibold">Rs. {{ number_format($order->total, 2) }}</div>
-                            <small class="text-muted">{{ $order->orderItems->count() }} items</small>
+                            <div class="address-info">
+                                <div class="fw-semibold">{{ Str::limit($order->shipping_address ?? 'Not specified', 30) }}</div>
+                                <small class="text-muted">{{ $order->receiver_city ?? 'N/A' }}</small>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="amount-info">
+                                <div class="fw-semibold">Rs. {{ number_format($order->total, 0) }}</div>
+                                <div class="d-flex gap-2">
+                                    @if($order->payment_status === 'paid')
+                                        <span class="badge badge-success">Paid</span>
+                                    @else
+                                        <span class="badge badge-warning">COD</span>
+                                    @endif
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="products-info">
+                                <div class="fw-semibold">{{ $order->orderItems->count() }} items</div>
+                                <small class="text-muted">
+                                    @if($order->orderItems->count() > 0)
+                                        @php
+                                            $firstItem = $order->orderItems->first();
+                                            $productName = $firstItem->product->name ?? 'N/A';
+                                        @endphp
+                                        {{ Str::limit($productName, 20) }}
+                                        @if($order->orderItems->count() > 1)
+                                            +{{ $order->orderItems->count() - 1 }} more
+                                        @endif
+                                    @else
+                                        No products
+                                    @endif
+                                </small>
+                            </div>
                         </td>
                         <td>
                             <span class="badge badge-{{ $order->status === 'completed' ? 'success' : ($order->status === 'pending' ? 'warning' : ($order->status === 'cancelled' ? 'danger' : 'info')) }}">
@@ -304,62 +337,23 @@
                             </span>
                         </td>
                         <td>
-                            <span class="badge badge-{{ $order->payment_status === 'paid' ? 'success' : ($order->payment_status === 'refunded' ? 'warning' : 'danger') }}">
-                                {{ ucfirst($order->payment_status) }}
-                            </span>
-                        </td>
-                        <td>
-                            <div class="text-muted">{{ $order->created_at->format('M j, Y') }}</div>
-                            <small class="text-muted">{{ $order->created_at->format('g:i A') }}</small>
-                        </td>
-                        <td>
-                            <div class="btn-group btn-group-sm">
+                            <div class="action-buttons d-flex gap-1">
                                 <a href="{{ route('admin.orders.show', $order) }}" 
-                                   class="btn btn-outline-primary" 
+                                   class="action-btn view" 
                                    title="View Order">
                                     <i class="fas fa-eye"></i>
                                 </a>
                                 <a href="{{ route('admin.orders.edit', $order) }}" 
-                                   class="btn btn-outline-secondary" 
+                                   class="action-btn edit" 
                                    title="Edit Order">
-                                    <i class="fas fa-edit"></i>
+                                    <i class="fas fa-pencil-alt"></i>
                                 </a>
-                                <div class="dropdown">
-                                    <button class="btn btn-outline-secondary dropdown-toggle" 
-                                            data-bs-toggle="dropdown" 
-                                            title="More Actions">
-                                <i class="fas fa-ellipsis-v"></i>
-                            </button>
-                            <ul class="dropdown-menu">
-                                        <li>
-                                            <a class="dropdown-item" href="#" onclick="changeStatus({{ $order->id }}, 'confirmed')">
-                                                <i class="fas fa-check-circle text-success"></i> Confirm
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a class="dropdown-item" href="#" onclick="changeStatus({{ $order->id }}, 'processing')">
-                                                <i class="fas fa-cog text-warning"></i> Process
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a class="dropdown-item" href="#" onclick="changeStatus({{ $order->id }}, 'shipped')">
-                                                <i class="fas fa-shipping-fast text-info"></i> Ship
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a class="dropdown-item" href="#" onclick="changeStatus({{ $order->id }}, 'completed')">
-                                                <i class="fas fa-check text-success"></i> Deliver
-                                            </a>
-                                        </li>
-                                <li><hr class="dropdown-divider"></li>
-                                        <li>
-                                            <a class="dropdown-item text-danger" href="#" onclick="deleteOrder({{ $order->id }})">
-                                                <i class="fas fa-trash"></i> Delete
-                                            </a>
-                                        </li>
-                            </ul>
-                        </div>
-                    </div>
+                                <button class="action-btn delete" 
+                                        onclick="deleteOrder({{ $order->id }})" 
+                                        title="Delete Order">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
                         </td>
                     </tr>
             @empty
@@ -482,6 +476,91 @@
     border: 1px solid rgba(59, 130, 246, 0.2);
 }
 
+/* Action Buttons */
+.action-buttons {
+    display: flex;
+    gap: 0.25rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.action-btn {
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 0.75rem;
+    font-weight: 600;
+    transition: all var(--transition-fast);
+    text-decoration: none;
+    box-shadow: var(--shadow-sm);
+}
+
+.action-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.action-btn i {
+    font-size: 0.75rem;
+}
+
+.action-btn.view {
+    background: linear-gradient(135deg, #3B82F6, #2563EB);
+    color: white;
+    border: 1px solid #2563EB;
+}
+
+.action-btn.view:hover {
+    background: linear-gradient(135deg, #2563EB, #1D4ED8);
+    border-color: #1D4ED8;
+}
+
+.action-btn.edit {
+    background: linear-gradient(135deg, var(--warning), #D97706);
+    color: white;
+    border: 1px solid #D97706;
+}
+
+.action-btn.edit:hover {
+    background: linear-gradient(135deg, #D97706, #B45309);
+    border-color: #B45309;
+}
+
+.action-btn.delete {
+    background: linear-gradient(135deg, var(--danger), #DC2626);
+    color: white;
+    border: 1px solid #DC2626;
+}
+
+.action-btn.delete:hover {
+    background: linear-gradient(135deg, #DC2626, #B91C1C);
+    border-color: #B91C1C;
+}
+
+/* Address and Products Info */
+.address-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.products-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.amount-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
 /* Empty State */
 .empty-state {
     padding: var(--space-2xl);
@@ -503,6 +582,16 @@
     
     .table-responsive {
         font-size: 0.875rem;
+    }
+    
+    .action-btn {
+        width: 28px;
+        height: 28px;
+        font-size: 0.625rem;
+    }
+    
+    .action-btn i {
+        font-size: 0.625rem;
     }
 }
 </style>

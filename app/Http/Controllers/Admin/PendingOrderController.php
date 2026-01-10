@@ -17,7 +17,7 @@ class PendingOrderController extends Controller
     public function index(Request $request)
     {
         // Build base query with eager loading
-        $query = Order::with(['user:id,name,email,phone', 'orderItems:id,order_id,product_id,quantity,price,total'])
+        $query = Order::with(['user:id,name,email,phone', 'orderItems.product:id,name'])
                      ->where('status', 'pending');
 
         // Search functionality
@@ -169,13 +169,26 @@ class PendingOrderController extends Controller
             'customer_phone' => 'required|string|max:20',
             'shipping_address' => 'required|string',
             'payment_method' => 'required|in:cash_on_delivery,paid,bank_transfer,khalti,esewa,cod',
-            'total_amount' => 'required|numeric|min:0',
             'status' => 'required|in:pending,processing,completed,cancelled',
-            'notes' => 'nullable|string'
+            'notes' => 'nullable|string',
+            'product_ids' => 'required|array|min:1',
+            'product_ids.*' => 'required|exists:products,id',
+            'quantities' => 'required|array|min:1',
+            'quantities.*' => 'required|integer|min:1',
         ]);
 
+        // Calculate subtotal from products
+        $subtotal = 0;
+        foreach ($validated['product_ids'] as $index => $productId) {
+            $product = Product::find($productId);
+            $quantity = $validated['quantities'][$index] ?? 1;
+            $itemPrice = $product->sale_price ?? $product->price;
+            $subtotal += $itemPrice * $quantity;
+        }
+
         $pending_order->update([
-            'total' => $validated['total_amount'],
+            'subtotal' => $subtotal,
+            'total' => $subtotal, // For now, total equals subtotal
             'status' => $validated['status'],
             'payment_status' => in_array($validated['payment_method'], ['paid', 'bank_transfer', 'khalti', 'esewa']) ? 'paid' : 'unpaid',
             'payment_method' => $validated['payment_method'],
@@ -185,6 +198,24 @@ class PendingOrderController extends Controller
             'receiver_phone' => $validated['customer_phone'],
             'notes' => $validated['notes'] ?? ''
         ]);
+        
+        // Delete existing order items
+        $pending_order->orderItems()->delete();
+        
+        // Create new order items
+        foreach ($validated['product_ids'] as $index => $productId) {
+            $product = Product::find($productId);
+            $quantity = $validated['quantities'][$index] ?? 1;
+            $itemPrice = $product->sale_price ?? $product->price;
+            $itemTotal = $itemPrice * $quantity;
+
+            $pending_order->orderItems()->create([
+                'product_id' => $product->id,
+                'quantity' => $quantity,
+                'price' => $itemPrice,
+                'total' => $itemTotal,
+            ]);
+        }
         
         // Update user if exists
         if ($pending_order->user) {
@@ -199,14 +230,104 @@ class PendingOrderController extends Controller
 
     public function destroy(Order $pending_order)
     {
-        $pending_order->orderItems()->delete();
-        $pending_order->delete();
+        try {
+            // Check if order belongs to current tenant
+            if ($pending_order->tenant_id !== auth()->user()->tenant_id) {
+                \Log::warning('Pending order delete attempt - wrong tenant', [
+                    'order_id' => $pending_order->id,
+                    'order_tenant_id' => $pending_order->tenant_id,
+                    'user_tenant_id' => auth()->user()->tenant_id
+                ]);
+                
+                if (request()->ajax() || request()->wantsJson()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'You do not have permission to delete this order.'
+                    ], 403);
+                }
+                
+                return redirect()->route('admin.pending-orders.index')
+                    ->with('error', 'You do not have permission to delete this order.');
+            }
+            
+            // Check if order is still pending
+            if ($pending_order->status !== 'pending') {
+                $message = "Cannot delete order. Order status is '{$pending_order->status}', only pending orders can be deleted.";
+                
+                if (request()->ajax() || request()->wantsJson()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => $message
+                    ], 422);
+                }
+                
+                return redirect()->route('admin.pending-orders.index')->with('error', $message);
+            }
+            
+            $orderNumber = $pending_order->order_number;
+            
+            // Soft delete the order (move to trash) - don't delete order items
+            // Order items will be automatically handled by the relationship
+            $pending_order->delete();
+            
+            \Log::info('Pending order moved to trash', [
+                'order_id' => $pending_order->id,
+                'order_number' => $orderNumber,
+                'deleted_by' => auth()->user()->id
+            ]);
 
-        if (request()->ajax()) {
-            return response()->json(['success' => true, 'message' => 'Order deleted successfully.']);
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json([
+                    'success' => true, 
+                    'message' => 'Order moved to trash successfully.'
+                ]);
+            }
+
+            return redirect()->route('admin.pending-orders.index')
+                ->with('success', 'Order moved to trash successfully.');
+                
+        } catch (\Illuminate\Database\QueryException $e) {
+            \Log::error('Pending order delete (DB) error: '.$e->getMessage(), [
+                'order_id' => $pending_order->id,
+                'error_code' => $e->getCode()
+            ]);
+            
+            $message = 'Unable to delete order. Database error occurred.';
+            if (config('app.debug')) {
+                $message .= ' Error: ' . $e->getMessage();
+            }
+            
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $message
+                ], 422);
+            }
+            
+            return redirect()->route('admin.pending-orders.index')->with('error', $message);
+            
+        } catch (\Throwable $e) {
+            \Log::error('Pending order delete unexpected error: '.$e->getMessage(), [
+                'order_id' => $pending_order->id,
+                'error_type' => get_class($e),
+                'error_file' => $e->getFile(),
+                'error_line' => $e->getLine()
+            ]);
+            
+            $message = 'An unexpected error occurred while deleting the order.';
+            if (config('app.debug')) {
+                $message .= ' Error: ' . $e->getMessage();
+            }
+            
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $message
+                ], 500);
+            }
+            
+            return redirect()->route('admin.pending-orders.index')->with('error', $message);
         }
-
-        return redirect()->route('admin.pending-orders.index')->with('success', 'Order deleted successfully.');
     }
 
     public function confirm(Request $request, Order $pending_order)
@@ -344,18 +465,36 @@ class PendingOrderController extends Controller
     public function reject(Order $pending_order)
     {
         try {
+            // Check tenant ownership
+            if ($pending_order->tenant_id !== auth()->user()->tenant_id) {
+                if (request()->ajax() || request()->wantsJson() || request()->expectsJson()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'You do not have permission to reject this order.'
+                    ], 403);
+                }
+                return redirect()->route('admin.pending-orders.index')
+                    ->with('error', 'You do not have permission to reject this order.');
+            }
+
             if ($pending_order->status !== 'pending') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Only pending orders can be rejected.'
-                ], 400);
+                $message = "Only pending orders can be rejected. Current status: {$pending_order->status}";
+                
+                if (request()->ajax() || request()->wantsJson() || request()->expectsJson()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => $message
+                    ], 422);
+                }
+                
+                return redirect()->route('admin.pending-orders.index')->with('error', $message);
             }
 
             $pending_order->update(['status' => 'rejected']);
             
             \Log::info('Order rejected successfully', ['order_id' => $pending_order->id, 'order_number' => $pending_order->order_number]);
 
-            if (request()->ajax()) {
+            if (request()->ajax() || request()->wantsJson() || request()->expectsJson()) {
                 return response()->json([
                     'success' => true,
                     'message' => 'Order rejected successfully.'
@@ -370,10 +509,14 @@ class PendingOrderController extends Controller
                 'trace' => $e->getTraceAsString()
             ]);
             
-            if (request()->ajax()) {
+            if (request()->ajax() || request()->wantsJson() || request()->expectsJson()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Error: ' . $e->getMessage()
+                    'message' => 'Error: ' . $e->getMessage(),
+                    'error_details' => config('app.debug') ? [
+                        'file' => $e->getFile(),
+                        'line' => $e->getLine()
+                    ] : []
                 ], 500);
             }
             
@@ -433,13 +576,15 @@ class PendingOrderController extends Controller
                 break;
                 
             case 'delete':
-                $orders = Order::whereIn('id', $orderIds)->get();
+                $orders = Order::whereIn('id', $orderIds)
+                    ->where('status', 'pending')
+                    ->get();
                 foreach ($orders as $order) {
-                    $order->orderItems()->delete();
+                    // Soft delete (move to trash) - don't delete order items
                     $order->delete();
                     $count++;
                 }
-                $message = "{$count} orders deleted.";
+                $message = "{$count} orders moved to trash.";
                 break;
         }
 
@@ -483,15 +628,21 @@ class PendingOrderController extends Controller
         $defaultNotes = $validated['default_notes'] ?? '';
 
         foreach ($validated['orders'] as $orderData) {
-            // Create a dummy user if not exists
+            // Create or update user with phone number
             $user = User::firstOrCreate(
-                ['email' => Str::slug($orderData['customer_name']) . '@example.com'],
+                ['phone' => $orderData['customer_phone']],
                 [
                     'name' => $orderData['customer_name'],
+                    'email' => Str::slug($orderData['customer_name']) . '@example.com',
                     'password' => bcrypt(Str::random(10)),
                     'role' => 'user',
                 ]
             );
+            
+            // Update user name if it changed
+            if ($user->name !== $orderData['customer_name']) {
+                $user->update(['name' => $orderData['customer_name']]);
+            }
 
             $orderNumber = 'BULK-' . str_pad(Order::max('id') + 1, 4, '0', STR_PAD_LEFT);
             $subtotal = 0;
@@ -507,6 +658,10 @@ class PendingOrderController extends Controller
                 'payment_status' => 'unpaid',
                 'payment_method' => $orderData['payment_method'] ?? 'cash_on_delivery',
                 'shipping_address' => $orderData['shipping_address'] ?? 'To be updated',
+                'receiver_name' => $orderData['customer_name'] ?? null,
+                'receiver_phone' => $orderData['customer_phone'] ?? null,
+                'billing_first_name' => $orderData['customer_name'] ?? null,
+                'billing_phone' => $orderData['customer_phone'] ?? null,
                 'notes' => $orderData['notes'] ?? $defaultNotes,
                 'is_manual' => true,
                 'created_by' => Auth::id(),
@@ -540,5 +695,144 @@ class PendingOrderController extends Controller
             'message' => "Successfully created {$createdCount} bulk orders.",
             'count' => $createdCount
         ]);
+    }
+
+    /**
+     * Show trashed (deleted) orders
+     */
+    public function trash(Request $request)
+    {
+        // Get soft deleted orders
+        $query = Order::onlyTrashed()
+            ->with(['user:id,name,email,phone', 'orderItems.product:id,name'])
+            ->orderBy('deleted_at', 'desc');
+
+        // Search functionality
+        if ($request->has('search') && $request->search != '') {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('order_number', 'like', "%{$search}%")
+                  ->orWhereHas('user', function($q) use ($search) {
+                      $q->where('name', 'like', "%{$search}%")
+                        ->orWhere('email', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        $orders = $query->paginate(15);
+        
+        return view('admin.pending-orders.trash', compact('orders'));
+    }
+
+    /**
+     * Restore a trashed order
+     */
+    public function restore($id)
+    {
+        try {
+            $order = Order::onlyTrashed()->findOrFail($id);
+            
+            // Check tenant ownership
+            if ($order->tenant_id !== auth()->user()->tenant_id) {
+                if (request()->ajax() || request()->wantsJson()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'You do not have permission to restore this order.'
+                    ], 403);
+                }
+                return redirect()->route('admin.pending-orders.trash')
+                    ->with('error', 'You do not have permission to restore this order.');
+            }
+            
+            $order->restore();
+            
+            \Log::info('Order restored from trash', [
+                'order_id' => $order->id,
+                'order_number' => $order->order_number,
+                'restored_by' => auth()->user()->id
+            ]);
+            
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Order restored successfully.'
+                ]);
+            }
+            
+            return redirect()->route('admin.pending-orders.trash')
+                ->with('success', 'Order restored successfully.');
+                
+        } catch (\Exception $e) {
+            \Log::error('Error restoring order: ' . $e->getMessage(), ['order_id' => $id]);
+            
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to restore order: ' . $e->getMessage()
+                ], 500);
+            }
+            
+            return redirect()->route('admin.pending-orders.trash')
+                ->with('error', 'Failed to restore order.');
+        }
+    }
+
+    /**
+     * Permanently delete an order from trash
+     */
+    public function forceDelete($id)
+    {
+        try {
+            $order = Order::onlyTrashed()->findOrFail($id);
+            
+            // Check tenant ownership
+            if ($order->tenant_id !== auth()->user()->tenant_id) {
+                if (request()->ajax() || request()->wantsJson()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'You do not have permission to permanently delete this order.'
+                    ], 403);
+                }
+                return redirect()->route('admin.pending-orders.trash')
+                    ->with('error', 'You do not have permission to permanently delete this order.');
+            }
+            
+            $orderNumber = $order->order_number;
+            
+            // Permanently delete order items first
+            $order->orderItems()->forceDelete();
+            
+            // Permanently delete the order
+            $order->forceDelete();
+            
+            \Log::info('Order permanently deleted from trash', [
+                'order_id' => $id,
+                'order_number' => $orderNumber,
+                'deleted_by' => auth()->user()->id
+            ]);
+            
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Order permanently deleted.'
+                ]);
+            }
+            
+            return redirect()->route('admin.pending-orders.trash')
+                ->with('success', 'Order permanently deleted.');
+                
+        } catch (\Exception $e) {
+            \Log::error('Error permanently deleting order: ' . $e->getMessage(), ['order_id' => $id]);
+            
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to permanently delete order: ' . $e->getMessage()
+                ], 500);
+            }
+            
+            return redirect()->route('admin.pending-orders.trash')
+                ->with('error', 'Failed to permanently delete order.');
+        }
     }
 }

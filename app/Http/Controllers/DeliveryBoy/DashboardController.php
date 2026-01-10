@@ -4,6 +4,7 @@ namespace App\Http\Controllers\DeliveryBoy;
 
 use App\Http\Controllers\Controller;
 use App\Models\ManualDelivery;
+use App\Models\CodSettlement;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -117,15 +118,33 @@ class DashboardController extends Controller
             abort(403, 'Unauthorized access');
         }
 
-        $manualDelivery->load(['order.user', 'order.orderItems', 'activities']);
+        $manualDelivery->load(['order.user', 'order.orderItems.product', 'activities']);
         
         // Always sync COD amount with current order items total
         $manualDelivery->syncCodAmount();
         
         // Refresh the model to get updated cod_amount
         $manualDelivery->refresh();
+        
+        // Find COD settlement for this delivery if settled
+        $codSettlement = null;
+        if ($manualDelivery->cod_settled) {
+            // Find settlement that includes this order_id in the order_ids JSON array
+            $codSettlement = CodSettlement::where('delivery_boy_id', $manualDelivery->delivery_boy_id)
+                ->get()
+                ->filter(function($settlement) use ($manualDelivery) {
+                    $orderIds = $settlement->getOrderIdsArray();
+                    return in_array($manualDelivery->order_id, $orderIds);
+                })
+                ->first();
+            
+            // Load settledBy relationship if settlement found
+            if ($codSettlement) {
+                $codSettlement->load('settledBy');
+            }
+        }
 
-        return view('delivery-boy.delivery-details', compact('manualDelivery', 'deliveryBoy'));
+        return view('delivery-boy.delivery-details', compact('manualDelivery', 'deliveryBoy', 'codSettlement'));
     }
 
     public function updateStatus(Request $request, ManualDelivery $manualDelivery)
@@ -152,8 +171,31 @@ class DashboardController extends Controller
             'status' => 'required|in:picked_up,in_transit,delivered,cancelled',
             'notes' => 'nullable|string',
             'cancellation_reason' => 'required_if:status,cancelled',
-            'cod_collected' => 'boolean',
+            'cod_collected' => 'nullable|string',
             'delivery_proof' => 'nullable|image|max:2048',
+        ]);
+        
+        // Server-side validation: If status is delivered and it's a COD order, cod_collected must be checked
+        if ($validated['status'] === 'delivered') {
+            $isCod = in_array($manualDelivery->order->payment_method, ['cod', 'cash_on_delivery']);
+            if ($isCod) {
+                $codCollected = $request->input('cod_collected');
+                if ($codCollected !== '1' && $codCollected !== 1 && $codCollected !== true && $codCollected !== 'on') {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'You must confirm that COD amount has been collected before marking as delivered.'
+                    ], 422);
+                }
+            }
+        }
+
+        // Log all request data for debugging
+        \Log::info('Delivery status update request', [
+            'delivery_id' => $manualDelivery->id,
+            'status' => $validated['status'],
+            'all_request_data' => $request->all(),
+            'cod_collected_raw' => $request->input('cod_collected'),
+            'cod_collected_validated' => $validated['cod_collected'] ?? 'not_set',
         ]);
 
         $oldStatus = $manualDelivery->status;
@@ -165,7 +207,51 @@ class DashboardController extends Controller
 
         if ($validated['status'] === 'delivered') {
             $manualDelivery->delivered_at = now();
-            $manualDelivery->cod_collected = $request->boolean('cod_collected', false);
+            
+            // Set COD collected flag - only for COD orders
+            $isCod = in_array($manualDelivery->order->payment_method, ['cod', 'cash_on_delivery']);
+            if ($isCod) {
+                // Check if cod_collected checkbox was checked
+                // When checkbox is checked, FormData sends 'cod_collected' = '1'
+                // When unchecked, the field might not be included in FormData
+                $codCollectedValue = $request->input('cod_collected');
+                
+                // Log what we received for debugging
+                \Log::info('Processing COD collected checkbox', [
+                    'delivery_id' => $manualDelivery->id,
+                    'order_id' => $manualDelivery->order_id,
+                    'order_payment_method' => $manualDelivery->order->payment_method,
+                    'is_cod' => $isCod,
+                    'raw_value' => $codCollectedValue,
+                    'value_type' => gettype($codCollectedValue),
+                    'request_has_cod_collected' => $request->has('cod_collected'),
+                    'all_request_inputs' => $request->all(),
+                ]);
+                
+                // Explicitly check for checkbox value - handle all possible formats
+                $isCollected = false;
+                if ($codCollectedValue !== null) {
+                    $isCollected = (
+                        $codCollectedValue === '1' || 
+                        $codCollectedValue === 1 || 
+                        $codCollectedValue === true || 
+                        $codCollectedValue === 'on' ||
+                        $codCollectedValue === 'true'
+                    );
+                }
+                
+                $manualDelivery->cod_collected = $isCollected;
+                
+                // Log the result
+                \Log::info('COD collected flag set', [
+                    'delivery_id' => $manualDelivery->id,
+                    'cod_collected_set_to' => $manualDelivery->cod_collected,
+                    'before_save' => true
+                ]);
+            } else {
+                // For non-COD orders, ensure cod_collected is false
+                $manualDelivery->cod_collected = false;
+            }
             
             // Handle delivery proof upload
             if ($request->hasFile('delivery_proof')) {
@@ -189,7 +275,27 @@ class DashboardController extends Controller
             $manualDelivery->delivery_notes = $validated['notes'];
         }
 
-        $manualDelivery->save();
+        // Log before save
+        \Log::info('Before saving manual delivery', [
+            'delivery_id' => $manualDelivery->id,
+            'status' => $manualDelivery->status,
+            'cod_collected' => $manualDelivery->cod_collected,
+            'delivered_at' => $manualDelivery->delivered_at,
+            'is_dirty' => $manualDelivery->isDirty('cod_collected'),
+            'original_cod_collected' => $manualDelivery->getOriginal('cod_collected'),
+        ]);
+        
+        $saved = $manualDelivery->save();
+        
+        // Refresh and log after save
+        $manualDelivery->refresh();
+        \Log::info('After saving manual delivery', [
+            'delivery_id' => $manualDelivery->id,
+            'save_result' => $saved,
+            'status' => $manualDelivery->status,
+            'cod_collected' => $manualDelivery->cod_collected,
+            'cod_collected_in_db' => $manualDelivery->cod_collected,
+        ]);
 
         // Log activity
         $deliveryBoy->logActivity(

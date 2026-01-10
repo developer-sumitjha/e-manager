@@ -95,7 +95,10 @@
                         <td>
                             <div class="product-image">
                                 @if($product->primary_image_url)
-                                    <img src="{{ $product->primary_image_url }}" alt="{{ $product->name }}" class="img-fluid rounded">
+                                    <img src="{{ $product->primary_image_url }}" 
+                                         alt="{{ $product->name }}" 
+                                         class="img-fluid rounded"
+                                         onerror="this.onerror=null; this.style.display='none'; this.parentElement.innerHTML='<div class=\'placeholder-image\'><i class=\'fas fa-image\'></i></div>';">
                                 @else
                                     <div class="placeholder-image">
                                         <i class="fas fa-image"></i>
@@ -438,38 +441,57 @@ window.AjaxHelper = window.AjaxHelper || {
     }
 };
 
-// AdminDashboard fallback if not available
-window.AdminDashboard = window.AdminDashboard || {
-    showLoading: function(element, text) {
-        const originalText = element.textContent;
+// AdminDashboard fallback/extension if not available or missing methods
+if (!window.AdminDashboard) {
+    window.AdminDashboard = {};
+}
+
+// Add showLoading if it doesn't exist
+if (!window.AdminDashboard.showLoading) {
+    window.AdminDashboard.showLoading = function(element, text) {
+        const originalText = element.textContent || element.innerHTML;
         const originalDisabled = element.disabled;
-        element.textContent = text;
+        const originalHTML = element.innerHTML;
+        
+        if (text) {
+            element.textContent = text;
+        }
         element.disabled = true;
+        element.classList.add('loading');
+        
+        // Return function to restore original state
         return function() {
+            element.innerHTML = originalHTML;
             element.textContent = originalText;
             element.disabled = originalDisabled;
+            element.classList.remove('loading');
         };
-    },
-    showNotification: function(message, type) {
+    };
+}
+
+// Add showNotification if it doesn't exist
+if (!window.AdminDashboard.showNotification) {
+    window.AdminDashboard.showNotification = function(message, type) {
         const notification = document.createElement('div');
-        notification.className = `alert alert-${type === 'error' ? 'danger' : type} alert-dismissible fade show`;
+        notification.className = `alert alert-${type === 'error' ? 'danger' : type} alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3`;
+        notification.style.zIndex = '9999';
+        notification.style.minWidth = '300px';
         notification.innerHTML = `
             <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
             ${message}
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         `;
         
-        const content = document.querySelector('.content');
-        if (content) {
-            content.insertBefore(notification, content.firstChild);
-            setTimeout(() => {
-                if (notification.parentNode) {
-                    notification.remove();
-                }
-            }, 5000);
-        }
-    }
-};
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.classList.remove('show');
+                setTimeout(() => notification.remove(), 150);
+            }
+        }, 5000);
+    };
+}
 
 function initializeProductManagement() {
     // Search functionality
@@ -513,8 +535,16 @@ function initializeProductManagement() {
     
     // Delete product
     document.querySelectorAll('.delete-product').forEach(button => {
-        button.addEventListener('click', function() {
-            deleteProduct(this.dataset.productId);
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            const productId = this.getAttribute('data-product-id') || this.dataset.productId;
+            if (productId) {
+                deleteProduct(productId);
+            } else {
+                console.error('Product ID not found on delete button');
+                AdminDashboard.showNotification('Error: Product ID not found', 'error');
+            }
         });
     });
     
@@ -613,30 +643,125 @@ function duplicateProduct(productId) {
 }
 
 function deleteProduct(productId) {
+    if (!productId) {
+        console.error('Product ID is required');
+        AdminDashboard.showNotification('Error: Product ID is missing', 'error');
+        return;
+    }
+    
     if (!confirm('Are you sure you want to delete this product? This action cannot be undone.')) {
         return;
     }
     
     const button = document.querySelector(`[data-product-id="${productId}"].delete-product`);
+    if (!button) {
+        console.error('Delete button not found for product:', productId);
+        AdminDashboard.showNotification('Error: Delete button not found', 'error');
+        return;
+    }
+    
     const loadingState = AdminDashboard.showLoading(button, 'Deleting...');
     
-    AjaxHelper.delete(`{{ url('admin/products') }}/${productId}`)
-    .then(response => {
-        AdminDashboard.showNotification(response.message || 'Product deleted successfully', 'success');
-        // Remove row from table
-        const row = document.querySelector(`tr[data-product-id="${productId}"]`);
-        if (row) {
-            row.style.opacity = '0';
-            setTimeout(() => {
-                row.remove();
-            }, 300);
+    // Get CSRF token
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+    if (!csrfToken) {
+        console.error('CSRF token not found');
+        AdminDashboard.showNotification('Error: CSRF token not found. Please refresh the page.', 'error');
+        loadingState();
+        return;
+    }
+    
+    // Use the destroyJson route which handles JSON responses better
+    const url = `{{ url('admin/products') }}/${productId}/delete`;
+    
+    console.log('Deleting product:', productId, 'URL:', url);
+    
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': csrfToken,
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(async response => {
+        // Get response text first to see what we're dealing with
+        const responseText = await response.text();
+        console.log('Delete response status:', response.status);
+        console.log('Delete response text:', responseText);
+        
+        // Try to parse as JSON
+        let data;
+        try {
+            data = JSON.parse(responseText);
+        } catch (e) {
+            // If not JSON, might be HTML error page
+            if (response.status === 419) {
+                throw new Error('Session expired. Please refresh the page and try again.');
+            } else if (response.status === 403) {
+                throw new Error('You do not have permission to delete this product.');
+            } else if (response.status === 404) {
+                throw new Error('Product not found. It may have already been deleted.');
+            } else if (response.status === 500) {
+                throw new Error('Server error occurred. Please check the logs or try again later.');
+            } else {
+                throw new Error(`Unexpected response format. Status: ${response.status}`);
+            }
+        }
+        
+        // Check if response is ok
+        if (!response.ok) {
+            throw new Error(data.message || data.error || `Server error: ${response.status}`);
+        }
+        
+        return data;
+    })
+    .then(data => {
+        console.log('Delete response data:', data);
+        
+        if (data.success !== false && data.success !== 0) {
+            AdminDashboard.showNotification(data.message || 'Product deleted successfully', 'success');
+            // Remove row from table
+            const row = document.querySelector(`tr[data-product-id="${productId}"]`);
+            if (row) {
+                row.style.opacity = '0';
+                row.style.transition = 'opacity 0.3s';
+                setTimeout(() => {
+                    row.remove();
+                    // Update product count if displayed
+                    const productCount = document.querySelector('.card-title');
+                    if (productCount) {
+                        const currentText = productCount.textContent;
+                        const match = currentText.match(/\((\d+)\)/);
+                        if (match) {
+                            const newCount = Math.max(0, parseInt(match[1]) - 1);
+                            productCount.textContent = currentText.replace(/\(\d+\)/, `(${newCount})`);
+                        }
+                    }
+                }, 300);
+            } else {
+                // If row not found, reload page to reflect changes
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+            }
+        } else {
+            throw new Error(data.message || data.error || 'Failed to delete product');
         }
     })
     .catch(error => {
-        AdminDashboard.showNotification(error.message || 'Failed to delete product', 'error');
+        console.error('Delete error details:', {
+            error: error,
+            message: error.message,
+            stack: error.stack,
+            productId: productId
+        });
+        const errorMessage = error.message || (typeof error === 'string' ? error : 'Failed to delete product. Please try again.');
+        AdminDashboard.showNotification(errorMessage, 'error');
     })
     .finally(() => {
-        loadingState();
+        if (loadingState) loadingState();
     });
 }
 

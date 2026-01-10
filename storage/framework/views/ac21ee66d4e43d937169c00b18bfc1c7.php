@@ -390,7 +390,7 @@
                     <th>Tracking #</th>
                     <th>Delivery Boy</th>
                     <th>Order</th>
-                    <th>Fee</th>
+                    <th>COD Amount</th>
                     <th>Status</th>
                     <th>Rating</th>
                     <th>Date</th>
@@ -422,7 +422,16 @@
                         </div>
                     </td>
                     <td>
-                        <div class="delivery-fee">₹<?php echo e(number_format($delivery->delivery_fee, 2)); ?></div>
+                        <?php
+                            $order = $delivery->order;
+                            $isCod = $order && in_array($order->payment_method, ['cod', 'cash_on_delivery']);
+                            $codAmount = $isCod ? ($order->total ?? 0) : 0;
+                        ?>
+                        <?php if($isCod): ?>
+                            <div class="delivery-fee text-danger">₹<?php echo e(number_format($codAmount, 2)); ?></div>
+                        <?php else: ?>
+                            <div class="delivery-fee text-muted">N/A</div>
+                        <?php endif; ?>
                     </td>
                     <td>
                         <span class="status-badge status-<?php echo e($delivery->status); ?>">

@@ -39,6 +39,161 @@
                     @csrf
                     @method('PUT')
                     
+                    <!-- Customer Information Section -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h6 class="card-title mb-0">
+                                <i class="fas fa-user me-2"></i>Customer/Receiver Information
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="customer_name" class="form-label">
+                                        <i class="fas fa-user me-1"></i> Customer Name *
+                                    </label>
+                                    <input type="text" 
+                                           class="form-control @error('customer_name') is-invalid @enderror" 
+                                           id="customer_name" 
+                                           name="customer_name" 
+                                           value="{{ old('customer_name', $order->receiver_name ?? $order->user->name ?? '') }}" 
+                                           required 
+                                           placeholder="Full name of customer">
+                                    @error('customer_name')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <label for="customer_phone" class="form-label">
+                                        <i class="fas fa-phone me-1"></i> Customer Phone *
+                                    </label>
+                                    <input type="tel" 
+                                           class="form-control @error('customer_phone') is-invalid @enderror" 
+                                           id="customer_phone" 
+                                           name="customer_phone" 
+                                           value="{{ old('customer_phone', $order->receiver_phone ?? $order->user->phone ?? '') }}" 
+                                           required 
+                                           placeholder="Phone number">
+                                    @error('customer_phone')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                
+                                <div class="col-12">
+                                    <label for="shipping_address" class="form-label">
+                                        <i class="fas fa-map-marker-alt me-1"></i> Complete Shipping Address *
+                                    </label>
+                                    <textarea class="form-control @error('shipping_address') is-invalid @enderror" 
+                                              id="shipping_address" 
+                                              name="shipping_address" 
+                                              rows="3" 
+                                              required 
+                                              placeholder="House/Flat number, Street, Landmark, City">{{ old('shipping_address', $order->receiver_full_address ?? $order->shipping_address ?? '') }}</textarea>
+                                    @error('shipping_address')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Products Section -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h6 class="card-title mb-0">
+                                    <i class="fas fa-box me-2"></i>Products
+                                </h6>
+                                <button type="button" class="btn btn-sm btn-primary" onclick="addProductRow()">
+                                    <i class="fas fa-plus me-1"></i> Add Product
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div id="productsContainer">
+                                @if($order->orderItems->count() > 0)
+                                    @foreach($order->orderItems as $index => $item)
+                                        <div class="product-row mb-3 p-3 border rounded">
+                                            <div class="row align-items-end">
+                                                <div class="col-md-5">
+                                                    <label class="form-label">Product *</label>
+                                                    <select class="form-select" name="product_ids[]" required onchange="updatePrice(this)">
+                                                        <option value="">Select Product</option>
+                                                        @foreach($products as $product)
+                                                            <option value="{{ $product->id }}" 
+                                                                    data-price="{{ $product->sale_price ?? $product->price }}"
+                                                                    {{ $item->product_id == $product->id ? 'selected' : '' }}>
+                                                                {{ $product->name }} - Rs. {{ number_format($product->sale_price ?? $product->price, 2) }}
+                                                            </option>
+                                                        @endforeach
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <label class="form-label">Quantity *</label>
+                                                    <input type="number" class="form-control" name="quantities[]" 
+                                                           value="{{ old('quantities.'.$index, $item->quantity) }}" min="1" required onchange="calculateTotal()">
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <label class="form-label">Price</label>
+                                                    <div class="form-control-plaintext fw-semibold" id="price-{{ $index }}">
+                                                        Rs. {{ number_format($item->price * $item->quantity, 2) }}
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-1">
+                                                    <label class="form-label">&nbsp;</label>
+                                                    <button type="button" class="btn btn-danger btn-sm" onclick="removeProductRow(this)">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                @else
+                                    <div class="product-row mb-3 p-3 border rounded">
+                                        <div class="row align-items-end">
+                                            <div class="col-md-5">
+                                                <label class="form-label">Product *</label>
+                                                <select class="form-select" name="product_ids[]" required onchange="updatePrice(this)">
+                                                    <option value="">Select Product</option>
+                                                    @foreach($products as $product)
+                                                        <option value="{{ $product->id }}" data-price="{{ $product->sale_price ?? $product->price }}">
+                                                            {{ $product->name }} - Rs. {{ number_format($product->sale_price ?? $product->price, 2) }}
+                                                        </option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <label class="form-label">Quantity *</label>
+                                                <input type="number" class="form-control" name="quantities[]" value="1" min="1" required onchange="calculateTotal()">
+                                            </div>
+                                            <div class="col-md-3">
+                                                <label class="form-label">Price</label>
+                                                <div class="form-control-plaintext fw-semibold" id="price-0">Rs. 0.00</div>
+                                            </div>
+                                            <div class="col-md-1">
+                                                <label class="form-label">&nbsp;</label>
+                                                <button type="button" class="btn btn-danger btn-sm" onclick="removeProductRow(this)">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endif
+                            </div>
+                            
+                            @if(count($products) == 0)
+                                <div class="alert alert-warning">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                    <strong>No products available.</strong> Please add products first before editing orders.
+                                    <a href="{{ route('admin.products.create') }}" class="btn btn-sm btn-primary mt-2">
+                                        <i class="fas fa-plus me-1"></i> Add Product
+                                    </a>
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+                    
                     <div class="row g-3">
                         <!-- Order Status -->
                         <div class="col-md-6">
@@ -146,6 +301,44 @@
                             @enderror
                         </div>
 
+                        <!-- Shipping Cost -->
+                        <div class="col-md-6">
+                            <label for="shipping_cost" class="form-label">
+                                <i class="fas fa-shipping-fast me-1"></i> Shipping Cost (Rs.)
+                            </label>
+                            <input type="number" 
+                                   class="form-control @error('shipping_cost') is-invalid @enderror" 
+                                   id="shipping_cost" 
+                                   name="shipping_cost" 
+                                   value="{{ old('shipping_cost', $order->shipping_cost ?? $order->shipping ?? 0) }}" 
+                                   min="0" 
+                                   step="0.01" 
+                                   onchange="calculateTotal()"
+                                   placeholder="0.00">
+                            @error('shipping_cost')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <!-- Tax Amount -->
+                        <div class="col-md-6">
+                            <label for="tax_amount" class="form-label">
+                                <i class="fas fa-receipt me-1"></i> Tax Amount (Rs.)
+                            </label>
+                            <input type="number" 
+                                   class="form-control @error('tax_amount') is-invalid @enderror" 
+                                   id="tax_amount" 
+                                   name="tax_amount" 
+                                   value="{{ old('tax_amount', $order->tax_amount ?? $order->tax ?? 0) }}" 
+                                   min="0" 
+                                   step="0.01" 
+                                   onchange="calculateTotal()"
+                                   placeholder="0.00">
+                            @error('tax_amount')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+
                         <!-- Order Notes -->
                         <div class="col-12">
                             <label for="notes" class="form-label">
@@ -208,16 +401,30 @@
                         <div class="fw-semibold">{{ $order->order_number }}</div>
                     </div>
                     <div class="col-6">
-                        <small class="text-muted">Total Amount</small>
-                        <div class="fw-semibold">Rs. {{ number_format($order->total, 2) }}</div>
-                    </div>
-                </div>
-                <div class="row g-2 mb-3">
-                    <div class="col-6">
                         <small class="text-muted">Items</small>
                         <div class="fw-semibold">{{ $order->orderItems->count() }}</div>
                     </div>
-                    <div class="col-6">
+                </div>
+                <div class="border-top pt-2 mb-2">
+                    <div class="d-flex justify-content-between mb-2">
+                        <small class="text-muted">Subtotal:</small>
+                        <div class="fw-semibold" id="order-subtotal">Rs. {{ number_format($order->subtotal ?? $order->orderItems->sum('total'), 2) }}</div>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <small class="text-muted">Shipping:</small>
+                        <div class="fw-semibold" id="order-shipping">Rs. {{ number_format($order->shipping_cost ?? $order->shipping ?? 0, 2) }}</div>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <small class="text-muted">Tax:</small>
+                        <div class="fw-semibold" id="order-tax">Rs. {{ number_format($order->tax_amount ?? $order->tax ?? 0, 2) }}</div>
+                    </div>
+                    <div class="d-flex justify-content-between border-top pt-2">
+                        <strong>Total:</strong>
+                        <strong class="text-primary" id="order-total">Rs. {{ number_format($order->total, 2) }}</strong>
+                    </div>
+                </div>
+                <div class="row g-2 mt-3">
+                    <div class="col-12">
                         <small class="text-muted">Created</small>
                         <div class="fw-semibold">{{ $order->created_at->format('M j, Y') }}</div>
                     </div>
@@ -234,17 +441,19 @@
                 <div class="d-flex align-items-center mb-3">
                     <div class="avatar-sm me-3">
                         <div class="avatar-initials">
-                            {{ substr($order->user->name ?? 'G', 0, 1) }}
+                            {{ substr($order->receiver_name ?? $order->user->name ?? 'G', 0, 1) }}
                         </div>
                     </div>
                     <div>
-                        <div class="fw-semibold">{{ $order->user->name ?? 'Guest' }}</div>
-                        <small class="text-muted">{{ $order->user->email ?? 'N/A' }}</small>
+                        <div class="fw-semibold">{{ $order->receiver_name ?? $order->user->name ?? 'Guest' }}</div>
+                        <small class="text-muted">{{ $order->receiver_phone ?? $order->user->phone ?? 'N/A' }}</small>
                     </div>
                 </div>
+                @if($order->user)
                 <div class="text-muted">
-                    <small>Phone: {{ $order->user->phone ?? 'N/A' }}</small>
+                    <small>Email: {{ $order->user->email ?? 'N/A' }}</small>
                 </div>
+                @endif
             </div>
         </div>
 
@@ -391,12 +600,25 @@
 
 @push('scripts')
 <script>
+let productCounter = {{ $order->orderItems->count() }};
+
 document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('order-edit-form');
     const saveBtn = document.getElementById('save-btn');
     
+    // Initialize product calculations
+    calculateTotal();
+    updateAllPrices();
+    
     // Form submission with loading state
     form.addEventListener('submit', function(e) {
+        const productRows = document.querySelectorAll('.product-row');
+        if (productRows.length === 0) {
+            e.preventDefault();
+            alert('Please add at least one product.');
+            return false;
+        }
+        
         saveBtn.classList.add('loading');
         saveBtn.disabled = true;
     });
@@ -458,6 +680,103 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 });
+
+function addProductRow() {
+    const container = document.getElementById('productsContainer');
+    const productRow = document.createElement('div');
+    productRow.className = 'product-row mb-3 p-3 border rounded';
+    productRow.innerHTML = `
+        <div class="row align-items-end">
+            <div class="col-md-5">
+                <label class="form-label">Product *</label>
+                <select class="form-select" name="product_ids[]" required onchange="updatePrice(this)">
+                    <option value="">Select Product</option>
+                    @foreach($products as $product)
+                        <option value="{{ $product->id }}" data-price="{{ $product->sale_price ?? $product->price }}">
+                            {{ $product->name }} - Rs. {{ number_format($product->sale_price ?? $product->price, 2) }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Quantity *</label>
+                <input type="number" class="form-control" name="quantities[]" value="1" min="1" required onchange="calculateTotal()">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Price</label>
+                <div class="form-control-plaintext fw-semibold" id="price-${productCounter}">Rs. 0.00</div>
+            </div>
+            <div class="col-md-1">
+                <label class="form-label">&nbsp;</label>
+                <button type="button" class="btn btn-danger btn-sm" onclick="removeProductRow(this)">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        </div>
+    `;
+    container.appendChild(productRow);
+    productCounter++;
+}
+
+function removeProductRow(button) {
+    const productRows = document.querySelectorAll('.product-row');
+    if (productRows.length > 1) {
+        button.closest('.product-row').remove();
+        calculateTotal();
+    } else {
+        alert('At least one product is required.');
+    }
+}
+
+function updatePrice(select) {
+    const price = select.options[select.selectedIndex]?.dataset.price || 0;
+    const row = select.closest('.product-row');
+    const priceDisplay = row.querySelector('[id^="price-"]');
+    const quantity = row.querySelector('input[name="quantities[]"]').value || 1;
+    const total = parseFloat(price) * parseInt(quantity);
+    
+    if (priceDisplay) {
+        priceDisplay.textContent = `Rs. ${total.toFixed(2)}`;
+    }
+    calculateTotal();
+}
+
+function updateAllPrices() {
+    document.querySelectorAll('.product-row').forEach(row => {
+        const select = row.querySelector('select[name="product_ids[]"]');
+        if (select && select.value) {
+            updatePrice(select);
+        }
+    });
+}
+
+function calculateTotal() {
+    let subtotal = 0;
+    
+    document.querySelectorAll('.product-row').forEach(row => {
+        const select = row.querySelector('select[name="product_ids[]"]');
+        const quantity = row.querySelector('input[name="quantities[]"]').value || 1;
+        const price = select.options[select.selectedIndex]?.dataset.price || 0;
+        
+        subtotal += parseFloat(price) * parseInt(quantity);
+    });
+    
+    // Get shipping and tax amounts
+    const shippingCost = parseFloat(document.getElementById('shipping_cost').value) || 0;
+    const taxAmount = parseFloat(document.getElementById('tax_amount').value) || 0;
+    const total = subtotal + shippingCost + taxAmount;
+    
+    // Update order summary in sidebar if elements exist
+    const subtotalEl = document.getElementById('order-subtotal');
+    const shippingEl = document.getElementById('order-shipping');
+    const taxEl = document.getElementById('order-tax');
+    const totalEl = document.getElementById('order-total');
+    
+    if (subtotalEl) subtotalEl.textContent = `Rs. ${subtotal.toFixed(2)}`;
+    if (shippingEl) shippingEl.textContent = `Rs. ${shippingCost.toFixed(2)}`;
+    if (taxEl) taxEl.textContent = `Rs. ${taxAmount.toFixed(2)}`;
+    if (totalEl) totalEl.textContent = `Rs. ${total.toFixed(2)}`;
+}
 </script>
 
 <script src="{{ asset('js/orders.js') }}"></script>

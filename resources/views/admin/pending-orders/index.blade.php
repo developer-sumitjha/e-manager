@@ -28,6 +28,9 @@
             </div>
             <div class="col-md-6">
                 <div class="d-flex gap-2 justify-content-end">
+                    <a href="{{ route('admin.pending-orders.trash') }}" class="btn btn-outline-warning">
+                        <i class="fas fa-trash"></i> Trash
+                    </a>
                     <a href="{{ route('admin.rejected-orders.index') }}" class="btn btn-outline-danger">
                         <i class="fas fa-times-circle"></i> Rejected Orders
                     </a>
@@ -161,19 +164,18 @@
                                     {{ $order->order_number }}
                                 </a>
                                 <small class="text-muted">{{ $order->id }}</small>
-                                <span class="badge badge-info">Manual</span>
                             </div>
                         </td>
                         <td>
                             <div class="d-flex align-items-center">
                                 <div class="avatar-sm me-2">
                                     <div class="avatar-initials">
-                                        {{ substr($order->user->name ?? 'G', 0, 1) }}
+                                        {{ substr($order->receiver_name ?? $order->user->name ?? 'G', 0, 1) }}
                                     </div>
                                 </div>
                                 <div>
-                                    <div class="fw-semibold">{{ $order->user->name ?? 'Guest' }}</div>
-                                    <small class="text-muted">{{ $order->user->phone ?? 'N/A' }}</small>
+                                    <div class="fw-semibold">{{ $order->receiver_name ?? $order->user->name ?? 'Guest' }}</div>
+                                    <small class="text-muted">{{ $order->receiver_phone ?? $order->user->phone ?? 'N/A' }}</small>
                                 </div>
                             </div>
                         </td>
@@ -200,7 +202,11 @@
                                 <div class="fw-semibold">{{ $order->orderItems->count() }} items</div>
                                 <small class="text-muted">
                                     @if($order->orderItems->count() > 0)
-                                        {{ Str::limit($order->orderItems->first()->product_name ?? 'N/A', 20) }}
+                                        @php
+                                            $firstItem = $order->orderItems->first();
+                                            $productName = $firstItem->product->name ?? 'N/A';
+                                        @endphp
+                                        {{ Str::limit($productName, 20) }}
                                         @if($order->orderItems->count() > 1)
                                             +{{ $order->orderItems->count() - 1 }} more
                                         @endif
@@ -611,57 +617,188 @@ function performBulkAction(action, orderIds) {
 // Confirm Order Modal - replaced old confirmOrder function
 
 function rejectOrder(orderId) {
+    if (!orderId) {
+        console.error('Order ID is required');
+        showNotification('Order ID is missing', 'error');
+        return;
+    }
+
     if (confirm('Are you sure you want to reject this order? It will be moved to Rejected Orders list.')) {
+        const button = event.target.closest('.action-btn');
+        const originalText = button ? button.innerHTML : '';
+        
+        if (button) {
+            button.disabled = true;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        }
+
         fetch(`{{ url('/admin/pending-orders') }}/${orderId}/reject`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || document.querySelector('input[name="_token"]')?.value
             }
         })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(data => {
+                    throw new Error(data.message || `Server error: ${response.status}`);
+                });
+            }
+            return response.json();
+        })
         .then(data => {
+            console.log('Reject response:', data);
             if (data.success) {
-                showNotification('Order rejected successfully!', 'success');
-                setTimeout(() => {
-                    window.location.reload();
-                }, 1500);
+                showNotification(data.message || 'Order rejected successfully!', 'success');
+                // Remove row from table
+                const row = document.querySelector(`tr[data-order-id="${orderId}"]`);
+                if (row) {
+                    row.style.opacity = '0';
+                    row.style.transition = 'opacity 0.3s';
+                    setTimeout(() => {
+                        row.remove();
+                        // Reload if no more orders
+                        if (document.querySelectorAll('tbody tr').length === 0) {
+                            window.location.reload();
+                        }
+                    }, 300);
+                } else {
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1500);
+                }
             } else {
-                showNotification(data.message || 'Failed to reject order', 'error');
+                throw new Error(data.message || 'Failed to reject order');
             }
         })
         .catch(error => {
-            console.error('Error:', error);
-            showNotification('An error occurred while rejecting order', 'error');
+            console.error('Reject error:', error);
+            showNotification(error.message || 'An error occurred while rejecting order', 'error');
+            if (button) {
+                button.disabled = false;
+                button.innerHTML = originalText;
+            }
         });
     }
 }
 
 function deleteOrder(orderId) {
-    if (confirm('Are you sure you want to delete this order? This action cannot be undone.')) {
-        fetch(`{{ url('/admin/pending-orders') }}/${orderId}`, {
-            method: 'DELETE',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+    if (!orderId) {
+        console.error('Order ID is required');
+        showNotification('Error: Order ID is missing', 'error');
+        return;
+    }
+    
+    if (!confirm('Are you sure you want to delete this order? This action cannot be undone.')) {
+        return;
+    }
+    
+    const button = document.querySelector(`button[onclick*="deleteOrder(${orderId})"]`);
+    const originalText = button ? button.innerHTML : '';
+    
+    if (button) {
+        button.disabled = true;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    }
+    
+    // Get CSRF token
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+    if (!csrfToken) {
+        console.error('CSRF token not found');
+        showNotification('Error: CSRF token not found. Please refresh the page.', 'error');
+        if (button) {
+            button.disabled = false;
+            button.innerHTML = originalText;
+        }
+        return;
+    }
+    
+    const url = `{{ url('admin/pending-orders') }}/${orderId}`;
+    console.log('Deleting order:', orderId, 'URL:', url);
+    
+    fetch(url, {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': csrfToken,
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(async response => {
+        // Get response text first
+        const responseText = await response.text();
+        console.log('Delete response status:', response.status);
+        console.log('Delete response text:', responseText);
+        
+        // Try to parse as JSON
+        let data;
+        try {
+            data = JSON.parse(responseText);
+        } catch (e) {
+            // If not JSON, might be HTML error page
+            if (response.status === 419) {
+                throw new Error('Session expired. Please refresh the page and try again.');
+            } else if (response.status === 403) {
+                throw new Error('You do not have permission to delete this order.');
+            } else if (response.status === 404) {
+                throw new Error('Order not found. It may have already been deleted.');
+            } else if (response.status === 500) {
+                throw new Error('Server error occurred. Please check the logs or try again later.');
+            } else {
+                throw new Error(`Unexpected response format. Status: ${response.status}`);
             }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                showNotification('Order deleted successfully!', 'success');
+        }
+        
+        // Check if response is ok
+        if (!response.ok) {
+            throw new Error(data.message || data.error || `Server error: ${response.status}`);
+        }
+        
+        return data;
+    })
+    .then(data => {
+        console.log('Delete response data:', data);
+        
+        if (data.success !== false && data.success !== 0) {
+            showNotification(data.message || 'Order deleted successfully!', 'success');
+            // Remove row from table
+            const row = document.querySelector(`tr[data-order-id="${orderId}"]`) || 
+                       document.querySelector(`tr:has(button[onclick*="deleteOrder(${orderId})"])`);
+            if (row) {
+                row.style.opacity = '0';
+                row.style.transition = 'opacity 0.3s';
+                setTimeout(() => {
+                    row.remove();
+                }, 300);
+            } else {
+                // If row not found, reload page to reflect changes
                 setTimeout(() => {
                     window.location.reload();
-                }, 1500);
-            } else {
-                showNotification('Failed to delete order', 'error');
+                }, 1000);
             }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            showNotification('An error occurred while deleting order', 'error');
+        } else {
+            throw new Error(data.message || data.error || 'Failed to delete order');
+        }
+    })
+    .catch(error => {
+        console.error('Delete error details:', {
+            error: error,
+            message: error.message,
+            stack: error.stack,
+            orderId: orderId
         });
-    }
+        const errorMessage = error.message || (typeof error === 'string' ? error : 'Failed to delete order. Please try again.');
+        showNotification(errorMessage, 'error');
+    })
+    .finally(() => {
+        if (button) {
+            button.disabled = false;
+            button.innerHTML = originalText;
+        }
+    });
 }
 
 // Confirm Order Modal

@@ -450,7 +450,7 @@
                         </a>
                     </div>
                     <div class="nav-item">
-                        <a href="<?php echo e(route('admin.pending-orders.index')); ?>" class="nav-link <?php echo e(request()->routeIs('admin.pending-orders.*') ? 'active' : ''); ?>">
+                        <a href="<?php echo e(route('admin.pending-orders.index')); ?>" class="nav-link <?php echo e(request()->routeIs('admin.pending-orders.index') || request()->routeIs('admin.pending-orders.create') || request()->routeIs('admin.pending-orders.edit') || request()->routeIs('admin.pending-orders.show') || request()->routeIs('admin.pending-orders.create-bulk') ? 'active' : ''); ?>">
                             <i class="nav-icon fas fa-clock"></i>
                             <span class="nav-text">Pending Orders</span>
                         </a>
@@ -465,6 +465,12 @@
                         <a href="<?php echo e(route('admin.rejected-orders.index')); ?>" class="nav-link <?php echo e(request()->routeIs('admin.rejected-orders.*') ? 'active' : ''); ?>">
                             <i class="nav-icon fas fa-times-circle"></i>
                             <span class="nav-text">Rejected Orders</span>
+                        </a>
+                    </div>
+                    <div class="nav-item">
+                        <a href="<?php echo e(route('admin.pending-orders.trash')); ?>" class="nav-link <?php echo e(request()->routeIs('admin.pending-orders.trash') ? 'active' : ''); ?>">
+                            <i class="nav-icon fas fa-trash"></i>
+                            <span class="nav-text">Trash</span>
                         </a>
                     </div>
                 </div>

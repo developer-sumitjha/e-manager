@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\File;
 
 class ProductController extends Controller
 {
@@ -213,28 +214,203 @@ class ProductController extends Controller
             'sale_price' => 'nullable|numeric|min:0',
             'sku' => 'required|string|unique:products,sku,' . $product->id,
             'stock' => 'required|integer|min:0',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
+            'images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
             'is_active' => 'sometimes',
             'is_featured' => 'sometimes',
         ]);
 
         $validated['slug'] = Str::slug($validated['name']);
         
+        // Handle image upload - delete old image if new one is uploaded
         if ($request->hasFile('image')) {
-            $imagePath = $request->file('image')->store('products', 'public');
-            $validated['image'] = $imagePath;
+            try {
+                $uploadedFile = $request->file('image');
+                
+                // Validate file upload
+                if (!$uploadedFile->isValid()) {
+                    $errorCode = $uploadedFile->getError();
+                    $errorMessages = [
+                        UPLOAD_ERR_INI_SIZE => 'The uploaded file exceeds the upload_max_filesize directive in php.ini',
+                        UPLOAD_ERR_FORM_SIZE => 'The uploaded file exceeds the MAX_FILE_SIZE directive',
+                        UPLOAD_ERR_PARTIAL => 'The uploaded file was only partially uploaded',
+                        UPLOAD_ERR_NO_FILE => 'No file was uploaded',
+                        UPLOAD_ERR_NO_TMP_DIR => 'Missing a temporary folder',
+                        UPLOAD_ERR_CANT_WRITE => 'Failed to write file to disk',
+                        UPLOAD_ERR_EXTENSION => 'A PHP extension stopped the file upload',
+                    ];
+                    $errorMsg = $errorMessages[$errorCode] ?? 'Unknown upload error (code: ' . $errorCode . ')';
+                    throw new \Exception('File upload failed: ' . $errorMsg);
+                }
+                
+                // Delete old image if it exists
+                if ($product->image && Storage::disk('public')->exists($product->image)) {
+                    Storage::disk('public')->delete($product->image);
+                }
+                
+                // Also delete from images array if it exists there
+                if ($product->images && is_array($product->images) && count($product->images) > 0) {
+                    $firstImage = $product->images[0] ?? null;
+                    if ($firstImage && Storage::disk('public')->exists($firstImage) && $firstImage !== $product->image) {
+                        Storage::disk('public')->delete($firstImage);
+                    }
+                }
+                
+                // Ensure storage directory is writable
+                $storagePath = storage_path('app/public');
+                if (!is_writable($storagePath)) {
+                    throw new \Exception('Storage directory is not writable: ' . $storagePath . '. Please check permissions.');
+                }
+                
+                // Ensure products directory exists
+                $productsDir = storage_path('app/public/products');
+                if (!File::exists($productsDir)) {
+                    if (!File::makeDirectory($productsDir, 0755, true)) {
+                        throw new \Exception('Failed to create products directory: ' . $productsDir);
+                    }
+                }
+                
+                // Check if directory is writable
+                if (!is_writable($productsDir)) {
+                    throw new \Exception('Products directory is not writable: ' . $productsDir . '. Please check permissions.');
+                }
+                
+                // Store new image
+                try {
+                    $imagePath = $uploadedFile->store('products', 'public');
+                } catch (\Exception $e) {
+                    \Log::error('Image store exception', [
+                        'error' => $e->getMessage(),
+                        'file' => $uploadedFile->getClientOriginalName(),
+                        'size' => $uploadedFile->getSize(),
+                        'mime' => $uploadedFile->getMimeType(),
+                    ]);
+                    throw new \Exception('Failed to store image file: ' . $e->getMessage());
+                }
+                
+                if (!$imagePath || empty($imagePath)) {
+                    $error = error_get_last();
+                    $errorMsg = $error ? $error['message'] : 'Unknown error';
+                    \Log::error('Image store returned false/empty', [
+                        'error' => $errorMsg,
+                        'file' => $uploadedFile->getClientOriginalName(),
+                        'size' => $uploadedFile->getSize(),
+                        'mime' => $uploadedFile->getMimeType(),
+                        'tmp_name' => $uploadedFile->getRealPath(),
+                    ]);
+                    throw new \Exception('Failed to store image file. Error: ' . $errorMsg);
+                }
+                
+                // Verify the file was actually created
+                if (!Storage::disk('public')->exists($imagePath)) {
+                    \Log::error('Image file not found after store', ['path' => $imagePath]);
+                    throw new \Exception('Image file was not created at path: ' . $imagePath);
+                }
+                
+                $validated['image'] = $imagePath;
+                
+                // Update images array - if product has images array, update it, otherwise create new
+                if ($product->images && is_array($product->images) && count($product->images) > 0) {
+                    // Replace first image in array
+                    $images = $product->images;
+                    $images[0] = $imagePath;
+                    $validated['images'] = $images;
+                } else {
+                    // Create new images array
+                    $validated['images'] = [$imagePath];
+                    $validated['primary_image_index'] = 0;
+                }
+            } catch (\Exception $e) {
+                \Log::error('Product image upload failed: ' . $e->getMessage(), [
+                    'product_id' => $product->id,
+                    'error' => $e->getMessage()
+                ]);
+                return back()->withInput()->withErrors(['image' => 'Failed to upload image: ' . $e->getMessage()]);
+            }
+        } else {
+            // Preserve existing image if no new image is uploaded
+            if ($product->image) {
+                $validated['image'] = $product->image;
+            }
+            if ($product->images && is_array($product->images)) {
+                $validated['images'] = $product->images;
+            }
+        }
+        
+        // Handle multiple images upload (if provided)
+        if ($request->hasFile('images')) {
+            try {
+                // Delete old images if they exist
+                if ($product->images && is_array($product->images)) {
+                    foreach ($product->images as $oldImage) {
+                        if ($oldImage && Storage::disk('public')->exists($oldImage)) {
+                            Storage::disk('public')->delete($oldImage);
+                        }
+                    }
+                }
+                // Also delete old single image if it exists
+                if ($product->image && Storage::disk('public')->exists($product->image)) {
+                    Storage::disk('public')->delete($product->image);
+                }
+                
+                // Ensure products directory exists
+                $productsDir = storage_path('app/public/products');
+                if (!File::exists($productsDir)) {
+                    File::makeDirectory($productsDir, 0755, true);
+                }
+                
+                $imagePaths = [];
+                foreach ($request->file('images') as $image) {
+                    $path = $image->store('products', 'public');
+                    if ($path) {
+                        // Verify the file was actually created
+                        if (Storage::disk('public')->exists($path)) {
+                            $imagePaths[] = $path;
+                        } else {
+                            \Log::warning('Image file was not created', ['path' => $path]);
+                        }
+                    } else {
+                        $error = error_get_last();
+                        \Log::error('Failed to store image', ['error' => $error ? $error['message'] : 'Unknown error']);
+                    }
+                }
+                
+                if (count($imagePaths) > 0) {
+                    $validated['images'] = $imagePaths;
+                    
+                    // Set first image as fallback for old 'image' field
+                    $validated['image'] = $imagePaths[0];
+                    
+                    // Set primary image index
+                    $validated['primary_image_index'] = $request->input('primary_image_index', 0);
+                }
+            } catch (\Exception $e) {
+                \Log::error('Product multiple images upload failed: ' . $e->getMessage(), [
+                    'product_id' => $product->id,
+                    'error' => $e->getMessage()
+                ]);
+                return back()->withInput()->withErrors(['images' => 'Failed to upload images: ' . $e->getMessage()]);
+            }
         }
 
         // Normalize checkboxes
         $validated['is_active'] = $request->has('is_active');
         $validated['is_featured'] = $request->has('is_featured');
 
-        $product->update($validated);
-        
-        // Clear storefront cache
-        Cache::forget("categories_{$product->tenant_id}");
+        try {
+            $product->update($validated);
+            
+            // Clear storefront cache
+            Cache::forget("categories_{$product->tenant_id}");
 
-        return redirect()->route('admin.products.index')->with('success', 'Product updated successfully.');
+            return redirect()->route('admin.products.index')->with('success', 'Product updated successfully.');
+        } catch (\Exception $e) {
+            \Log::error('Product update failed: ' . $e->getMessage(), [
+                'product_id' => $product->id,
+                'error' => $e->getMessage()
+            ]);
+            return back()->withInput()->withErrors(['error' => 'Failed to update product: ' . $e->getMessage()]);
+        }
     }
 
     public function destroy(Product $product)
@@ -272,19 +448,95 @@ class ProductController extends Controller
     public function destroyJson(Request $request, Product $product)
     {
         try {
+            // Check if product belongs to current tenant
+            if ($product->tenant_id !== auth()->user()->tenant_id) {
+                \Log::warning('Product delete attempt - wrong tenant', [
+                    'product_id' => $product->id,
+                    'product_tenant_id' => $product->tenant_id,
+                    'user_tenant_id' => auth()->user()->tenant_id
+                ]);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You do not have permission to delete this product.'
+                ], 403);
+            }
+            
+            // Check if product is referenced in orders
+            $orderItemCount = \App\Models\OrderItem::where('product_id', $product->id)->count();
+            if ($orderItemCount > 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "Cannot delete product. It is referenced in {$orderItemCount} order(s). Products with orders cannot be deleted."
+                ], 422);
+            }
+            
+            // Perform soft delete
+            $productName = $product->name;
             $product->delete();
-            return response()->json(['success' => true, 'message' => 'Product deleted successfully.']);
+            
+            \Log::info('Product deleted successfully', [
+                'product_id' => $product->id,
+                'product_name' => $productName,
+                'deleted_by' => auth()->user()->id
+            ]);
+            
+            return response()->json([
+                'success' => true, 
+                'message' => 'Product deleted successfully.'
+            ]);
+            
         } catch (\Illuminate\Database\QueryException $e) {
-            \Log::error('Product delete (JSON) DB error: '.$e->getMessage(), ['product_id' => $product->id]);
+            \Log::error('Product delete (JSON) DB error: '.$e->getMessage(), [
+                'product_id' => $product->id,
+                'error_code' => $e->getCode(),
+                'error_sql' => $e->getSql() ?? 'N/A'
+            ]);
+            
+            $message = 'Unable to delete product. ';
+            if (str_contains($e->getMessage(), 'foreign key constraint')) {
+                $message .= 'It may be referenced by existing orders or other records.';
+            } else {
+                $message .= 'Database error: ' . $e->getMessage();
+            }
+            
             return response()->json([
                 'success' => false,
-                'message' => 'Unable to delete product. It may be referenced by existing orders.'
+                'message' => $message,
+                'error' => config('app.debug') ? $e->getMessage() : null
             ], 422);
-        } catch (\Throwable $e) {
-            \Log::error('Product delete (JSON) error: '.$e->getMessage(), ['product_id' => $product->id]);
+            
+        } catch (\Illuminate\Auth\AuthenticationException $e) {
+            \Log::error('Product delete (JSON) auth error', ['product_id' => $product->id]);
             return response()->json([
                 'success' => false,
-                'message' => 'An unexpected error occurred while deleting the product.'
+                'message' => 'Authentication required. Please refresh the page and try again.'
+            ], 401);
+            
+        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
+            \Log::error('Product delete (JSON) permission error', ['product_id' => $product->id]);
+            return response()->json([
+                'success' => false,
+                'message' => 'You do not have permission to delete products.'
+            ], 403);
+            
+        } catch (\Throwable $e) {
+            \Log::error('Product delete (JSON) unexpected error: '.$e->getMessage(), [
+                'product_id' => $product->id,
+                'error_type' => get_class($e),
+                'error_file' => $e->getFile(),
+                'error_line' => $e->getLine(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            $message = 'An unexpected error occurred while deleting the product.';
+            if (config('app.debug')) {
+                $message .= ' Error: ' . $e->getMessage();
+            }
+            
+            return response()->json([
+                'success' => false,
+                'message' => $message,
+                'error' => config('app.debug') ? $e->getMessage() : null
             ], 500);
         }
     }

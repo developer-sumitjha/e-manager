@@ -484,12 +484,34 @@ function setLoadingState(element, isLoading, progress = null) {
     }
 }
 
+// Helper function for showLoading (returns a function to restore state)
+function showLoading(element, text) {
+    const originalText = element.textContent || element.innerHTML;
+    const originalDisabled = element.disabled;
+    const originalHTML = element.innerHTML;
+    
+    if (text) {
+        element.textContent = text;
+    }
+    element.disabled = true;
+    element.classList.add('loading');
+    
+    // Return function to restore original state
+    return function() {
+        element.innerHTML = originalHTML;
+        element.textContent = originalText;
+        element.disabled = originalDisabled;
+        element.classList.remove('loading');
+    };
+}
+
 // Export functions for use in other scripts
 window.AdminDashboard = {
     showNotification,
     makeRequest,
     validateForm,
     setLoadingState,
+    showLoading,
     initCounters,
     initTrends,
     isValidEmail,

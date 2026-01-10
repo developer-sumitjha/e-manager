@@ -130,7 +130,7 @@
 
     .table-grid {
         display: grid;
-        grid-template-columns: auto 1fr 1fr 1fr 120px 150px auto;
+        grid-template-columns: 150px 1.5fr 1.5fr 2fr 120px 130px 200px;
         gap: 1rem;
         align-items: center;
         padding: 1rem;
@@ -271,6 +271,44 @@
         color: #EF4444;
     }
 
+    .action-btn.status {
+        background: rgba(16, 185, 129, 0.1);
+        color: #10B981;
+        border-color: rgba(16, 185, 129, 0.2);
+    }
+
+    .action-btn.status:hover {
+        background: rgba(16, 185, 129, 0.2);
+        color: #10B981;
+    }
+
+    .status-dropdown {
+        position: relative;
+        display: inline-block;
+    }
+
+    .status-select {
+        padding: 0.5rem 1rem;
+        border-radius: 0.5rem;
+        border: 1px solid rgba(16, 185, 129, 0.2);
+        background: rgba(16, 185, 129, 0.1);
+        color: #10B981;
+        font-size: 0.75rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .status-select:hover {
+        background: rgba(16, 185, 129, 0.2);
+    }
+
+    .status-select:focus {
+        outline: none;
+        border-color: #10B981;
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+    }
+
     .no-orders {
         text-align: center;
         padding: 4rem 2rem;
@@ -355,34 +393,43 @@
 <div class="rejected-orders-table">
     @if($orders->count() > 0)
         <div class="table-grid table-header">
-            <div></div>
             <div>Order ID</div>
             <div>Customer</div>
             <div>Address</div>
             <div>Amount</div>
             <div>Rejected Date</div>
+            <div>Status</div>
             <div>Actions</div>
         </div>
 
         @foreach($orders as $order)
         <div class="table-grid table-row">
-            <div></div>
             <div class="order-id-info">
                 <div class="order-number">#{{ $order->order_number }}</div>
                 <span class="rejected-tag">Rejected</span>
             </div>
             <div class="customer-info">
-                <div class="customer-name">{{ $order->user->name ?? 'Guest' }}</div>
-                <div class="customer-phone">{{ $order->user->email ?? 'N/A' }}</div>
+                <div class="customer-name">{{ $order->receiver_name ?? $order->user->name ?? 'Guest' }}</div>
+                <div class="customer-phone">{{ $order->receiver_phone ?? $order->user->phone ?? 'N/A' }}</div>
             </div>
             <div class="address-info">
-                <div class="address-line">{{ Str::limit($order->shipping_address, 50) }}</div>
+                <div class="address-line">{{ Str::limit($order->shipping_address ?? 'N/A', 50) }}</div>
             </div>
             <div class="amount-info">
                 <div class="amount-total">₹{{ number_format($order->total, 2) }}</div>
             </div>
             <div class="rejected-date">
                 {{ $order->updated_at->format('M d, Y') }}
+            </div>
+            <div class="status-dropdown">
+                <select class="status-select" onchange="changeOrderStatus({{ $order->id }}, this.value)" data-order-id="{{ $order->id }}">
+                    <option value="rejected" {{ $order->status === 'rejected' ? 'selected' : '' }}>Rejected</option>
+                    <option value="pending" {{ $order->status === 'pending' ? 'selected' : '' }}>Pending</option>
+                    <option value="confirmed" {{ $order->status === 'confirmed' ? 'selected' : '' }}>Confirmed</option>
+                    <option value="processing" {{ $order->status === 'processing' ? 'selected' : '' }}>Processing</option>
+                    <option value="completed" {{ $order->status === 'completed' ? 'selected' : '' }}>Completed</option>
+                    <option value="cancelled" {{ $order->status === 'cancelled' ? 'selected' : '' }}>Cancelled</option>
+                </select>
             </div>
             <div class="action-buttons">
                 <a href="{{ route('admin.pending-orders.show', $order->id) }}" class="action-btn view">
@@ -428,7 +475,8 @@
                 method: 'DELETE',
                 headers: {
                     'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
                 }
             })
             .then(response => response.json())
@@ -439,7 +487,7 @@
                         window.location.reload();
                     }, 500);
                 } else {
-                    showNotification('Failed to delete order.', 'error');
+                    showNotification(data.message || 'Failed to delete order.', 'error');
                 }
             })
             .catch(error => {
@@ -448,6 +496,81 @@
             });
         }
     }
+
+    function changeOrderStatus(orderId, newStatus) {
+        if (!orderId || !newStatus) {
+            console.error('Order ID and status are required');
+            return;
+        }
+
+        const select = document.querySelector(`select[data-order-id="${orderId}"]`);
+        const originalStatus = select.dataset.originalStatus || 'rejected';
+        
+        if (newStatus === originalStatus) {
+            return; // No change needed
+        }
+
+        if (!confirm(`Are you sure you want to change the order status from "${originalStatus}" to "${newStatus}"?`)) {
+            select.value = originalStatus;
+            return;
+        }
+
+        // Disable select while processing
+        select.disabled = true;
+        const originalValue = select.value;
+        select.value = newStatus;
+
+        fetch(`{{ url('/admin/orders') }}/${orderId}/status`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || document.querySelector('input[name="_token"]')?.value || '{{ csrf_token() }}'
+            },
+            body: JSON.stringify({
+                status: newStatus,
+                payment_status: newStatus === 'completed' ? 'paid' : (newStatus === 'cancelled' ? 'refunded' : (newStatus === 'confirmed' || newStatus === 'processing' ? 'unpaid' : 'unpaid'))
+            })
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(data => {
+                    throw new Error(data.message || `Server error: ${response.status}`);
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                showNotification(data.message || 'Order status updated successfully!', 'success');
+                select.dataset.originalStatus = newStatus;
+                
+                // If status changed to pending, reload to move order
+                if (newStatus === 'pending') {
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1500);
+                }
+            } else {
+                throw new Error(data.message || 'Failed to update order status');
+            }
+        })
+        .catch(error => {
+            console.error('Error updating status:', error);
+            showNotification(error.message || 'An error occurred while updating order status.', 'error');
+            select.value = originalValue;
+        })
+        .finally(() => {
+            select.disabled = false;
+        });
+    }
+
+    // Store original status on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.status-select').forEach(select => {
+            select.dataset.originalStatus = select.value;
+        });
+    });
 </script>
 @endpush
 

@@ -23,12 +23,15 @@
                     </div>
                     <div class="col-md-6 mb-3">
                         <strong>Customer Name:</strong><br>
-                        {{ $manualDelivery->order->user->name ?? 'N/A' }}
+                        {{ $manualDelivery->order->receiver_name ?? $manualDelivery->order->user->name ?? 'N/A' }}
                     </div>
                     <div class="col-md-6 mb-3">
                         <strong>Customer Phone:</strong><br>
-                        @if($manualDelivery->order->user)
-                            <a href="tel:{{ $manualDelivery->order->user->phone }}">{{ $manualDelivery->order->user->phone }}</a>
+                        @php
+                            $customerPhone = $manualDelivery->order->receiver_phone ?? $manualDelivery->order->user->phone ?? null;
+                        @endphp
+                        @if($customerPhone)
+                            <a href="tel:{{ $customerPhone }}">{{ $customerPhone }}</a>
                         @else
                             N/A
                         @endif
@@ -67,27 +70,47 @@
                         @endforeach
                     </tbody>
                     <tfoot>
+                        @php
+                            $order = $manualDelivery->order;
+                            // Get subtotal - prefer stored subtotal, fallback to calculated items_total
+                            $subtotal = $order->subtotal ?? $order->items_total ?? 0;
+                            
+                            // Get tax - check both tax_amount (new) and tax (legacy), use whichever has a value
+                            $tax = null;
+                            if ($order->tax_amount !== null && $order->tax_amount > 0) {
+                                $tax = $order->tax_amount;
+                            } elseif ($order->tax !== null && $order->tax > 0) {
+                                $tax = $order->tax;
+                            } else {
+                                $tax = $order->tax_amount ?? $order->tax ?? 0;
+                            }
+                            
+                            // Get shipping - check both shipping_cost (new) and shipping (legacy), use whichever has a value
+                            $shipping = null;
+                            if ($order->shipping_cost !== null && $order->shipping_cost > 0) {
+                                $shipping = $order->shipping_cost;
+                            } elseif ($order->shipping !== null && $order->shipping > 0) {
+                                $shipping = $order->shipping;
+                            } else {
+                                $shipping = $order->shipping_cost ?? $order->shipping ?? 0;
+                            }
+                        @endphp
                         <tr>
-                            <td colspan="3" class="text-end"><strong>Items Total:</strong></td>
-                            <td><strong>₨{{ number_format($manualDelivery->order->items_total, 2) }}</strong></td>
-                        </tr>
-                        @if($manualDelivery->order->shipping_cost > 0 || $manualDelivery->order->tax_amount > 0)
-                        <tr>
-                            <td colspan="3" class="text-end">
-                                @if($manualDelivery->order->shipping_cost > 0)
-                                    <small>Shipping: ₨{{ number_format($manualDelivery->order->shipping_cost ?? $manualDelivery->order->shipping ?? 0, 2) }}</small><br>
-                                @endif
-                                @if($manualDelivery->order->tax_amount > 0)
-                                    <small>Tax: ₨{{ number_format($manualDelivery->order->tax_amount ?? $manualDelivery->order->tax ?? 0, 2) }}</small>
-                                @endif
-                            </td>
-                            <td></td>
+                            <td colspan="3" class="text-end"><strong>Subtotal:</strong></td>
+                            <td><strong>₨{{ number_format($subtotal, 2) }}</strong></td>
                         </tr>
                         <tr>
-                            <td colspan="3" class="text-end"><strong>Order Total:</strong></td>
-                            <td><strong>₨{{ number_format($manualDelivery->order->total, 2) }}</strong></td>
+                            <td colspan="3" class="text-end">Tax:</td>
+                            <td>₨{{ number_format($tax, 2) }}</td>
                         </tr>
-                        @endif
+                        <tr>
+                            <td colspan="3" class="text-end">Shipping:</td>
+                            <td>₨{{ number_format($shipping, 2) }}</td>
+                        </tr>
+                        <tr class="table-active">
+                            <td colspan="3" class="text-end fw-bold">Total:</td>
+                            <td class="fw-bold">₨{{ number_format($order->total, 2) }}</td>
+                        </tr>
                     </tfoot>
                 </table>
             </div>
@@ -115,6 +138,21 @@
                             <div>
                                 <strong>Picked Up</strong><br>
                                 <small>{{ $manualDelivery->picked_up_at->format('M d, Y h:i A') }}</small>
+                            </div>
+                        </div>
+                    @endif
+                    @if($manualDelivery->status === 'in_transit' || ($manualDelivery->status === 'delivered' && $manualDelivery->picked_up_at))
+                        <div class="timeline-item">
+                            <i class="fas fa-truck text-warning"></i>
+                            <div>
+                                <strong>In Transit</strong><br>
+                                <small>
+                                    @if($manualDelivery->status === 'in_transit')
+                                        {{ $manualDelivery->updated_at->format('M d, Y h:i A') }}
+                                    @elseif($manualDelivery->picked_up_at)
+                                        {{ $manualDelivery->picked_up_at->format('M d, Y h:i A') }}
+                                    @endif
+                                </small>
                             </div>
                         </div>
                     @endif
@@ -180,30 +218,109 @@
                 <h5 class="mb-0"><i class="fas fa-money-bill me-2"></i> Payment Info</h5>
             </div>
             <div class="card-body">
+                @php
+                    $order = $manualDelivery->order;
+                    $isCod = $order && in_array($order->payment_method, ['cod', 'cash_on_delivery']);
+                    
+                    // Get COD amount - use order total directly
+                    $codAmount = 0;
+                    if ($isCod) {
+                        // Use order total directly as COD amount
+                        $codAmount = $order->total ?? 0;
+                    }
+                    
+                    // Get COD collected status from database
+                    $codCollected = $manualDelivery->cod_collected ?? false;
+                    
+                    // Get COD settled status from database
+                    $codSettled = $manualDelivery->cod_settled ?? false;
+                @endphp
+                
+                <div class="mb-2">
+                    <strong>Payment Method:</strong><br>
+                    <span class="badge bg-{{ $isCod ? 'warning' : 'info' }}">
+                        {{ $isCod ? 'COD' : strtoupper(str_replace('_', ' ', $order->payment_method ?? 'N/A')) }}
+                    </span>
+                </div>
+                
+                @if($isCod)
                 <div class="mb-2">
                     <strong>COD Amount:</strong><br>
-                    @php
-                        $codAmount = $manualDelivery->cod_amount ?? 0;
-                        if (($codAmount == 0 || $codAmount == null) && $manualDelivery->order && $manualDelivery->order->payment_method === 'cod') {
-                            $codAmount = $manualDelivery->order->orderItems->sum(function($item) {
-                                return ($item->quantity ?? 0) * ($item->price ?? 0);
-                            });
-                        }
-                    @endphp
                     <span class="h4 text-danger">₨{{ number_format($codAmount, 2) }}</span>
                 </div>
                 <div class="mb-2">
                     <strong>COD Collected:</strong><br>
-                    <span class="badge bg-{{ $manualDelivery->cod_collected ? 'success' : 'secondary' }}">
-                        {{ $manualDelivery->cod_collected ? 'Yes' : 'No' }}
+                    <span class="badge bg-{{ $codCollected ? 'success' : 'secondary' }}">
+                        {{ $codCollected ? 'Yes' : 'No' }}
                     </span>
+                    @if($codCollected && $manualDelivery->delivered_at)
+                        <br><small class="text-muted">Collected on {{ $manualDelivery->delivered_at->format('M d, Y h:i A') }}</small>
+                    @endif
                 </div>
                 <div>
                     <strong>Settlement Status:</strong><br>
-                    <span class="badge bg-{{ $manualDelivery->cod_settled ? 'success' : 'warning' }}">
-                        {{ $manualDelivery->cod_settled ? 'Settled' : 'Pending' }}
+                    <span class="badge bg-{{ $codSettled ? 'success' : 'warning' }}">
+                        {{ $codSettled ? 'Settled' : 'Pending' }}
+                    </span>
+                    @if($codSettled && $manualDelivery->cod_settled_at)
+                        <br><small class="text-muted">Settled on {{ $manualDelivery->cod_settled_at->format('M d, Y h:i A') }}</small>
+                    @endif
+                </div>
+                @endif
+                
+                @if($isCod && isset($codSettlement) && $codSettlement)
+                <!-- COD Settlement Details -->
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-receipt me-2"></i> COD Settlement Details</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-2">
+                            <strong>Settlement ID:</strong><br>
+                            <span class="fw-semibold">{{ $codSettlement->settlement_id }}</span>
+                        </div>
+                        <div class="mb-2">
+                            <strong>Settlement Amount:</strong><br>
+                            <span class="h5 text-success">₨{{ number_format($codSettlement->total_amount, 2) }}</span>
+                        </div>
+                        <div class="mb-2">
+                            <strong>Payment Method:</strong><br>
+                            <span class="badge bg-info">{{ ucfirst(str_replace('_', ' ', $codSettlement->payment_method)) }}</span>
+                        </div>
+                        @if($codSettlement->transaction_reference)
+                        <div class="mb-2">
+                            <strong>Transaction Reference:</strong><br>
+                            <span class="text-muted">{{ $codSettlement->transaction_reference }}</span>
+                        </div>
+                        @endif
+                        <div class="mb-2">
+                            <strong>Settled By:</strong><br>
+                            <span>{{ $codSettlement->settledBy->name ?? 'N/A' }}</span>
+                        </div>
+                        <div class="mb-2">
+                            <strong>Settlement Date:</strong><br>
+                            <span>{{ $codSettlement->settled_at->format('M d, Y h:i A') }}</span>
+                        </div>
+                        @if($codSettlement->notes)
+                        <div>
+                            <strong>Notes:</strong><br>
+                            <span class="text-muted">{{ $codSettlement->notes }}</span>
+                        </div>
+                        @endif
+                    </div>
+                </div>
+                @elseif(!$isCod)
+                <div class="mb-2">
+                    <strong>Payment Status:</strong><br>
+                    <span class="badge bg-{{ $order->payment_status === 'paid' ? 'success' : 'secondary' }}">
+                        {{ ucfirst($order->payment_status ?? 'unpaid') }}
                     </span>
                 </div>
+                <div>
+                    <strong>Order Total:</strong><br>
+                    <span class="h4 text-primary">₨{{ number_format($order->total, 2) }}</span>
+                </div>
+                @endif
             </div>
         </div>
 

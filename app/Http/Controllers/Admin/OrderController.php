@@ -13,7 +13,7 @@ class OrderController extends Controller
     public function index(Request $request)
     {
         // Build base query with eager loading
-        $query = Order::with(['user:id,name,email,phone', 'orderItems:id,order_id,product_id,quantity,price,total']);
+        $query = Order::with(['user:id,name,email,phone', 'orderItems.product:id,name']);
 
         // Search functionality
         if ($request->has('search') && $request->search != '') {
@@ -179,35 +179,110 @@ class OrderController extends Controller
 
     public function edit(Order $order)
     {
-        return view('admin.orders.edit', compact('order'));
+        // Load products for the dropdown (tenant scope is automatically applied)
+        $products = Product::orderBy('name')->get();
+        $order->load('orderItems.product');
+        return view('admin.orders.edit', compact('order', 'products'));
     }
 
     public function update(Request $request, Order $order)
     {
         $validated = $request->validate([
-            'status' => 'required|in:pending,processing,completed,cancelled',
+            'status' => 'required|in:pending,confirmed,processing,shipped,completed,cancelled',
             'payment_status' => 'required|in:unpaid,paid,refunded',
+            'payment_method' => 'nullable|in:cod,online,bank_transfer,khalti,esewa,cash_on_delivery,paid',
+            'delivery_type' => 'nullable|in:standard,express',
+            'customer_name' => 'required|string|max:255',
+            'customer_phone' => 'required|string|max:20',
+            'shipping_address' => 'required|string',
+            'shipping_cost' => 'nullable|numeric|min:0',
+            'tax_amount' => 'nullable|numeric|min:0',
             'notes' => 'nullable|string',
+            'delivery_instructions' => 'nullable|string',
+            'product_ids' => 'required|array|min:1',
+            'product_ids.*' => 'required|exists:products,id',
+            'quantities' => 'required|array|min:1',
+            'quantities.*' => 'required|integer|min:1',
         ]);
 
-        $order->update($validated);
+        // Calculate subtotal from products
+        $subtotal = 0;
+        foreach ($validated['product_ids'] as $index => $productId) {
+            $product = Product::find($productId);
+            $quantity = $validated['quantities'][$index] ?? 1;
+            $itemPrice = $product->sale_price ?? $product->price;
+            $subtotal += $itemPrice * $quantity;
+        }
+
+        // Get shipping and tax amounts
+        $shippingCost = $validated['shipping_cost'] ?? 0;
+        $taxAmount = $validated['tax_amount'] ?? 0;
+        $total = $subtotal + $shippingCost + $taxAmount;
+
+        // Update order with customer details and recalculated totals
+        $order->update([
+            'status' => $validated['status'],
+            'payment_status' => $validated['payment_status'],
+            'payment_method' => $validated['payment_method'] ?? $order->payment_method,
+            'delivery_type' => $validated['delivery_type'] ?? $order->delivery_type,
+            'receiver_name' => $validated['customer_name'],
+            'receiver_phone' => $validated['customer_phone'],
+            'receiver_full_address' => $validated['shipping_address'],
+            'shipping_address' => $validated['shipping_address'],
+            'subtotal' => $subtotal,
+            'shipping_cost' => $shippingCost,
+            'tax_amount' => $taxAmount,
+            'shipping' => $shippingCost, // Legacy field
+            'tax' => $taxAmount, // Legacy field
+            'total' => $total,
+            'notes' => $validated['notes'] ?? $order->notes,
+            'delivery_instructions' => $validated['delivery_instructions'] ?? $order->delivery_instructions,
+        ]);
+        
+        // Delete existing order items
+        $order->orderItems()->delete();
+        
+        // Create new order items
+        foreach ($validated['product_ids'] as $index => $productId) {
+            $product = Product::find($productId);
+            $quantity = $validated['quantities'][$index] ?? 1;
+            $itemPrice = $product->sale_price ?? $product->price;
+            $itemTotal = $itemPrice * $quantity;
+
+            $order->orderItems()->create([
+                'product_id' => $product->id,
+                'product_name' => $product->name,
+                'quantity' => $quantity,
+                'price' => $itemPrice,
+                'total' => $itemTotal,
+            ]);
+        }
+        
+        // Update user if exists
+        if ($order->user) {
+            $order->user->update([
+                'name' => $validated['customer_name'],
+                'phone' => $validated['customer_phone'],
+            ]);
+        }
         
         // Clear storefront cache when order status changes
         Cache::forget("categories_{$order->tenant_id}");
 
-        return redirect()->route('admin.orders.index')->with('success', 'Order updated successfully.');
+        return redirect()->route('admin.orders.show', $order)->with('success', 'Order updated successfully.');
     }
 
     public function destroy(Order $order)
     {
-        $order->orderItems()->delete();
+        // Soft delete the order - don't delete order items
+        // Order items will remain in the database and will be available when order is restored
         $order->delete();
 
         if (request()->ajax()) {
-            return response()->json(['success' => true, 'message' => 'Order deleted successfully.']);
+            return response()->json(['success' => true, 'message' => 'Order moved to trash successfully.']);
         }
 
-        return redirect()->route('admin.orders.index')->with('success', 'Order deleted successfully.');
+        return redirect()->route('admin.orders.index')->with('success', 'Order moved to trash successfully.');
     }
 
     public function bulkAction(Request $request)

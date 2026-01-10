@@ -264,6 +264,9 @@ class ManualDeliveryController extends Controller
             return ($item->quantity ?? 0) * ($item->price ?? 0);
         });
         
+        // Check if payment method is COD (handle both 'cod' and 'cash_on_delivery')
+        $isCod = in_array($order->payment_method, ['cod', 'cash_on_delivery']);
+        
         // Create manual delivery
         $manualDelivery = ManualDelivery::create([
             'order_id' => $order->id,
@@ -271,7 +274,7 @@ class ManualDeliveryController extends Controller
             'assigned_by' => Auth::id(),
             'status' => 'assigned',
             'assigned_at' => now(),
-            'cod_amount' => $order->payment_method === 'cod' ? $itemsTotal : 0,
+            'cod_amount' => $isCod ? $itemsTotal : 0,
             'delivery_notes' => $validated['delivery_notes'] ?? null,
         ]);
         
@@ -321,13 +324,16 @@ class ManualDeliveryController extends Controller
                     return ($item->quantity ?? 0) * ($item->price ?? 0);
                 });
                 
+                // Check if payment method is COD (handle both 'cod' and 'cash_on_delivery')
+                $isCod = in_array($order->payment_method, ['cod', 'cash_on_delivery']);
+                
                 $manualDelivery = ManualDelivery::create([
                     'order_id' => $order->id,
                     'delivery_boy_id' => $validated['delivery_boy_id'],
                     'assigned_by' => Auth::id(),
                     'status' => 'assigned',
                     'assigned_at' => now(),
-                    'cod_amount' => $order->payment_method === 'cod' ? $itemsTotal : 0,
+                    'cod_amount' => $isCod ? $itemsTotal : 0,
                 ]);
                 
                 // Ensure COD amount is synced with order items total
@@ -389,7 +395,25 @@ class ManualDeliveryController extends Controller
         $manualDelivery->syncCodAmount();
         $manualDelivery->refresh();
         
-        return view('admin.manual-delivery.show', compact('manualDelivery'));
+        // Find COD settlement for this delivery if settled
+        $codSettlement = null;
+        if ($manualDelivery->cod_settled) {
+            // Find settlement that includes this order_id in the order_ids JSON array
+            $codSettlement = CodSettlement::where('delivery_boy_id', $manualDelivery->delivery_boy_id)
+                ->get()
+                ->filter(function($settlement) use ($manualDelivery) {
+                    $orderIds = $settlement->getOrderIdsArray();
+                    return in_array($manualDelivery->order_id, $orderIds);
+                })
+                ->first();
+            
+            // Load settledBy relationship if settlement found
+            if ($codSettlement) {
+                $codSettlement->load('settledBy');
+            }
+        }
+        
+        return view('admin.manual-delivery.show', compact('manualDelivery', 'codSettlement'));
     }
     
     // Edit delivery (show edit form)
@@ -506,15 +530,17 @@ class ManualDeliveryController extends Controller
         $settlements = $query->latest('settled_at')->paginate(20);
         $deliveryBoys = DeliveryBoy::all();
         
-        // Get pending COD by delivery boy
+        // Get pending COD by delivery boy - use order total instead of cod_amount
         $pendingCod = DeliveryBoy::query()
             ->select('delivery_boys.id', 'delivery_boys.name', 'delivery_boys.phone', 'delivery_boys.tenant_id')
-            ->selectRaw('SUM(manual_deliveries.cod_amount) as pending_amount')
+            ->selectRaw('SUM(orders.total) as pending_amount')
             ->selectRaw('COUNT(manual_deliveries.id) as pending_orders')
             ->join('manual_deliveries', 'delivery_boys.id', '=', 'manual_deliveries.delivery_boy_id')
+            ->join('orders', 'manual_deliveries.order_id', '=', 'orders.id')
             ->where('manual_deliveries.status', 'delivered')
             ->where('manual_deliveries.cod_collected', true)
             ->where('manual_deliveries.cod_settled', false)
+            ->whereIn('orders.payment_method', ['cod', 'cash_on_delivery'])
             ->groupBy('delivery_boys.id', 'delivery_boys.name', 'delivery_boys.phone', 'delivery_boys.tenant_id')
             ->having('pending_amount', '>', 0)
             ->get();
@@ -532,7 +558,10 @@ class ManualDeliveryController extends Controller
             ->where('cod_settled', false)
             ->get();
         
-        $totalAmount = $pendingDeliveries->sum('cod_amount');
+        // Calculate total from order totals (full amount including tax and shipping)
+        $totalAmount = $pendingDeliveries->sum(function($delivery) {
+            return $delivery->order->total ?? 0;
+        });
         
         return view('admin.manual-delivery.create-settlement', compact('deliveryBoy', 'pendingDeliveries', 'totalAmount'));
     }
@@ -559,7 +588,13 @@ class ManualDeliveryController extends Controller
             return back()->with('error', 'No valid deliveries found for settlement.');
         }
         
-        $totalAmount = $deliveries->sum('cod_amount');
+        // Load orders to get full totals
+        $deliveries->load('order');
+        
+        // Calculate total from order totals (full amount including tax and shipping)
+        $totalAmount = $deliveries->sum(function($delivery) {
+            return $delivery->order->total ?? 0;
+        });
         $orderIds = $deliveries->pluck('order_id')->toArray();
         
         // Generate settlement ID

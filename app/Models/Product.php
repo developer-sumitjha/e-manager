@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Support\Facades\Storage;
 use App\Traits\BelongsToTenant;
 
 class Product extends Model
@@ -63,15 +64,26 @@ class Product extends Model
      */
     public function getPrimaryImageUrlAttribute()
     {
+        // Check images array first
         if ($this->images && is_array($this->images) && count($this->images) > 0) {
             $index = $this->primary_image_index ?? 0;
             $image = $this->images[$index] ?? $this->images[0];
-            return asset('storage/' . $image);
+            
+            // Ensure image path is valid
+            if ($image && is_string($image) && !empty(trim($image))) {
+                // Check if file exists
+                if (Storage::disk('public')->exists($image)) {
+                    return asset('storage/' . ltrim($image, '/'));
+                }
+            }
         }
         
         // Fallback to old single image field
-        if ($this->image) {
-            return asset('storage/' . $this->image);
+        if ($this->image && is_string($this->image) && !empty(trim($this->image))) {
+            // Check if file exists
+            if (Storage::disk('public')->exists($this->image)) {
+                return asset('storage/' . ltrim($this->image, '/'));
+            }
         }
         
         return null;
@@ -82,18 +94,27 @@ class Product extends Model
      */
     public function getAllImagesUrlsAttribute()
     {
+        $urls = [];
+        
         if ($this->images && is_array($this->images)) {
-            return array_map(function($image) {
-                return asset('storage/' . $image);
-            }, $this->images);
+            foreach ($this->images as $image) {
+                if ($image && is_string($image) && !empty(trim($image))) {
+                    // Check if file exists
+                    if (Storage::disk('public')->exists($image)) {
+                        $urls[] = asset('storage/' . ltrim($image, '/'));
+                    }
+                }
+            }
         }
         
-        // Fallback to old single image
-        if ($this->image) {
-            return [asset('storage/' . $this->image)];
+        // Fallback to old single image if no images in array
+        if (empty($urls) && $this->image && is_string($this->image) && !empty(trim($this->image))) {
+            if (Storage::disk('public')->exists($this->image)) {
+                $urls[] = asset('storage/' . ltrim($this->image, '/'));
+            }
         }
         
-        return [];
+        return $urls;
     }
     
     /**

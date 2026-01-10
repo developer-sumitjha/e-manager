@@ -61,14 +61,25 @@
             </thead>
             <tbody>
                 @forelse($deliveries as $delivery)
+                @php
+                    $order = $delivery->order;
+                    $isCod = $order && in_array($order->payment_method, ['cod', 'cash_on_delivery']);
+                    $codAmount = $isCod ? ($order->total ?? 0) : 0;
+                @endphp
                 <tr>
-                    <td><strong>{{ $delivery->order->order_number }}</strong></td>
+                    <td><strong>{{ $order->order_number }}</strong></td>
                     <td>
-                        <div>{{ $delivery->order->user->name }}</div>
-                        <small class="text-muted">{{ $delivery->order->user->phone }}</small>
+                        <div>{{ $order->receiver_name ?? $order->user->name ?? 'N/A' }}</div>
+                        <small class="text-muted">{{ $order->receiver_phone ?? $order->user->phone ?? 'N/A' }}</small>
                     </td>
-                    <td>{{ Str::limit($delivery->order->shipping_address ?? 'N/A', 40) }}</td>
-                    <td><strong class="text-danger">₨{{ number_format($delivery->effective_cod_amount, 2) }}</strong></td>
+                    <td>{{ Str::limit($order->receiver_full_address ?? $order->shipping_address ?? 'N/A', 40) }}</td>
+                    <td>
+                        @if($isCod)
+                            <strong class="text-danger">₨{{ number_format($codAmount, 2) }}</strong>
+                        @else
+                            <span class="text-muted">N/A</span>
+                        @endif
+                    </td>
                     <td><span class="badge {{ $delivery->getStatusBadgeClass() }}">{{ strtoupper(str_replace('_', ' ', $delivery->status)) }}</span></td>
                     <td>{{ $delivery->assigned_at->format('M d, Y h:i A') }}</td>
                     <td>

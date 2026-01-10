@@ -81,12 +81,26 @@
                         </div>
                     </div>
 
-                    @if($product->image)
+                    @if($product->primary_image_url || $product->image)
                     <div class="mb-3">
                         <label class="form-label">Current Image</label>
                         <div>
-                            <img src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->name }}" style="max-width: 200px; border-radius: 5px;">
+                            @php
+                                $currentImageUrl = $product->primary_image_url;
+                                if (!$currentImageUrl && $product->image) {
+                                    $currentImageUrl = asset('storage/' . $product->image);
+                                }
+                            @endphp
+                            @if($currentImageUrl)
+                                <img src="{{ $currentImageUrl }}" alt="{{ $product->name }}" 
+                                     style="max-width: 200px; border-radius: 5px; border: 1px solid #ddd; padding: 5px;"
+                                     onerror="this.onerror=null; this.style.display='none'; this.nextElementSibling.style.display='block';">
+                                <div style="display: none; width: 200px; height: 200px; border: 1px solid #ddd; border-radius: 5px; background: #f5f5f5; display: flex; align-items: center; justify-content: center; color: #999;">
+                                    <i class="fas fa-image"></i> Image not found
+                                </div>
+                            @endif
                         </div>
+                        <small class="text-muted">Upload a new image to replace this one.</small>
                     </div>
                     @endif
 
@@ -96,6 +110,12 @@
                         @error('image')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
+                        <div id="imagePreview" class="mt-2" style="display: none;">
+                            <label class="form-label">New Image Preview</label>
+                            <div>
+                                <img id="previewImg" src="" alt="Preview" style="max-width: 200px; border-radius: 5px; border: 1px solid #ddd; padding: 5px;">
+                            </div>
+                        </div>
                     </div>
 
                     <div class="mb-3">
@@ -148,6 +168,30 @@
                 skuEl.value = suggested;
             }
         }
+        
+        // Image preview functionality
+        function setupImagePreview(){
+            const imageInput = document.getElementById('image');
+            const imagePreview = document.getElementById('imagePreview');
+            const previewImg = document.getElementById('previewImg');
+            
+            if (imageInput && imagePreview && previewImg) {
+                imageInput.addEventListener('change', function(e){
+                    const file = e.target.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = function(e){
+                            previewImg.src = e.target.result;
+                            imagePreview.style.display = 'block';
+                        };
+                        reader.readAsDataURL(file);
+                    } else {
+                        imagePreview.style.display = 'none';
+                    }
+                });
+            }
+        }
+        
         document.addEventListener('DOMContentLoaded', function(){
             const nameEl = document.getElementById('productName');
             const skuEl = document.getElementById('skuInput');
@@ -159,6 +203,7 @@
                 skuEl.addEventListener('input', function(){ userEditedSku = true; });
                 skuEl.addEventListener('blur', function(){ this.value = slugToSku(this.value); });
             }
+            setupImagePreview();
         });
     })();
 </script>

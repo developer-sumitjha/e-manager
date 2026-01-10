@@ -126,24 +126,30 @@
                 <div class="d-flex align-items-center mb-3">
                     <div class="avatar-lg me-3">
                         <div class="avatar-initials">
-                            {{ substr($order->user->name ?? 'G', 0, 1) }}
+                            {{ substr($order->receiver_name ?? $order->user->name ?? 'G', 0, 1) }}
                         </div>
                     </div>
                     <div>
-                        <div class="fw-semibold">{{ $order->user->name ?? 'Guest' }}</div>
-                        <small class="text-muted">{{ $order->user->email ?? 'N/A' }}</small>
+                        <div class="fw-semibold">{{ $order->receiver_name ?? $order->user->name ?? 'Guest' }}</div>
+                        <small class="text-muted">{{ $order->receiver_phone ?? $order->user->phone ?? 'N/A' }}</small>
                     </div>
                 </div>
                 
                 <div class="row g-2">
-                    <div class="col-6">
+                    <div class="col-12">
                         <small class="text-muted">Phone</small>
-                        <div class="fw-semibold">{{ $order->user->phone ?? 'N/A' }}</div>
+                        <div class="fw-semibold">{{ $order->receiver_phone ?? $order->user->phone ?? 'N/A' }}</div>
                     </div>
-                    <div class="col-6">
+                    @if($order->user)
+                    <div class="col-12">
+                        <small class="text-muted">Email</small>
+                        <div class="fw-semibold">{{ $order->user->email ?? 'N/A' }}</div>
+                    </div>
+                    <div class="col-12">
                         <small class="text-muted">Role</small>
                         <div class="fw-semibold">{{ ucfirst($order->user->role ?? 'Guest') }}</div>
                     </div>
+                    @endif
                 </div>
             </div>
         </div>
@@ -180,7 +186,7 @@
         </div>
 
         <!-- Shipping Address -->
-        @if($order->shipping_address || $order->receiver_name)
+        @if($order->shipping_address || $order->receiver_name || $order->receiver_full_address)
         <div class="card mb-4">
             <div class="card-header">
                 <h6 class="card-title mb-0">Shipping Address</h6>
@@ -192,8 +198,10 @@
                 @if($order->receiver_phone)
                 <div class="text-muted mb-2">{{ $order->receiver_phone }}</div>
                 @endif
-                @if($order->shipping_address)
-                <div class="text-muted">{{ $order->shipping_address }}</div>
+                @if($order->receiver_full_address)
+                <div class="text-muted mb-2">{{ $order->receiver_full_address }}</div>
+                @elseif($order->shipping_address)
+                <div class="text-muted mb-2">{{ $order->shipping_address }}</div>
                 @endif
                 @if($order->receiver_city)
                 <div class="text-muted">{{ $order->receiver_city }}{{ $order->receiver_area ? ', ' . $order->receiver_area : '' }}</div>

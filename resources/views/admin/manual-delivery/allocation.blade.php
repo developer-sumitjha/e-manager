@@ -69,8 +69,22 @@
                             <td>{{ Str::limit($order->shipping_address ?? 'N/A', 40) }}</td>
                             <td><strong class="text-success">₨{{ number_format($order->total, 2) }}</strong></td>
                             <td>
-                                <span class="badge bg-{{ $order->payment_method === 'cod' ? 'warning' : 'info' }}">
-                                    {{ strtoupper($order->payment_method) }}
+                                @php
+                                    $paymentMethod = $order->payment_method;
+                                    // Normalize payment method display
+                                    if (in_array($paymentMethod, ['cod', 'cash_on_delivery'])) {
+                                        $paymentMethod = 'COD';
+                                        $badgeClass = 'warning';
+                                    } elseif (in_array($paymentMethod, ['paid', 'online', 'bank_transfer', 'khalti', 'esewa'])) {
+                                        $paymentMethod = ucfirst(str_replace('_', ' ', $paymentMethod));
+                                        $badgeClass = 'success';
+                                    } else {
+                                        $paymentMethod = ucfirst(str_replace('_', ' ', $paymentMethod ?? 'N/A'));
+                                        $badgeClass = 'info';
+                                    }
+                                @endphp
+                                <span class="badge bg-{{ $badgeClass }}">
+                                    {{ $paymentMethod }}
                                 </span>
                             </td>
                             <td>{{ $order->created_at->format('M d, Y') }}</td>

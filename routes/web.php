@@ -97,7 +97,9 @@ Route::middleware(['auth', 'admin_employee', 'subscription.active'])->prefix('ad
     // Products
     Route::resource('products', ProductController::class)
         ->middleware(['plan.limit:products', 'employee.can:products']);
-    Route::post('products/{product}/delete', [ProductController::class, 'destroyJson'])->name('products.destroy.json');
+    Route::post('products/{product}/delete', [ProductController::class, 'destroyJson'])
+        ->name('products.destroy.json')
+        ->middleware(['employee.can:products']);
     Route::post('products/{product}/toggle-status', [ProductController::class, 'toggleStatus'])->name('products.toggle-status');
     Route::post('products/{product}/duplicate', [ProductController::class, 'duplicate'])->name('products.duplicate')->middleware('plan.limit:products');
     Route::post('products/bulk-action', [ProductController::class, 'bulkAction'])->name('products.bulk-action');
@@ -121,6 +123,11 @@ Route::middleware(['auth', 'admin_employee', 'subscription.active'])->prefix('ad
     Route::get('pending-orders/bulk/create', [App\Http\Controllers\Admin\PendingOrderController::class, 'createBulk'])->name('pending-orders.create-bulk');
     Route::post('pending-orders/bulk', [App\Http\Controllers\Admin\PendingOrderController::class, 'storeBulk'])->name('pending-orders.store-bulk');
     Route::get('rejected-orders', [App\Http\Controllers\Admin\PendingOrderController::class, 'rejectedOrders'])->name('rejected-orders.index');
+    
+    // Trash Management for Pending Orders
+    Route::get('pending-orders/trash', [App\Http\Controllers\Admin\PendingOrderController::class, 'trash'])->name('pending-orders.trash');
+    Route::post('pending-orders/{id}/restore', [App\Http\Controllers\Admin\PendingOrderController::class, 'restore'])->name('pending-orders.restore');
+    Route::delete('pending-orders/{id}/force-delete', [App\Http\Controllers\Admin\PendingOrderController::class, 'forceDelete'])->name('pending-orders.force-delete');
     
     // Pending Orders - Resource routes last
     Route::resource('pending-orders', App\Http\Controllers\Admin\PendingOrderController::class);
@@ -169,29 +176,29 @@ Route::middleware(['auth', 'admin_employee', 'subscription.active'])->prefix('ad
     Route::post('manual-delivery/allocate', [App\Http\Controllers\Admin\ManualDeliveryController::class, 'allocateOrder'])->name('manual-delivery.allocate');
     Route::post('manual-delivery/bulk-allocate', [App\Http\Controllers\Admin\ManualDeliveryController::class, 'bulkAllocate'])->name('manual-delivery.bulk-allocate');
     
-    // Parameterized routes (must come after specific routes)
-    Route::get('manual-delivery/{manualDelivery}', [App\Http\Controllers\Admin\ManualDeliveryController::class, 'show'])->name('manual-delivery.show');
-    Route::get('manual-delivery/{manualDelivery}/edit', [App\Http\Controllers\Admin\ManualDeliveryController::class, 'edit'])->name('manual-delivery.edit');
-    Route::put('manual-delivery/{manualDelivery}', [App\Http\Controllers\Admin\ManualDeliveryController::class, 'update'])->name('manual-delivery.update');
-    
-    // Delivery Boy Wise Views
+    // Delivery Boy Wise Views (must come before parameterized routes)
     Route::get('manual-delivery/delivery-boy-wise', [App\Http\Controllers\Admin\ManualDeliveryController::class, 'deliveryBoyWise'])->name('manual-delivery.delivery-boy-wise');
     Route::get('manual-delivery/delivery-boy/{deliveryBoy}/deliveries', [App\Http\Controllers\Admin\ManualDeliveryController::class, 'deliveryBoyDeliveries'])->name('manual-delivery.boy-deliveries');
     Route::post('manual-delivery/deliveries/{manualDelivery}/update-status', [App\Http\Controllers\Admin\ManualDeliveryController::class, 'updateDeliveryStatus'])->name('manual-delivery.update-delivery-status');
     
-    // COD Settlements
+    // COD Settlements (must come before parameterized routes)
     Route::get('manual-delivery/cod-settlements', [App\Http\Controllers\Admin\ManualDeliveryController::class, 'codSettlements'])->name('manual-delivery.cod-settlements');
     Route::get('manual-delivery/cod-settlements/{deliveryBoy}/create', [App\Http\Controllers\Admin\ManualDeliveryController::class, 'createCodSettlement'])->name('manual-delivery.create-settlement');
     Route::post('manual-delivery/cod-settlements/{deliveryBoy}', [App\Http\Controllers\Admin\ManualDeliveryController::class, 'storeCodSettlement'])->name('manual-delivery.store-settlement');
     
-    // Delivery Boy Analytics
+    // Delivery Boy Analytics (must come before parameterized routes)
     Route::get('manual-delivery/delivery-boy/{deliveryBoy}/analytics', [App\Http\Controllers\Admin\ManualDeliveryController::class, 'deliveryBoyAnalytics'])->name('manual-delivery.boy-analytics');
     
-    // Delivery Boys Management
+    // Delivery Boys Management (must come before parameterized routes)
     Route::get('manual-delivery/delivery-boys', [App\Http\Controllers\Admin\ManualDeliveryController::class, 'deliveryBoys'])->name('manual-delivery.delivery-boys');
     Route::post('manual-delivery/delivery-boys', [App\Http\Controllers\Admin\ManualDeliveryController::class, 'storeDeliveryBoy'])->name('manual-delivery.store-delivery-boy');
     Route::post('manual-delivery/delivery-boy/{deliveryBoy}/update', [App\Http\Controllers\Admin\ManualDeliveryController::class, 'updateDeliveryBoy'])->name('manual-delivery.update-delivery-boy');
     Route::post('manual-delivery/delivery-boy/{deliveryBoy}/status', [App\Http\Controllers\Admin\ManualDeliveryController::class, 'updateDeliveryBoyStatus'])->name('manual-delivery.update-boy-status');
+    
+    // Parameterized routes (must come after all specific routes)
+    Route::get('manual-delivery/{manualDelivery}', [App\Http\Controllers\Admin\ManualDeliveryController::class, 'show'])->name('manual-delivery.show');
+    Route::get('manual-delivery/{manualDelivery}/edit', [App\Http\Controllers\Admin\ManualDeliveryController::class, 'edit'])->name('manual-delivery.edit');
+    Route::put('manual-delivery/{manualDelivery}', [App\Http\Controllers\Admin\ManualDeliveryController::class, 'update'])->name('manual-delivery.update');
     
     // Settings
     Route::prefix('settings')->name('settings.')->group(function () {

@@ -227,6 +227,9 @@
                         <button type="submit" class="btn btn-primary">
                             <i class="fas fa-save"></i> Create Product
                         </button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="clearProductForm()">
+                            <i class="fas fa-times"></i> Clear Form
+                        </button>
                         <a href="{{ route('admin.products.index') }}" class="btn btn-outline-secondary">
                             <i class="fas fa-times"></i> Cancel
                         </a>
@@ -645,35 +648,66 @@ function createCategory() {
 
 // Form auto-save functionality
 let autoSaveTimeout;
+let formHasBeenModified = false;
+
 document.querySelectorAll('#product-form input, #product-form textarea, #product-form select').forEach(field => {
     field.addEventListener('input', function() {
+        formHasBeenModified = true;
         clearTimeout(autoSaveTimeout);
         autoSaveTimeout = setTimeout(() => {
-            // Auto-save to localStorage
-            const formData = new FormData(document.getElementById('product-form'));
-            const data = {};
-            for (let [key, value] of formData.entries()) {
-                data[key] = value;
+            // Only auto-save if form has been modified by user
+            if (formHasBeenModified) {
+                // Auto-save to localStorage
+                const formData = new FormData(document.getElementById('product-form'));
+                const data = {};
+                for (let [key, value] of formData.entries()) {
+                    data[key] = value;
+                }
+                // Add timestamp to track when draft was saved
+                data._timestamp = Date.now();
+                localStorage.setItem('product-draft', JSON.stringify(data));
             }
-            localStorage.setItem('product-draft', JSON.stringify(data));
         }, 2000);
     });
 });
 
-// Load draft on page load
-window.addEventListener('load', function() {
+// Load draft on page load - only if there's no old() input (validation errors)
+// But DON'T load on fresh page loads - only if user was actively editing
+document.addEventListener('DOMContentLoaded', function() {
+    // Check if there's any old() input data (from validation errors)
+    const nameField = document.getElementById('name');
+    const hasOldInput = nameField && nameField.value && nameField.value.trim() !== '';
+    const hasValidationErrors = @json($errors->any());
+    
+    // If there are validation errors or old input, clear the draft
+    if (hasOldInput || hasValidationErrors) {
+        localStorage.removeItem('product-draft');
+        return;
+    }
+    
+    // For fresh page loads, don't auto-load draft
+    // Only load if user explicitly wants it (via a button or if they start typing)
+    // This prevents the "previous data" issue when clicking "Add Product"
     const draft = localStorage.getItem('product-draft');
-    if (draft && !document.getElementById('name').value) {
+    if (draft && nameField && !nameField.value) {
+        // Check if draft was saved recently (within last hour)
         try {
             const data = JSON.parse(draft);
-            Object.keys(data).forEach(key => {
-                const field = document.querySelector(`[name="${key}"]`);
-                if (field) {
-                    field.value = data[key];
-                }
-            });
+            const draftTimestamp = data._timestamp || 0;
+            const oneHourAgo = Date.now() - (60 * 60 * 1000);
+            
+            // Only load if draft is recent (within 1 hour) and form is empty
+            if (draftTimestamp > oneHourAgo) {
+                // Don't auto-load - let user decide
+                // Instead, show a notification that draft exists
+                console.log('Draft available. Use "Restore Draft" if needed.');
+            } else {
+                // Old draft - remove it
+                localStorage.removeItem('product-draft');
+            }
         } catch (e) {
-            console.error('Error loading draft:', e);
+            console.error('Error checking draft:', e);
+            localStorage.removeItem('product-draft');
         }
     }
 });
@@ -682,5 +716,44 @@ window.addEventListener('load', function() {
 document.getElementById('product-form').addEventListener('submit', function() {
     localStorage.removeItem('product-draft');
 });
+
+// Add function to clear form and draft
+function clearProductForm() {
+    if (confirm('Are you sure you want to clear all form data? This cannot be undone.')) {
+        document.getElementById('product-form').reset();
+        localStorage.removeItem('product-draft');
+        formHasBeenModified = false;
+        
+        // Clear image previews
+        const imagePreview = document.getElementById('image-preview');
+        if (imagePreview) {
+            imagePreview.innerHTML = '';
+        }
+        
+        // Clear file inputs
+        const fileInputs = document.querySelectorAll('input[type="file"]');
+        fileInputs.forEach(input => {
+            input.value = '';
+        });
+        
+        // Reset checkboxes
+        const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = false;
+        });
+        
+        // Reset stock to 0
+        const stockInput = document.getElementById('stock');
+        const stockQuantityInput = document.getElementById('stock_quantity');
+        if (stockInput) stockInput.value = 0;
+        if (stockQuantityInput) stockQuantityInput.value = 0;
+        
+        // Reset category
+        const categorySelect = document.getElementById('category_id');
+        if (categorySelect) categorySelect.selectedIndex = 0;
+        
+        alert('Form cleared successfully!');
+    }
+}
 </script>
 @endpush

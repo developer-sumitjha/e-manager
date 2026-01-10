@@ -59,14 +59,25 @@
             </thead>
             <tbody>
                 <?php $__empty_1 = true; $__currentLoopData = $deliveries; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $delivery): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
+                <?php
+                    $order = $delivery->order;
+                    $isCod = $order && in_array($order->payment_method, ['cod', 'cash_on_delivery']);
+                    $codAmount = $isCod ? ($order->total ?? 0) : 0;
+                ?>
                 <tr>
-                    <td><strong><?php echo e($delivery->order->order_number); ?></strong></td>
+                    <td><strong><?php echo e($order->order_number); ?></strong></td>
                     <td>
-                        <div><?php echo e($delivery->order->user->name); ?></div>
-                        <small class="text-muted"><?php echo e($delivery->order->user->phone); ?></small>
+                        <div><?php echo e($order->receiver_name ?? $order->user->name ?? 'N/A'); ?></div>
+                        <small class="text-muted"><?php echo e($order->receiver_phone ?? $order->user->phone ?? 'N/A'); ?></small>
                     </td>
-                    <td><?php echo e(Str::limit($delivery->order->shipping_address ?? 'N/A', 40)); ?></td>
-                    <td><strong class="text-danger">₨<?php echo e(number_format($delivery->effective_cod_amount, 2)); ?></strong></td>
+                    <td><?php echo e(Str::limit($order->receiver_full_address ?? $order->shipping_address ?? 'N/A', 40)); ?></td>
+                    <td>
+                        <?php if($isCod): ?>
+                            <strong class="text-danger">₨<?php echo e(number_format($codAmount, 2)); ?></strong>
+                        <?php else: ?>
+                            <span class="text-muted">N/A</span>
+                        <?php endif; ?>
+                    </td>
                     <td><span class="badge <?php echo e($delivery->getStatusBadgeClass()); ?>"><?php echo e(strtoupper(str_replace('_', ' ', $delivery->status))); ?></span></td>
                     <td><?php echo e($delivery->assigned_at->format('M d, Y h:i A')); ?></td>
                     <td>

@@ -67,8 +67,22 @@
                             <td><?php echo e(Str::limit($order->shipping_address ?? 'N/A', 40)); ?></td>
                             <td><strong class="text-success">₨<?php echo e(number_format($order->total, 2)); ?></strong></td>
                             <td>
-                                <span class="badge bg-<?php echo e($order->payment_method === 'cod' ? 'warning' : 'info'); ?>">
-                                    <?php echo e(strtoupper($order->payment_method)); ?>
+                                <?php
+                                    $paymentMethod = $order->payment_method;
+                                    // Normalize payment method display
+                                    if (in_array($paymentMethod, ['cod', 'cash_on_delivery'])) {
+                                        $paymentMethod = 'COD';
+                                        $badgeClass = 'warning';
+                                    } elseif (in_array($paymentMethod, ['paid', 'online', 'bank_transfer', 'khalti', 'esewa'])) {
+                                        $paymentMethod = ucfirst(str_replace('_', ' ', $paymentMethod));
+                                        $badgeClass = 'success';
+                                    } else {
+                                        $paymentMethod = ucfirst(str_replace('_', ' ', $paymentMethod ?? 'N/A'));
+                                        $badgeClass = 'info';
+                                    }
+                                ?>
+                                <span class="badge bg-<?php echo e($badgeClass); ?>">
+                                    <?php echo e($paymentMethod); ?>
 
                                 </span>
                             </td>

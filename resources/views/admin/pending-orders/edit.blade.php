@@ -169,6 +169,89 @@
         transform: translateY(-2px);
         box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
     }
+
+    .products-section {
+        background: rgba(255, 255, 255, 0.9);
+        border-radius: 1rem;
+        padding: 2rem;
+        border: 1px solid rgba(16, 185, 129, 0.1);
+        backdrop-filter: blur(10px);
+        margin-bottom: 2rem;
+    }
+
+    .product-row {
+        display: flex;
+        gap: 1rem;
+        align-items: end;
+        margin-bottom: 1rem;
+        padding: 1rem;
+        background: rgba(16, 185, 129, 0.02);
+        border-radius: 0.75rem;
+        border: 1px solid rgba(16, 185, 129, 0.1);
+    }
+
+    .product-select {
+        flex: 2;
+    }
+
+    .quantity-input {
+        flex: 1;
+        max-width: 120px;
+    }
+
+    .price-display {
+        flex: 1;
+        max-width: 120px;
+        padding: 0.875rem 1rem;
+        background: rgba(16, 185, 129, 0.1);
+        border-radius: 0.75rem;
+        border: 1px solid rgba(16, 185, 129, 0.2);
+        font-weight: 600;
+        color: #10B981;
+        text-align: center;
+    }
+
+    .remove-product-btn {
+        background: rgba(239, 68, 68, 0.1);
+        color: #EF4444;
+        border: 1px solid rgba(239, 68, 68, 0.2);
+        border-radius: 0.5rem;
+        padding: 0.875rem;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 50px;
+        height: 50px;
+    }
+
+    .remove-product-btn:hover {
+        background: rgba(239, 68, 68, 0.2);
+        color: #EF4444;
+    }
+
+    .add-product-btn {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.5rem;
+        background: linear-gradient(135deg, #10B981, #34D399);
+        color: white;
+        text-decoration: none;
+        border-radius: 0.75rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+        margin-bottom: 1rem;
+    }
+
+    .add-product-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
+        color: white;
+    }
 </style>
 @endpush
 
@@ -267,16 +350,6 @@
                 </div>
                 <div class="col-md-6">
                     <div class="form-group">
-                        <label for="total_amount" class="form-label">Total Amount *</label>
-                        <input type="number" class="form-control" id="total_amount" name="total_amount" 
-                               value="{{ old('total_amount', $pending_order->total) }}" step="0.01" min="0" required>
-                        @error('total_amount')
-                            <div class="text-danger mt-1">{{ $message }}</div>
-                        @enderror
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="form-group">
                         <label for="notes" class="form-label">Notes (Optional)</label>
                         <textarea class="form-control" id="notes" name="notes" rows="3" 
                                   placeholder="Add any special instructions...">{{ old('notes', $pending_order->notes ?? '') }}</textarea>
@@ -286,6 +359,110 @@
                     </div>
                 </div>
             </div>
+        </div>
+        
+        <div class="products-section">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h3 class="section-title mb-0">
+                    <i class="fas fa-box"></i>
+                    Products
+                </h3>
+                <button type="button" class="add-product-btn" onclick="addProductRow()">
+                    <i class="fas fa-plus"></i> Add Product
+                </button>
+            </div>
+            
+            <div id="productsContainer">
+                @if($pending_order->orderItems->count() > 0)
+                    @foreach($pending_order->orderItems as $index => $item)
+                        <div class="product-row">
+                            <div class="product-select">
+                                <label class="form-label">Product</label>
+                                <select class="form-select" name="product_ids[]" required onchange="updatePrice(this)">
+                                    <option value="">Select Product</option>
+                                    @foreach($products as $product)
+                                        <option value="{{ $product->id }}" 
+                                                data-price="{{ $product->sale_price ?? $product->price }}"
+                                                {{ $item->product_id == $product->id ? 'selected' : '' }}>
+                                            {{ $product->name }} - ₹{{ number_format($product->sale_price ?? $product->price, 2) }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="quantity-input">
+                                <label class="form-label">Quantity</label>
+                                <input type="number" class="form-control" name="quantities[]" 
+                                       value="{{ $item->quantity }}" min="1" required onchange="calculateTotal()">
+                            </div>
+                            <div class="price-display">
+                                <label class="form-label">Price</label>
+                                <div id="price-{{ $index }}">₹{{ number_format($item->price * $item->quantity, 2) }}</div>
+                            </div>
+                            <div>
+                                <label class="form-label">&nbsp;</label>
+                                <button type="button" class="remove-product-btn" onclick="removeProductRow(this)">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    @endforeach
+                @else
+                    <div class="product-row">
+                        <div class="product-select">
+                            <label class="form-label">Product</label>
+                            <select class="form-select" name="product_ids[]" required onchange="updatePrice(this)">
+                                <option value="">Select Product</option>
+                                @foreach($products as $product)
+                                    <option value="{{ $product->id }}" data-price="{{ $product->sale_price ?? $product->price }}">
+                                        {{ $product->name }} - ₹{{ number_format($product->sale_price ?? $product->price, 2) }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="quantity-input">
+                            <label class="form-label">Quantity</label>
+                            <input type="number" class="form-control" name="quantities[]" value="1" min="1" required onchange="calculateTotal()">
+                        </div>
+                        <div class="price-display">
+                            <label class="form-label">Price</label>
+                            <div id="price-0">₹0.00</div>
+                        </div>
+                        <div>
+                            <label class="form-label">&nbsp;</label>
+                            <button type="button" class="remove-product-btn" onclick="removeProductRow(this)">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                @endif
+            </div>
+            
+            @if(count($products) == 0)
+                <div class="empty-products">
+                    <i class="fas fa-box"></i>
+                    <h5>No products available</h5>
+                    <p>Please add products first before editing orders.</p>
+                    <a href="{{ route('admin.products.create') }}" class="add-product-btn">
+                        <i class="fas fa-plus"></i> Add Product
+                    </a>
+                </div>
+            @endif
+        </div>
+    </div>
+    
+    <div class="order-summary">
+        <h4 class="section-title mb-3">
+            <i class="fas fa-calculator"></i>
+            Order Summary
+        </h4>
+        
+        <div class="summary-row">
+            <span class="summary-label">Subtotal:</span>
+            <span class="summary-value" id="subtotal">₹{{ number_format($pending_order->subtotal ?? 0, 2) }}</span>
+        </div>
+        <div class="summary-row">
+            <span class="summary-label">Total:</span>
+            <span class="summary-value" id="total">₹{{ number_format($pending_order->total ?? 0, 2) }}</span>
         </div>
     </div>
     
@@ -334,8 +511,103 @@
 
 @push('scripts')
 <script>
+    let productCounter = {{ $pending_order->orderItems->count() }};
+
+    document.addEventListener('DOMContentLoaded', function() {
+        calculateTotal();
+        updateAllPrices();
+    });
+
+    function addProductRow() {
+        const container = document.getElementById('productsContainer');
+        const productRow = document.createElement('div');
+        productRow.className = 'product-row';
+        productRow.innerHTML = `
+            <div class="product-select">
+                <label class="form-label">Product</label>
+                <select class="form-select" name="product_ids[]" required onchange="updatePrice(this)">
+                    <option value="">Select Product</option>
+                    @foreach($products as $product)
+                        <option value="{{ $product->id }}" data-price="{{ $product->sale_price ?? $product->price }}">
+                            {{ $product->name }} - ₹{{ number_format($product->sale_price ?? $product->price, 2) }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="quantity-input">
+                <label class="form-label">Quantity</label>
+                <input type="number" class="form-control" name="quantities[]" value="1" min="1" required onchange="calculateTotal()">
+            </div>
+            <div class="price-display">
+                <label class="form-label">Price</label>
+                <div id="price-${productCounter}">₹0.00</div>
+            </div>
+            <div>
+                <label class="form-label">&nbsp;</label>
+                <button type="button" class="remove-product-btn" onclick="removeProductRow(this)">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        `;
+        container.appendChild(productRow);
+        productCounter++;
+    }
+
+    function removeProductRow(button) {
+        const productRows = document.querySelectorAll('.product-row');
+        if (productRows.length > 1) {
+            button.closest('.product-row').remove();
+            calculateTotal();
+        } else {
+            alert('At least one product is required.');
+        }
+    }
+
+    function updatePrice(select) {
+        const price = select.options[select.selectedIndex]?.dataset.price || 0;
+        const row = select.closest('.product-row');
+        const priceDisplay = row.querySelector('[id^="price-"]');
+        const quantity = row.querySelector('input[name="quantities[]"]').value || 1;
+        const total = parseFloat(price) * parseInt(quantity);
+        
+        priceDisplay.textContent = `₹${total.toFixed(2)}`;
+        calculateTotal();
+    }
+
+    function updateAllPrices() {
+        document.querySelectorAll('.product-row').forEach(row => {
+            const select = row.querySelector('select[name="product_ids[]"]');
+            if (select && select.value) {
+                updatePrice(select);
+            }
+        });
+    }
+
+    function calculateTotal() {
+        let subtotal = 0;
+        
+        document.querySelectorAll('.product-row').forEach(row => {
+            const select = row.querySelector('select[name="product_ids[]"]');
+            const quantity = row.querySelector('input[name="quantities[]"]').value || 1;
+            const price = select.options[select.selectedIndex]?.dataset.price || 0;
+            
+            subtotal += parseFloat(price) * parseInt(quantity);
+        });
+        
+        document.getElementById('subtotal').textContent = `₹${subtotal.toFixed(2)}`;
+        document.getElementById('total').textContent = `₹${subtotal.toFixed(2)}`;
+    }
+
     document.getElementById('editOrderForm').addEventListener('submit', function(e) {
+        const productRows = document.querySelectorAll('.product-row');
         const submitBtn = document.getElementById('submitBtn');
+        
+        if (productRows.length === 0) {
+            e.preventDefault();
+            alert('Please add at least one product.');
+            return false;
+        }
+        
         submitBtn.disabled = true;
         submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating Order...';
     });
