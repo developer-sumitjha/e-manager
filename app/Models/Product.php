@@ -73,7 +73,8 @@ class Product extends Model
             if ($image && is_string($image) && !empty(trim($image))) {
                 // Check if file exists
                 if (Storage::disk('public')->exists($image)) {
-                    return asset('storage/' . ltrim($image, '/'));
+                    // Use Storage::url() for better compatibility with different server configurations
+                    return Storage::disk('public')->url($image);
                 }
             }
         }
@@ -82,7 +83,8 @@ class Product extends Model
         if ($this->image && is_string($this->image) && !empty(trim($this->image))) {
             // Check if file exists
             if (Storage::disk('public')->exists($this->image)) {
-                return asset('storage/' . ltrim($this->image, '/'));
+                // Use Storage::url() for better compatibility with different server configurations
+                return Storage::disk('public')->url($this->image);
             }
         }
         
@@ -101,7 +103,8 @@ class Product extends Model
                 if ($image && is_string($image) && !empty(trim($image))) {
                     // Check if file exists
                     if (Storage::disk('public')->exists($image)) {
-                        $urls[] = asset('storage/' . ltrim($image, '/'));
+                        // Use Storage::url() for better compatibility with different server configurations
+                        $urls[] = Storage::disk('public')->url($image);
                     }
                 }
             }
@@ -110,7 +113,8 @@ class Product extends Model
         // Fallback to old single image if no images in array
         if (empty($urls) && $this->image && is_string($this->image) && !empty(trim($this->image))) {
             if (Storage::disk('public')->exists($this->image)) {
-                $urls[] = asset('storage/' . ltrim($this->image, '/'));
+                // Use Storage::url() for better compatibility with different server configurations
+                $urls[] = Storage::disk('public')->url($this->image);
             }
         }
         
@@ -122,7 +126,13 @@ class Product extends Model
      */
     public function getVideoUrlAttribute()
     {
-        return $this->video ? asset('storage/' . $this->video) : null;
+        if ($this->video && is_string($this->video) && !empty(trim($this->video))) {
+            if (Storage::disk('public')->exists($this->video)) {
+                // Use Storage::url() for better compatibility with different server configurations
+                return Storage::disk('public')->url($this->video);
+            }
+        }
+        return null;
     }
     
     /**
