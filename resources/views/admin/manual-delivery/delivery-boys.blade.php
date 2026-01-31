@@ -766,21 +766,25 @@ function refreshTable() {
 }
 
 function showNotification(message, type) {
-    // Create notification element
-    const notification = $(`
-        <div class="alert alert-${type === 'success' ? 'success' : type === 'error' ? 'danger' : 'info'} alert-dismissible fade show position-fixed" 
-             style="top: 20px; right: 20px; z-index: 9999; min-width: 300px;">
-            ${message}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    `);
+    // Create notification element using vanilla JavaScript
+    const alertType = type === 'success' ? 'success' : type === 'error' ? 'danger' : 'info';
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${alertType} alert-dismissible fade show position-fixed`;
+    notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    notification.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    `;
     
-    $('body').append(notification);
+    document.body.appendChild(notification);
     
-    // Auto remove after 3 seconds
+    // Auto remove after 5 seconds
     setTimeout(() => {
-        notification.alert('close');
-    }, 3000);
+        if (notification.parentNode) {
+            const bsAlert = new bootstrap.Alert(notification);
+            bsAlert.close();
+        }
+    }, 5000);
 }
 
 // Form submission - Wrap in DOMContentLoaded to ensure form exists
@@ -796,9 +800,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     form.addEventListener('submit', function(e) {
     e.preventDefault();
-    
-    console.log('Form submitted'); // Debug log
-    alert('Form submission started! Check console for details.'); // Visual confirmation
     
     const formData = new FormData(this);
     
@@ -819,24 +820,59 @@ document.addEventListener('DOMContentLoaded', function() {
     })
     .then(response => {
         console.log('Response status:', response.status);
-        return response.json();
+        return response.json().then(data => {
+            return { status: response.status, data: data };
+        });
     })
-    .then(data => {
+    .then(({ status, data }) => {
         console.log('Success response:', data);
-        if (data.success) {
-            showNotification(data.message, 'success');
+        
+        if (status === 200 || status === 201) {
+            if (data.success) {
+                showNotification(data.message || 'Delivery boy created successfully', 'success');
+                
+                // Close modal
+                const modalElement = document.getElementById('addDeliveryBoyModal');
+                if (modalElement) {
+                    const modal = bootstrap.Modal.getInstance(modalElement);
+                    if (modal) {
+                        modal.hide();
+                    }
+                }
+                
+                // Reset form
+                const form = document.getElementById('addDeliveryBoyForm');
+                if (form) {
+                    form.reset();
+                }
+                
+                // Refresh page
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                showNotification(data.message || 'An error occurred', 'error');
+            }
+        } else if (status === 422) {
+            // Validation errors
+            let errorMessage = data.message || 'Validation failed';
             
-            // Close modal
-            const modal = bootstrap.Modal.getInstance(document.getElementById('addDeliveryBoyModal'));
-            modal.hide();
+            // Add specific field errors if available
+            if (data.errors) {
+                const errorList = [];
+                for (const [field, messages] of Object.entries(data.errors)) {
+                    if (Array.isArray(messages)) {
+                        errorList.push(...messages);
+                    } else {
+                        errorList.push(messages);
+                    }
+                }
+                if (errorList.length > 0) {
+                    errorMessage = errorList.join('<br>');
+                }
+            }
             
-            // Reset form
-            document.getElementById('addDeliveryBoyForm').reset();
-            
-            // Refresh page
-            setTimeout(() => location.reload(), 1500);
+            showNotification(errorMessage, 'error');
         } else {
-            showNotification(data.message || 'An error occurred', 'error');
+            showNotification(data.message || 'An error occurred. Please try again.', 'error');
         }
     })
     .catch(error => {
@@ -878,21 +914,53 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .then(response => {
                 console.log('Edit response status:', response.status);
-                return response.json();
+                return response.json().then(data => {
+                    return { status: response.status, data: data };
+                });
             })
-            .then(data => {
+            .then(({ status, data }) => {
                 console.log('Edit success response:', data);
-                if (data.success) {
-                    showNotification(data.message, 'success');
+                
+                if (status === 200 || status === 201) {
+                    if (data.success) {
+                        showNotification(data.message || 'Delivery boy updated successfully', 'success');
+                        
+                        // Close modal
+                        const modalElement = document.getElementById('editDeliveryBoyModal');
+                        if (modalElement) {
+                            const modal = bootstrap.Modal.getInstance(modalElement);
+                            if (modal) {
+                                modal.hide();
+                            }
+                        }
+                        
+                        // Refresh page
+                        setTimeout(() => location.reload(), 1500);
+                    } else {
+                        showNotification(data.message || 'An error occurred', 'error');
+                    }
+                } else if (status === 422) {
+                    // Validation errors
+                    let errorMessage = data.message || 'Validation failed';
                     
-                    // Close modal
-                    const modal = bootstrap.Modal.getInstance(document.getElementById('editDeliveryBoyModal'));
-                    modal.hide();
+                    // Add specific field errors if available
+                    if (data.errors) {
+                        const errorList = [];
+                        for (const [field, messages] of Object.entries(data.errors)) {
+                            if (Array.isArray(messages)) {
+                                errorList.push(...messages);
+                            } else {
+                                errorList.push(messages);
+                            }
+                        }
+                        if (errorList.length > 0) {
+                            errorMessage = errorList.join('<br>');
+                        }
+                    }
                     
-                    // Refresh page
-                    setTimeout(() => location.reload(), 1500);
+                    showNotification(errorMessage, 'error');
                 } else {
-                    showNotification(data.message || 'An error occurred', 'error');
+                    showNotification(data.message || 'An error occurred. Please try again.', 'error');
                 }
             })
             .catch(error => {
