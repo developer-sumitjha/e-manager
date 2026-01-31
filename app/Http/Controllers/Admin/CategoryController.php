@@ -42,6 +42,19 @@ class CategoryController extends Controller
         // Clear storefront cache
         Cache::forget("categories_{$category->tenant_id}");
 
+        // Return JSON response for AJAX requests (e.g., from product form modal)
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Category created successfully.',
+                'category' => [
+                    'id' => $category->id,
+                    'name' => $category->name,
+                    'slug' => $category->slug,
+                ]
+            ]);
+        }
+
         return redirect()->route('admin.categories.index')->with('success', 'Category created successfully.');
     }
 
