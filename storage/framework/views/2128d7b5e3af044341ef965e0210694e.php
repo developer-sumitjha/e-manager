@@ -1,9 +1,7 @@
-@extends('admin.layouts.app')
+<?php $__env->startSection('title', 'Bulk Create Gaaubesi Shipments'); ?>
+<?php $__env->startSection('page-title', 'Bulk Create Gaaubesi Shipments'); ?>
 
-@section('title', 'Bulk Create Gaaubesi Shipments')
-@section('page-title', 'Bulk Create Gaaubesi Shipments')
-
-@push('styles')
+<?php $__env->startPush('styles'); ?>
 <style>
     .bulk-create-container {
         background: rgba(255, 255, 255, 0.9);
@@ -252,9 +250,9 @@
         border-radius: 0.5rem;
     }
 </style>
-@endpush
+<?php $__env->stopPush(); ?>
 
-@section('content')
+<?php $__env->startSection('content'); ?>
 <div class="container-fluid">
     <div class="row">
         <div class="col-12">
@@ -267,14 +265,14 @@
                         </h1>
                         <p class="page-subtitle">Create multiple Gaaubesi shipments at once</p>
                     </div>
-                    <a href="{{ route('admin.gaaubesi.index') }}" class="btn btn-secondary">
+                    <a href="<?php echo e(route('admin.gaaubesi.index')); ?>" class="btn btn-secondary">
                         <i class="fas fa-arrow-left"></i> Back to Dashboard
                     </a>
                 </div>
 
-                @if($orders->count() > 0)
-                <form action="{{ route('admin.gaaubesi.bulk-create.store') }}" method="POST" id="bulkCreateForm">
-                    @csrf
+                <?php if($orders->count() > 0): ?>
+                <form action="<?php echo e(route('admin.gaaubesi.bulk-create.store')); ?>" method="POST" id="bulkCreateForm">
+                    <?php echo csrf_field(); ?>
                     
                     <!-- Orders Selection -->
                     <div class="orders-selection">
@@ -314,31 +312,32 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach($orders as $order)
-                                    <tr data-order-id="{{ $order->id }}">
+                                    <?php $__currentLoopData = $orders; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $order): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                    <tr data-order-id="<?php echo e($order->id); ?>">
                                         <td>
                                             <input type="checkbox" 
                                                    name="order_ids[]" 
-                                                   value="{{ $order->id }}" 
+                                                   value="<?php echo e($order->id); ?>" 
                                                    class="excel-checkbox order-checkbox"
                                                    onchange="updateSelectedCount()">
                                         </td>
-                                        <td class="order-info">{{ $order->order_number }}</td>
+                                        <td class="order-info"><?php echo e($order->order_number); ?></td>
                                         <td>
-                                            <div class="order-info">{{ $order->user->name ?? 'N/A' }}</div>
-                                            <div class="order-customer">{{ $order->user->phone ?? 'N/A' }}</div>
+                                            <div class="order-info"><?php echo e($order->user->name ?? 'N/A'); ?></div>
+                                            <div class="order-customer"><?php echo e($order->user->phone ?? 'N/A'); ?></div>
                                         </td>
                                         <td>
                                             <div class="address-cell">
-                                                {{ Str::limit($order->shipping_address, 80) }}
+                                                <?php echo e(Str::limit($order->shipping_address, 80)); ?>
+
                                             </div>
                                         </td>
                                         <td>
-                                            <select name="shipments[{{ $order->id }}][destination_branch]" class="form-select" required>
+                                            <select name="shipments[<?php echo e($order->id); ?>][destination_branch]" class="form-select" required>
                                                 <option value="HEAD OFFICE">HEAD OFFICE</option>
-                                                @if(is_array($locations) && !empty($locations))
-                                                    @foreach($locations as $location => $rate)
-                                                        @php
+                                                <?php if(is_array($locations) && !empty($locations)): ?>
+                                                    <?php $__currentLoopData = $locations; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $location => $rate): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                                        <?php
                                                             // Handle both array formats: associative (location => rate) or simple array
                                                             if (is_numeric($location)) {
                                                                 // Simple array: $location is index, $rate is the location name
@@ -349,29 +348,29 @@
                                                                 $locName = $location;
                                                                 $locRate = $rate;
                                                             }
-                                                        @endphp
-                                                        <option value="{{ $locName }}">{{ $locName }}@if($locRate) (₹{{ $locRate }})@endif</option>
-                                                    @endforeach
-                                                @endif
+                                                        ?>
+                                                        <option value="<?php echo e($locName); ?>"><?php echo e($locName); ?><?php if($locRate): ?> (₹<?php echo e($locRate); ?>)<?php endif; ?></option>
+                                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                                <?php endif; ?>
                                             </select>
-                                            <input type="hidden" name="shipments[{{ $order->id }}][source_branch]" value="HEAD OFFICE">
-                                            <input type="hidden" name="shipments[{{ $order->id }}][package_access]" value="Can't Open">
-                                            <input type="hidden" name="shipments[{{ $order->id }}][delivery_type]" value="Drop Off">
-                                            <input type="hidden" name="shipments[{{ $order->id }}][receiver_name]" value="{{ $order->receiver_name ?? $order->user->name ?? 'Customer' }}">
-                                            <input type="hidden" name="shipments[{{ $order->id }}][receiver_address]" value="{{ $order->receiver_full_address ?? $order->shipping_address ?? '' }}">
+                                            <input type="hidden" name="shipments[<?php echo e($order->id); ?>][source_branch]" value="HEAD OFFICE">
+                                            <input type="hidden" name="shipments[<?php echo e($order->id); ?>][package_access]" value="Can't Open">
+                                            <input type="hidden" name="shipments[<?php echo e($order->id); ?>][delivery_type]" value="Drop Off">
+                                            <input type="hidden" name="shipments[<?php echo e($order->id); ?>][receiver_name]" value="<?php echo e($order->receiver_name ?? $order->user->name ?? 'Customer'); ?>">
+                                            <input type="hidden" name="shipments[<?php echo e($order->id); ?>][receiver_address]" value="<?php echo e($order->receiver_full_address ?? $order->shipping_address ?? ''); ?>">
                                         </td>
                                         <td>
                                             <input type="number" 
-                                                   name="shipments[{{ $order->id }}][cod_charge]" 
-                                                   value="{{ $order->total }}" 
+                                                   name="shipments[<?php echo e($order->id); ?>][cod_charge]" 
+                                                   value="<?php echo e($order->total); ?>" 
                                                    step="0.01" 
                                                    class="order-amount"
                                                    style="border: none; background: none; font-weight: 600; color: #28a745; width: 100%;">
                                         </td>
                                         <td>
                                             <input type="text" 
-                                                   name="shipments[{{ $order->id }}][receiver_number]" 
-                                                   value="{{ $order->receiver_phone ?? $order->user->phone ?? '9800000000' }}" 
+                                                   name="shipments[<?php echo e($order->id); ?>][receiver_number]" 
+                                                   value="<?php echo e($order->receiver_phone ?? $order->user->phone ?? '9800000000'); ?>" 
                                                    class="form-control"
                                                    required
                                                    pattern="[0-9]{10,15}"
@@ -379,12 +378,12 @@
                                         </td>
                                         <td>
                                             <input type="text" 
-                                                   name="shipments[{{ $order->id }}][remarks]" 
+                                                   name="shipments[<?php echo e($order->id); ?>][remarks]" 
                                                    placeholder="Optional..." 
                                                    class="form-control">
                                         </td>
                                     </tr>
-                                    @endforeach
+                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                 </tbody>
                             </table>
                         </div>
@@ -396,28 +395,28 @@
                         <button type="submit" class="btn btn-primary" id="submitBtn" disabled>
                             <i class="fas fa-plus"></i> Create <span id="submitCount">0</span> Shipments
                         </button>
-                        <a href="{{ route('admin.gaaubesi.index') }}" class="btn btn-secondary">
+                        <a href="<?php echo e(route('admin.gaaubesi.index')); ?>" class="btn btn-secondary">
                             <i class="fas fa-times"></i> Cancel
                         </a>
                     </div>
                 </form>
-                @else
+                <?php else: ?>
                 <div class="empty-state">
                     <i class="fas fa-inbox"></i>
                     <h3>No Pending Orders</h3>
                     <p>There are no orders allocated to logistics that need Gaaubesi shipments.</p>
-                    <a href="{{ route('admin.shipments.index') }}" class="btn btn-primary">
+                    <a href="<?php echo e(route('admin.shipments.index')); ?>" class="btn btn-primary">
                         <i class="fas fa-shipping-fast"></i> Allocate Orders to Logistics
                     </a>
                 </div>
-                @endif
+                <?php endif; ?>
             </div>
         </div>
     </div>
 </div>
-@endsection
+<?php $__env->stopSection(); ?>
 
-@push('scripts')
+<?php $__env->startPush('scripts'); ?>
 <script>
 function selectAll() {
     const checkboxes = document.querySelectorAll('.order-checkbox');
@@ -529,7 +528,7 @@ document.getElementById('bulkCreateForm').addEventListener('submit', function(e)
             
             // Redirect to shipments list after a short delay
             setTimeout(() => {
-                window.location.href = '{{ route("admin.gaaubesi.index") }}';
+                window.location.href = '<?php echo e(route("admin.gaaubesi.index")); ?>';
             }, 2000);
         } else {
             let errorMsg = data.message || 'Failed to create shipments.';
@@ -554,4 +553,6 @@ document.addEventListener('DOMContentLoaded', function() {
     updateSelectedCount();
 });
 </script>
-@endpush
+<?php $__env->stopPush(); ?>
+
+<?php echo $__env->make('admin.layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH /Applications/XAMPP/xamppfiles/htdocs/e-manager/resources/views/admin/gaaubesi/bulk-create.blade.php ENDPATH**/ ?>

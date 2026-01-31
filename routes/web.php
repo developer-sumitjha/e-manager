@@ -153,6 +153,7 @@ Route::middleware(['auth', 'admin_employee', 'subscription.active'])->prefix('ad
     Route::get('gaaubesi/settings', [App\Http\Controllers\Admin\GaaubesiController::class, 'settings'])->name('gaaubesi.settings');
     Route::post('gaaubesi/settings', [App\Http\Controllers\Admin\GaaubesiController::class, 'updateSettings'])->name('gaaubesi.update-settings');
     Route::get('gaaubesi-locations', [App\Http\Controllers\Admin\GaaubesiController::class, 'getLocations'])->name('gaaubesi.locations');
+    Route::get('gaaubesi/test-connection', [App\Http\Controllers\Admin\GaaubesiController::class, 'testConnection'])->name('gaaubesi.test-connection');
     
     // Gaaubesi - Non-parameterized POST routes
     Route::post('gaaubesi', [App\Http\Controllers\Admin\GaaubesiController::class, 'store'])->name('gaaubesi.store');

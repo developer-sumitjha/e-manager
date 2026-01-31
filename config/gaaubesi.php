@@ -12,18 +12,20 @@ return [
     */
 
     // API Environment (production or testing)
+    // Note: Token and base URL should be configured in the Gaaubesi Settings page
+    // These are only used as fallback defaults if vendor settings are not available
     'environment' => env('GAAUBESI_ENVIRONMENT', 'production'),
 
-    // Production API Settings
+    // Production API Settings (Fallback defaults only)
     'production' => [
-        'base_url' => 'https://delivery.gaaubesi.com/api/v1',
-        'token' => env('GAAUBESI_TOKEN', 'a321a34a4f891a94fb45b56f3b8b0bf95e57d11c'),
+        'base_url' => env('GAAUBESI_PRODUCTION_URL', 'https://delivery.gaaubesi.com/api/v1'),
+        // Token removed - must be set in vendor settings page
     ],
 
-    // Testing API Settings
+    // Testing API Settings (Fallback defaults only)
     'testing' => [
-        'base_url' => 'https://testing.gaaubesi.com.np/api/v1',
-        'token' => env('GAAUBESI_TEST_TOKEN', '566f3b464f83e1bf2f2a48f7f4d7a3ed209f0f79'),
+        'base_url' => env('GAAUBESI_TESTING_URL', 'https://testing.gaaubesi.com.np/api/v1'),
+        // Token removed - must be set in vendor settings page
         'username' => 'demo_vendor',
     ],
 

@@ -1,9 +1,7 @@
-@extends('admin.layouts.app')
+<?php $__env->startSection('title', 'Create Gaaubesi Shipment'); ?>
+<?php $__env->startSection('page-title', 'Create Gaaubesi Shipment'); ?>
 
-@section('title', 'Create Gaaubesi Shipment')
-@section('page-title', 'Create Gaaubesi Shipment')
-
-@push('styles')
+<?php $__env->startPush('styles'); ?>
 <style>
     /* Create Gaaubesi Shipment Specific Styles */
     .create-header {
@@ -162,22 +160,22 @@
         }
     }
 </style>
-@endpush
+<?php $__env->stopPush(); ?>
 
-@section('content')
+<?php $__env->startSection('content'); ?>
 <div class="create-header">
     <div class="page-title-section">
         <h1>Create Gaaubesi Shipment</h1>
         <p class="page-subtitle">Create a new shipment with Gaaubesi Logistics</p>
     </div>
-    <a href="{{ route('admin.gaaubesi.index') }}" class="back-btn">
+    <a href="<?php echo e(route('admin.gaaubesi.index')); ?>" class="back-btn">
         <i class="fas fa-arrow-left"></i> Back to Shipments
     </a>
 </div>
 
 <div class="form-container">
-    <form action="{{ route('admin.gaaubesi.store') }}" method="POST" id="gaaubesi-form">
-        @csrf
+    <form action="<?php echo e(route('admin.gaaubesi.store')); ?>" method="POST" id="gaaubesi-form">
+        <?php echo csrf_field(); ?>
 
         <!-- Order Selection -->
         <div class="form-section">
@@ -190,41 +188,41 @@
                 <strong>Note:</strong> Only confirmed orders without existing Gaaubesi shipments are shown below.
             </div>
 
-            @if($orders->count() > 0)
+            <?php if($orders->count() > 0): ?>
                 <div class="mb-3">
                     <label class="form-label">Select Order <span class="text-danger">*</span></label>
                     <select class="form-select" name="order_id" id="order-select" required>
                         <option value="">Choose an order...</option>
-                        @foreach($orders as $order)
-                            <option value="{{ $order->id }}" 
-                                    data-receiver="{{ $order->receiver_name ?? $order->user->name ?? 'Customer' }}"
-                                    data-address="{{ $order->receiver_full_address ?? $order->shipping_address }}"
-                                    data-phone="{{ $order->receiver_phone ?? $order->user->phone ?? '' }}"
-                                    data-total="{{ $order->total }}"
-                                    data-payment="{{ $order->payment_method }}"
-                                    data-city="{{ $order->receiver_city ?? '' }}"
-                                    data-area="{{ $order->receiver_area ?? '' }}"
-                                    data-branch="{{ $order->delivery_branch ?? 'HEAD OFFICE' }}"
-                                    data-package-access="{{ $order->package_access ?? 'Can\'t Open' }}"
-                                    data-delivery-type="{{ $order->delivery_type ?? 'Drop Off' }}"
-                                    data-package-type="{{ $order->package_type ?? '' }}"
-                                    data-sender-name="{{ $order->sender_name ?? config('app.name') }}"
-                                    data-sender-phone="{{ $order->sender_phone ?? '' }}"
-                                    data-instructions="{{ $order->delivery_instructions ?? $order->notes ?? '' }}">
-                                {{ $order->order_number }} - {{ $order->receiver_name ?? $order->user->name ?? 'Guest' }} (₨{{ number_format($order->total, 2) }})
+                        <?php $__currentLoopData = $orders; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $order): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <option value="<?php echo e($order->id); ?>" 
+                                    data-receiver="<?php echo e($order->receiver_name ?? $order->user->name ?? 'Customer'); ?>"
+                                    data-address="<?php echo e($order->receiver_full_address ?? $order->shipping_address); ?>"
+                                    data-phone="<?php echo e($order->receiver_phone ?? $order->user->phone ?? ''); ?>"
+                                    data-total="<?php echo e($order->total); ?>"
+                                    data-payment="<?php echo e($order->payment_method); ?>"
+                                    data-city="<?php echo e($order->receiver_city ?? ''); ?>"
+                                    data-area="<?php echo e($order->receiver_area ?? ''); ?>"
+                                    data-branch="<?php echo e($order->delivery_branch ?? 'HEAD OFFICE'); ?>"
+                                    data-package-access="<?php echo e($order->package_access ?? 'Can\'t Open'); ?>"
+                                    data-delivery-type="<?php echo e($order->delivery_type ?? 'Drop Off'); ?>"
+                                    data-package-type="<?php echo e($order->package_type ?? ''); ?>"
+                                    data-sender-name="<?php echo e($order->sender_name ?? config('app.name')); ?>"
+                                    data-sender-phone="<?php echo e($order->sender_phone ?? ''); ?>"
+                                    data-instructions="<?php echo e($order->delivery_instructions ?? $order->notes ?? ''); ?>">
+                                <?php echo e($order->order_number); ?> - <?php echo e($order->receiver_name ?? $order->user->name ?? 'Guest'); ?> (₨<?php echo e(number_format($order->total, 2)); ?>)
                             </option>
-                        @endforeach
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </select>
                 </div>
-            @else
+            <?php else: ?>
                 <div class="alert alert-warning">
                     <i class="fas fa-exclamation-triangle"></i>
                     No confirmed orders available for shipment. Please confirm some orders first.
                 </div>
-            @endif
+            <?php endif; ?>
         </div>
 
-        @if($orders->count() > 0)
+        <?php if($orders->count() > 0): ?>
         <!-- Branch Information -->
         <div class="form-section">
             <h3 class="section-title">
@@ -237,9 +235,9 @@
                     <label class="form-label">Source Branch <span class="text-danger">*</span></label>
                     <select class="form-select" name="source_branch" id="source-branch" required>
                         <option value="HEAD OFFICE">HEAD OFFICE</option>
-                        @if(is_array($locations) && !empty($locations))
-                            @foreach($locations as $location => $rate)
-                                @php
+                        <?php if(is_array($locations) && !empty($locations)): ?>
+                            <?php $__currentLoopData = $locations; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $location => $rate): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                <?php
                                     // Handle both array formats: associative (location => rate) or simple array
                                     if (is_numeric($location)) {
                                         // Simple array: $location is index, $rate is the location name
@@ -250,10 +248,10 @@
                                         $locName = $location;
                                         $locRate = $rate;
                                     }
-                                @endphp
-                                <option value="{{ $locName }}">{{ $locName }}@if($locRate) (₹{{ $locRate }})@endif</option>
-                            @endforeach
-                        @endif
+                                ?>
+                                <option value="<?php echo e($locName); ?>"><?php echo e($locName); ?><?php if($locRate): ?> (₹<?php echo e($locRate); ?>)<?php endif; ?></option>
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                        <?php endif; ?>
                     </select>
                 </div>
 
@@ -261,9 +259,9 @@
                     <label class="form-label">Destination Branch <span class="text-danger">*</span></label>
                     <select class="form-select" name="destination_branch" id="destination-branch" required>
                         <option value="HEAD OFFICE">HEAD OFFICE</option>
-                        @if(is_array($locations) && !empty($locations))
-                            @foreach($locations as $location => $rate)
-                                @php
+                        <?php if(is_array($locations) && !empty($locations)): ?>
+                            <?php $__currentLoopData = $locations; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $location => $rate): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                <?php
                                     // Handle both array formats: associative (location => rate) or simple array
                                     if (is_numeric($location)) {
                                         // Simple array: $location is index, $rate is the location name
@@ -274,10 +272,10 @@
                                         $locName = $location;
                                         $locRate = $rate;
                                     }
-                                @endphp
-                                <option value="{{ $locName }}">{{ $locName }}@if($locRate) (₹{{ $locRate }})@endif</option>
-                            @endforeach
-                        @endif
+                                ?>
+                                <option value="<?php echo e($locName); ?>"><?php echo e($locName); ?><?php if($locRate): ?> (₹<?php echo e($locRate); ?>)<?php endif; ?></option>
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                        <?php endif; ?>
                     </select>
                 </div>
             </div>
@@ -324,18 +322,18 @@
                 <div class="col-md-6 mb-3">
                     <label class="form-label">Package Access <span class="text-danger">*</span></label>
                     <select class="form-select" name="package_access" required>
-                        @foreach($packageAccessOptions as $option)
-                            <option value="{{ $option }}" {{ $option === "Can't Open" ? 'selected' : '' }}>{{ $option }}</option>
-                        @endforeach
+                        <?php $__currentLoopData = $packageAccessOptions; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $option): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <option value="<?php echo e($option); ?>" <?php echo e($option === "Can't Open" ? 'selected' : ''); ?>><?php echo e($option); ?></option>
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </select>
                 </div>
 
                 <div class="col-md-6 mb-3">
                     <label class="form-label">Delivery Type <span class="text-danger">*</span></label>
                     <select class="form-select" name="delivery_type" required>
-                        @foreach($deliveryTypeOptions as $option)
-                            <option value="{{ $option }}" {{ $option === 'Drop Off' ? 'selected' : '' }}>{{ $option }}</option>
-                        @endforeach
+                        <?php $__currentLoopData = $deliveryTypeOptions; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $option): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <option value="<?php echo e($option); ?>" <?php echo e($option === 'Drop Off' ? 'selected' : ''); ?>><?php echo e($option); ?></option>
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </select>
                 </div>
 
@@ -378,12 +376,12 @@
                 Create Shipment in Gaaubesi
             </button>
         </div>
-        @endif
+        <?php endif; ?>
     </form>
 </div>
-@endsection
+<?php $__env->stopSection(); ?>
 
-@push('scripts')
+<?php $__env->startPush('scripts'); ?>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const orderSelect = document.getElementById('order-select');
@@ -467,6 +465,8 @@
         });
     });
 </script>
-@endpush
+<?php $__env->stopPush(); ?>
 
 
+
+<?php echo $__env->make('admin.layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH /Applications/XAMPP/xamppfiles/htdocs/e-manager/resources/views/admin/gaaubesi/create.blade.php ENDPATH**/ ?>

@@ -337,19 +337,46 @@ class GaaubesiController extends Controller
      */
     public function getLocations()
     {
-        $result = $this->gaaubesiService->getLocationsData();
-        
-        if ($result['success']) {
-            return response()->json([
-                'success' => true,
-                'locations' => $result['locations']
-            ]);
-        }
+        try {
+            $result = $this->gaaubesiService->getLocationsData();
+            
+            if ($result['success']) {
+                return response()->json([
+                    'success' => true,
+                    'locations' => $result['locations'] ?? []
+                ]);
+            }
 
-        return response()->json([
-            'success' => false,
-            'message' => 'Failed to fetch locations'
-        ], 400);
+            return response()->json([
+                'success' => false,
+                'message' => $result['message'] ?? 'Failed to fetch locations. Please check your API token and URL in settings.'
+            ], 400);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Connection test failed: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+    
+    /**
+     * Test API connection
+     */
+    public function testConnection()
+    {
+        try {
+            $result = $this->gaaubesiService->testConnection();
+            
+            return response()->json([
+                'success' => $result['success'],
+                'message' => $result['message'] ?? 'Connection test completed'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Connection test failed: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
@@ -418,32 +445,57 @@ class GaaubesiController extends Controller
                 continue;
             }
 
+            // Prepare receiver data with fallbacks
+            $receiverName = $shipmentData['receiver_name'] ?? $order->receiver_name ?? $order->user->name ?? 'Customer';
+            $receiverAddress = $shipmentData['receiver_address'] ?? $order->receiver_full_address ?? $order->shipping_address ?? '';
+            $receiverNumber = $shipmentData['receiver_number'] ?? $order->receiver_phone ?? $order->user->phone ?? '9800000000';
+            $codCharge = $shipmentData['cod_charge'] ?? ($order->payment_method === 'cod' || $order->payment_method === 'cash_on_delivery' ? $order->total : 0);
+            
+            // Validate required fields
+            if (empty($receiverName)) {
+                $failed++;
+                $errors[] = "Order {$order->order_number}: Receiver name is required";
+                continue;
+            }
+            if (empty($receiverAddress)) {
+                $failed++;
+                $errors[] = "Order {$order->order_number}: Receiver address is required";
+                continue;
+            }
+            if (empty($receiverNumber)) {
+                $failed++;
+                $errors[] = "Order {$order->order_number}: Receiver phone number is required";
+                continue;
+            }
+            
             // Create shipment in Gaaubesi
             $apiResponse = $this->gaaubesiService->createOrder([
-                'branch' => $shipmentData['source_branch'],
+                'branch' => $shipmentData['source_branch'] ?? 'HEAD OFFICE',
                 'destination_branch' => $shipmentData['destination_branch'],
-                'receiver_name' => $shipmentData['receiver_name'] ?? $order->user->name ?? 'Customer',
-                'receiver_address' => $shipmentData['receiver_address'] ?? $order->shipping_address,
-                'receiver_number' => $shipmentData['receiver_number'] ?? $order->user->phone ?? '9800000000',
-                'cod_charge' => $shipmentData['cod_charge'] ?? $order->total,
-                'package_access' => $shipmentData['package_access'],
-                'delivery_type' => $shipmentData['delivery_type'],
+                'receiver_name' => $receiverName,
+                'receiver_address' => $receiverAddress,
+                'receiver_number' => $receiverNumber,
+                'cod_charge' => $codCharge,
+                'package_access' => $shipmentData['package_access'] ?? "Can't Open",
+                'delivery_type' => $shipmentData['delivery_type'] ?? 'Drop Off',
                 'remarks' => $shipmentData['remarks'] ?? '',
                 'package_type' => $order->orderItems->count() . ' items',
+                'order_contact_name' => $order->sender_name ?? config('app.name', 'E-Manager Store'),
+                'order_contact_number' => $order->sender_phone ?? '',
             ]);
 
             if ($apiResponse['success']) {
                 GaaubesiShipment::create([
                     'order_id' => $order->id,
                     'gaaubesi_order_id' => $apiResponse['order_id'],
-                    'source_branch' => $shipmentData['source_branch'],
+                    'source_branch' => $shipmentData['source_branch'] ?? 'HEAD OFFICE',
                     'destination_branch' => $shipmentData['destination_branch'],
-                    'receiver_name' => $shipmentData['receiver_name'] ?? $order->user->name ?? 'Customer',
-                    'receiver_address' => $shipmentData['receiver_address'] ?? $order->shipping_address,
-                    'receiver_number' => $shipmentData['receiver_number'] ?? $order->user->phone ?? '9800000000',
-                    'cod_charge' => $shipmentData['cod_charge'] ?? $order->total,
-                    'package_access' => $shipmentData['package_access'],
-                    'delivery_type' => $shipmentData['delivery_type'],
+                    'receiver_name' => $receiverName,
+                    'receiver_address' => $receiverAddress,
+                    'receiver_number' => $receiverNumber,
+                    'cod_charge' => $codCharge,
+                    'package_access' => $shipmentData['package_access'] ?? "Can't Open",
+                    'delivery_type' => $shipmentData['delivery_type'] ?? 'Drop Off',
                     'last_delivery_status' => 'Order Created',
                     'api_response' => $apiResponse,
                     'shipped_at' => now(),
@@ -672,6 +724,23 @@ class GaaubesiController extends Controller
             'auto_create_shipment' => 'boolean',
             'send_notifications' => 'boolean',
         ]);
+
+        // Trim string values to prevent whitespace issues
+        if (isset($validated['api_token'])) {
+            $validated['api_token'] = trim($validated['api_token']);
+        }
+        if (isset($validated['api_url'])) {
+            $validated['api_url'] = trim($validated['api_url']);
+        }
+        if (isset($validated['pickup_branch'])) {
+            $validated['pickup_branch'] = trim($validated['pickup_branch']);
+        }
+        if (isset($validated['pickup_contact_person'])) {
+            $validated['pickup_contact_person'] = trim($validated['pickup_contact_person']);
+        }
+        if (isset($validated['pickup_contact_phone'])) {
+            $validated['pickup_contact_phone'] = trim($validated['pickup_contact_phone']);
+        }
 
         $settings = \App\Models\GaaubesiSetting::getForCurrentTenant();
         $settings->update($validated);

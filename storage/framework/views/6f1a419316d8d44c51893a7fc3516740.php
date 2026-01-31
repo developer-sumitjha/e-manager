@@ -1,9 +1,7 @@
-@extends('admin.layouts.app')
+<?php $__env->startSection('title', 'Gaaubesi Settings'); ?>
+<?php $__env->startSection('page-title', 'Gaaubesi Settings'); ?>
 
-@section('title', 'Gaaubesi Settings')
-@section('page-title', 'Gaaubesi Settings')
-
-@section('content')
+<?php $__env->startSection('content'); ?>
 <div class="container-fluid">
     <!-- Header -->
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -11,20 +9,21 @@
             <h1>Gaaubesi Logistics Settings</h1>
             <p class="text-muted">Configure your Gaaubesi API credentials and default settings</p>
         </div>
-        <a href="{{ route('admin.gaaubesi.index') }}" class="btn btn-secondary">
+        <a href="<?php echo e(route('admin.gaaubesi.index')); ?>" class="btn btn-secondary">
             <i class="fas fa-arrow-left"></i> Back to Dashboard
         </a>
     </div>
 
-    @if(session('success'))
+    <?php if(session('success')): ?>
     <div class="alert alert-success alert-dismissible fade show">
-        <i class="fas fa-check-circle"></i> {{ session('success') }}
+        <i class="fas fa-check-circle"></i> <?php echo e(session('success')); ?>
+
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
-    @endif
+    <?php endif; ?>
 
-    <form action="{{ route('admin.gaaubesi.update-settings') }}" method="POST">
-        @csrf
+    <form action="<?php echo e(route('admin.gaaubesi.update-settings')); ?>" method="POST">
+        <?php echo csrf_field(); ?>
         
         <!-- API Credentials -->
         <div class="card mb-4">
@@ -35,36 +34,65 @@
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <label class="form-label">API Token *</label>
-                        <input type="text" name="api_token" class="form-control @error('api_token') is-invalid @enderror" 
-                               value="{{ old('api_token', $settings->api_token) }}" 
+                        <input type="text" name="api_token" class="form-control <?php $__errorArgs = ['api_token'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>" 
+                               value="<?php echo e(old('api_token', $settings->api_token)); ?>" 
                                placeholder="Enter your Gaaubesi API token">
                         <small class="text-muted">Get your API token from Gaaubesi dashboard</small>
-                        @error('api_token')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
+                        <?php $__errorArgs = ['api_token'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                            <div class="invalid-feedback"><?php echo e($message); ?></div>
+                        <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
                     </div>
                     <div class="col-md-6 mb-3">
                         <label class="form-label">API URL *</label>
-                        <input type="url" name="api_url" class="form-control @error('api_url') is-invalid @enderror" 
-                               value="{{ old('api_url', $settings->api_url) }}" 
+                        <input type="url" name="api_url" class="form-control <?php $__errorArgs = ['api_url'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>" 
+                               value="<?php echo e(old('api_url', $settings->api_url)); ?>" 
                                placeholder="https://api.gaaubesi.com">
-                        @error('api_url')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
+                        <?php $__errorArgs = ['api_url'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                            <div class="invalid-feedback"><?php echo e($message); ?></div>
+                        <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
                     </div>
                 </div>
 
-                @if($settings->api_token)
+                <?php if($settings->api_token): ?>
                 <div class="alert alert-info">
                     <i class="fas fa-info-circle"></i>
-                    <strong>Current Token:</strong> {{ substr($settings->api_token, 0, 10) }}...{{ substr($settings->api_token, -4) }}
+                    <strong>Current Token:</strong> <?php echo e(substr($settings->api_token, 0, 10)); ?>...<?php echo e(substr($settings->api_token, -4)); ?>
+
                 </div>
-                @else
+                <?php else: ?>
                 <div class="alert alert-warning">
                     <i class="fas fa-exclamation-triangle"></i>
                     <strong>API Token Not Set!</strong> Please enter your Gaaubesi API token to use logistics features.
                 </div>
-                @endif
+                <?php endif; ?>
             </div>
         </div>
 
@@ -78,23 +106,23 @@
                     <div class="col-md-4 mb-3">
                         <label class="form-label">Package Access *</label>
                         <select name="default_package_access" class="form-select">
-                            <option value="Accessible" {{ $settings->default_package_access == 'Accessible' ? 'selected' : '' }}>Accessible (Can Open)</option>
-                            <option value="Not Accessible" {{ $settings->default_package_access == 'Not Accessible' ? 'selected' : '' }}>Not Accessible (Can't Open)</option>
+                            <option value="Accessible" <?php echo e($settings->default_package_access == 'Accessible' ? 'selected' : ''); ?>>Accessible (Can Open)</option>
+                            <option value="Not Accessible" <?php echo e($settings->default_package_access == 'Not Accessible' ? 'selected' : ''); ?>>Not Accessible (Can't Open)</option>
                         </select>
                     </div>
                     <div class="col-md-4 mb-3">
                         <label class="form-label">Delivery Type *</label>
                         <select name="default_delivery_type" class="form-select">
-                            <option value="Normal" {{ $settings->default_delivery_type == 'Normal' ? 'selected' : '' }}>Normal</option>
-                            <option value="Express" {{ $settings->default_delivery_type == 'Express' ? 'selected' : '' }}>Express</option>
-                            <option value="Same Day" {{ $settings->default_delivery_type == 'Same Day' ? 'selected' : '' }}>Same Day</option>
+                            <option value="Normal" <?php echo e($settings->default_delivery_type == 'Normal' ? 'selected' : ''); ?>>Normal</option>
+                            <option value="Express" <?php echo e($settings->default_delivery_type == 'Express' ? 'selected' : ''); ?>>Express</option>
+                            <option value="Same Day" <?php echo e($settings->default_delivery_type == 'Same Day' ? 'selected' : ''); ?>>Same Day</option>
                         </select>
                     </div>
                     <div class="col-md-4 mb-3">
                         <label class="form-label">Insurance *</label>
                         <select name="default_insurance" class="form-select">
-                            <option value="Not Insured" {{ $settings->default_insurance == 'Not Insured' ? 'selected' : '' }}>Not Insured</option>
-                            <option value="Insured" {{ $settings->default_insurance == 'Insured' ? 'selected' : '' }}>Insured</option>
+                            <option value="Not Insured" <?php echo e($settings->default_insurance == 'Not Insured' ? 'selected' : ''); ?>>Not Insured</option>
+                            <option value="Insured" <?php echo e($settings->default_insurance == 'Insured' ? 'selected' : ''); ?>>Insured</option>
                         </select>
                     </div>
                 </div>
@@ -111,25 +139,25 @@
                     <div class="col-md-6 mb-3">
                         <label class="form-label">Pickup Branch</label>
                         <input type="text" name="pickup_branch" class="form-control" 
-                               value="{{ old('pickup_branch', $settings->pickup_branch) }}" 
+                               value="<?php echo e(old('pickup_branch', $settings->pickup_branch)); ?>" 
                                placeholder="e.g., HEAD OFFICE">
                     </div>
                     <div class="col-md-6 mb-3">
                         <label class="form-label">Contact Person</label>
                         <input type="text" name="pickup_contact_person" class="form-control" 
-                               value="{{ old('pickup_contact_person', $settings->pickup_contact_person) }}" 
+                               value="<?php echo e(old('pickup_contact_person', $settings->pickup_contact_person)); ?>" 
                                placeholder="Contact person name">
                     </div>
                     <div class="col-md-6 mb-3">
                         <label class="form-label">Contact Phone</label>
                         <input type="text" name="pickup_contact_phone" class="form-control" 
-                               value="{{ old('pickup_contact_phone', $settings->pickup_contact_phone) }}" 
+                               value="<?php echo e(old('pickup_contact_phone', $settings->pickup_contact_phone)); ?>" 
                                placeholder="Phone number">
                     </div>
                     <div class="col-md-12 mb-3">
                         <label class="form-label">Pickup Address</label>
                         <textarea name="pickup_address" class="form-control" rows="3" 
-                                  placeholder="Full pickup address">{{ old('pickup_address', $settings->pickup_address) }}</textarea>
+                                  placeholder="Full pickup address"><?php echo e(old('pickup_address', $settings->pickup_address)); ?></textarea>
                     </div>
                 </div>
             </div>
@@ -145,7 +173,7 @@
                     <div class="col-md-6 mb-3">
                         <div class="form-check form-switch">
                             <input class="form-check-input" type="checkbox" name="auto_create_shipment" value="1" 
-                                   {{ $settings->auto_create_shipment ? 'checked' : '' }}>
+                                   <?php echo e($settings->auto_create_shipment ? 'checked' : ''); ?>>
                             <label class="form-check-label">
                                 <strong>Auto Create Shipment</strong><br>
                                 <small class="text-muted">Automatically create Gaaubesi shipment when order is allocated to logistics</small>
@@ -155,7 +183,7 @@
                     <div class="col-md-6 mb-3">
                         <div class="form-check form-switch">
                             <input class="form-check-input" type="checkbox" name="send_notifications" value="1" 
-                                   {{ $settings->send_notifications ? 'checked' : '' }}>
+                                   <?php echo e($settings->send_notifications ? 'checked' : ''); ?>>
                             <label class="form-check-label">
                                 <strong>Send Notifications</strong><br>
                                 <small class="text-muted">Receive email/SMS notifications for shipment updates</small>
@@ -204,7 +232,7 @@ function testConnection() {
     testBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Testing...';
     resultDiv.innerHTML = '<div class="alert alert-info"><i class="fas fa-spinner fa-spin"></i> Testing connection...</div>';
     
-    fetch('{{ route("admin.gaaubesi.locations") }}')
+    fetch('<?php echo e(route("admin.gaaubesi.locations")); ?>')
         .then(async response => {
             // Always try to parse as JSON first, regardless of status
             let data;
@@ -242,6 +270,8 @@ function testConnection() {
         });
 }
 </script>
-@endsection
+<?php $__env->stopSection(); ?>
 
 
+
+<?php echo $__env->make('admin.layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH /Applications/XAMPP/xamppfiles/htdocs/e-manager/resources/views/admin/gaaubesi/settings-form.blade.php ENDPATH**/ ?>
