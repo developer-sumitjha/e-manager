@@ -24,6 +24,7 @@ return new class extends Migration
             'transactions',
             'invoices',
             'gaaubesi_shipments',
+            'pathao_shipments',
             'shipments',
         ];
 
@@ -56,6 +57,7 @@ return new class extends Migration
             'transactions',
             'invoices',
             'gaaubesi_shipments',
+            'pathao_shipments',
             'shipments',
         ];
 

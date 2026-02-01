@@ -484,6 +484,12 @@
                             <span class="nav-text">Gaaubesi Logistics</span>
                         </a>
                     </div>
+                    <div class="nav-item">
+                        <a href="{{ route('admin.pathao.index') }}" class="nav-link {{ request()->routeIs('admin.pathao.*') ? 'active' : '' }}">
+                            <i class="nav-icon fas fa-truck"></i>
+                            <span class="nav-text">Pathao Parcel</span>
+                        </a>
+                    </div>
                     <div class="nav-item has-submenu">
                         <a href="#" class="nav-link submenu-toggle">
                             <i class="nav-icon fas fa-motorcycle"></i>

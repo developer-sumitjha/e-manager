@@ -120,6 +120,11 @@ class Order extends Model
         return $this->hasOne(GaaubesiShipment::class);
     }
 
+    public function pathaoShipment()
+    {
+        return $this->hasOne(PathaoShipment::class);
+    }
+
     /**
      * Get the sum of all order items (actual items total)
      * This calculates the total from order items, not from the stored subtotal
