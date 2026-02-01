@@ -163,22 +163,22 @@ Route::middleware(['auth', 'admin_employee', 'subscription.active'])->prefix('ad
 
     // Pathao Logistics
     Route::get('pathao', [App\Http\Controllers\Admin\PathaoController::class, 'index'])->name('pathao.index')->middleware('employee.can:manual_delivery');
-
+    
     // Pathao - Specific routes BEFORE parameterized routes
-    Route::get('pathao/create', [App\Http\Controllers\Admin\PathaoController::class, 'create'])->name('pathao.create');
-    Route::get('pathao/bulk-create', [App\Http\Controllers\Admin\PathaoController::class, 'bulkCreateForm'])->name('pathao.bulk-create');
-    Route::post('pathao/bulk-create', [App\Http\Controllers\Admin\PathaoController::class, 'bulkCreate'])->name('pathao.bulk-create.store');
-    Route::post('pathao', [App\Http\Controllers\Admin\PathaoController::class, 'store'])->name('pathao.store');
+    Route::get('pathao/create', [App\Http\Controllers\Admin\PathaoController::class, 'create'])->name('pathao.create')->middleware('employee.can:manual_delivery');
+    Route::get('pathao/bulk-create', [App\Http\Controllers\Admin\PathaoController::class, 'bulkCreateForm'])->name('pathao.bulk-create')->middleware('employee.can:manual_delivery');
+    Route::post('pathao/bulk-create', [App\Http\Controllers\Admin\PathaoController::class, 'bulkCreate'])->name('pathao.bulk-create.store')->middleware('employee.can:manual_delivery');
+    Route::post('pathao', [App\Http\Controllers\Admin\PathaoController::class, 'store'])->name('pathao.store')->middleware('employee.can:manual_delivery');
     Route::get('pathao/settings', [App\Http\Controllers\Admin\PathaoController::class, 'settings'])->name('pathao.settings');
     Route::post('pathao/settings', [App\Http\Controllers\Admin\PathaoController::class, 'updateSettings'])->name('pathao.update-settings');
     Route::get('pathao/cities', [App\Http\Controllers\Admin\PathaoController::class, 'getCities'])->name('pathao.cities');
     Route::post('pathao/zones', [App\Http\Controllers\Admin\PathaoController::class, 'getZones'])->name('pathao.zones');
     Route::post('pathao/areas', [App\Http\Controllers\Admin\PathaoController::class, 'getAreas'])->name('pathao.areas');
     Route::post('pathao/test-connection', [App\Http\Controllers\Admin\PathaoController::class, 'testConnection'])->name('pathao.test-connection');
-    Route::post('pathao/{pathaoShipment}/refresh-status', [App\Http\Controllers\Admin\PathaoController::class, 'refreshStatus'])->name('pathao.refresh-status');
+    Route::post('pathao/{pathaoShipment}/refresh-status', [App\Http\Controllers\Admin\PathaoController::class, 'refreshStatus'])->name('pathao.refresh-status')->middleware('employee.can:manual_delivery');
 
     // Pathao - Parameterized routes LAST
-    Route::get('pathao/{pathaoShipment}', [App\Http\Controllers\Admin\PathaoController::class, 'show'])->name('pathao.show');
+    Route::get('pathao/{pathaoShipment}', [App\Http\Controllers\Admin\PathaoController::class, 'show'])->name('pathao.show')->middleware('employee.can:manual_delivery');
     Route::post('gaaubesi/{gaaubesiShipment}/refresh-status', [App\Http\Controllers\Admin\GaaubesiController::class, 'refreshStatus'])->name('gaaubesi.refresh-status');
     Route::post('gaaubesi/{gaaubesiShipment}/post-comment', [App\Http\Controllers\Admin\GaaubesiController::class, 'postComment'])->name('gaaubesi.post-comment');
     Route::post('gaaubesi/{gaaubesiShipment}/mark-cod-settled', [App\Http\Controllers\Admin\GaaubesiController::class, 'markCodSettled'])->name('gaaubesi.mark-cod-settled');
