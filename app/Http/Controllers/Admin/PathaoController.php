@@ -24,59 +24,90 @@ class PathaoController extends Controller
      */
     public function index(Request $request)
     {
-        $query = PathaoShipment::with(['order.user', 'shipment']);
+        try {
+            $query = PathaoShipment::with(['order.user', 'shipment']);
 
-        // Search
-        if ($request->has('search') && $request->search != '') {
-            $search = $request->search;
-            $query->where(function($q) use ($search) {
-                $q->where('pathao_order_id', 'like', "%{$search}%")
-                  ->orWhere('consignment_id', 'like', "%{$search}%")
-                  ->orWhere('tracking_id', 'like', "%{$search}%")
-                  ->orWhere('recipient_name', 'like', "%{$search}%")
-                  ->orWhere('recipient_phone', 'like', "%{$search}%")
-                  ->orWhereHas('order', function($q) use ($search) {
-                      $q->where('order_number', 'like', "%{$search}%");
-                  });
-            });
+            // Search
+            if ($request->has('search') && $request->search != '') {
+                $search = $request->search;
+                $query->where(function($q) use ($search) {
+                    $q->where('pathao_order_id', 'like', "%{$search}%")
+                      ->orWhere('consignment_id', 'like', "%{$search}%")
+                      ->orWhere('tracking_id', 'like', "%{$search}%")
+                      ->orWhere('recipient_name', 'like', "%{$search}%")
+                      ->orWhere('recipient_phone', 'like', "%{$search}%")
+                      ->orWhereHas('order', function($q) use ($search) {
+                          $q->where('order_number', 'like', "%{$search}%");
+                      });
+                });
+            }
+
+            // Filter by status
+            if ($request->has('status') && $request->status != '') {
+                $query->where('status', 'like', "%{$request->status}%");
+            }
+
+            // Filter by COD collected status
+            if ($request->has('cod_collected') && $request->cod_collected !== '') {
+                $query->where('cod_collected', $request->cod_collected);
+            }
+
+            $shipments = $query->latest()->paginate(15);
+
+            // Get statistics with error handling
+            try {
+                $totalShipments = PathaoShipment::count();
+                $deliveredShipments = PathaoShipment::whereNotNull('delivered_at')->count();
+                $codCollectedCount = PathaoShipment::where('cod_collected', true)->count();
+                $pendingShipments = $totalShipments - $deliveredShipments;
+            } catch (\Exception $e) {
+                Log::error('Pathao Index: Error getting statistics', ['error' => $e->getMessage()]);
+                $totalShipments = 0;
+                $deliveredShipments = 0;
+                $codCollectedCount = 0;
+                $pendingShipments = 0;
+            }
+
+            // Get pending logistics orders (allocated but not yet created in Pathao)
+            try {
+                $pendingLogisticsOrders = Order::where('status', 'processing')
+                                               ->whereHas('shipment', function($query) {
+                                                   $query->where('delivery_method', 'logistics');
+                                               })
+                                               ->whereDoesntHave('pathaoShipment')
+                                               ->with(['user', 'orderItems.product', 'shipment'])
+                                               ->latest()
+                                               ->get();
+            } catch (\Exception $e) {
+                Log::error('Pathao Index: Error getting pending orders', ['error' => $e->getMessage()]);
+                $pendingLogisticsOrders = collect([]);
+            }
+
+            return view('admin.pathao.index', compact(
+                'shipments',
+                'totalShipments',
+                'deliveredShipments',
+                'codCollectedCount',
+                'pendingShipments',
+                'pendingLogisticsOrders'
+            ));
+        } catch (\Exception $e) {
+            Log::error('Pathao Index Error: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
+            
+            // Return view with empty data instead of crashing
+            return view('admin.pathao.index', [
+                'shipments' => collect([])->paginate(15),
+                'totalShipments' => 0,
+                'deliveredShipments' => 0,
+                'codCollectedCount' => 0,
+                'pendingShipments' => 0,
+                'pendingLogisticsOrders' => collect([]),
+            ])->with('error', 'An error occurred while loading the page. Please check the logs.');
         }
-
-        // Filter by status
-        if ($request->has('status') && $request->status != '') {
-            $query->where('status', 'like', "%{$request->status}%");
-        }
-
-        // Filter by COD collected status
-        if ($request->has('cod_collected') && $request->cod_collected !== '') {
-            $query->where('cod_collected', $request->cod_collected);
-        }
-
-        $shipments = $query->latest()->paginate(15);
-
-        // Get statistics
-        $totalShipments = PathaoShipment::count();
-        $deliveredShipments = PathaoShipment::whereNotNull('delivered_at')->count();
-        $codCollectedCount = PathaoShipment::where('cod_collected', true)->count();
-        $pendingShipments = $totalShipments - $deliveredShipments;
-
-        // Get pending logistics orders (allocated but not yet created in Pathao)
-        $pendingLogisticsOrders = Order::where('status', 'processing')
-                                       ->whereHas('shipment', function($query) {
-                                           $query->where('delivery_method', 'logistics');
-                                       })
-                                       ->whereDoesntHave('pathaoShipment')
-                                       ->with(['user', 'orderItems.product', 'shipment'])
-                                       ->latest()
-                                       ->get();
-
-        return view('admin.pathao.index', compact(
-            'shipments',
-            'totalShipments',
-            'deliveredShipments',
-            'codCollectedCount',
-            'pendingShipments',
-            'pendingLogisticsOrders'
-        ));
     }
 
     /**
