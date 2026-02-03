@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('pathao_shipments', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('tenant_id')->nullable()->after('id')->constrained('tenants')->onDelete('cascade');
+            $table->foreignId('tenant_id')->nullable()->constrained('tenants')->onDelete('cascade');
             $table->foreignId('order_id')->constrained()->onDelete('cascade');
             $table->foreignId('shipment_id')->nullable()->constrained()->onDelete('set null');
             
