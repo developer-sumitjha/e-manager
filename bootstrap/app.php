@@ -12,6 +12,11 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Register IdentifyTenant middleware globally to process subdomain requests
+        $middleware->web(append: [
+            \App\Http\Middleware\IdentifyTenant::class,
+        ]);
+        
         $middleware->alias([
             'admin' => \App\Http\Middleware\AdminMiddleware::class,
             'delivery_boy' => \App\Http\Middleware\DeliveryBoyAuth::class,

@@ -22,11 +22,21 @@ class IdentifyTenant
         $host = $request->getHost();
         
         // Extract subdomain
+        // Handle both localhost and production domains
         $parts = explode('.', $host);
+        
+        // For localhost or IP addresses, skip tenant identification
+        if ($host === 'localhost' || filter_var($host, FILTER_VALIDATE_IP)) {
+            return $next($request);
+        }
+        
+        // Extract subdomain (first part before the main domain)
+        // For example: subdomain.example.com -> subdomain
+        // For example.com -> null
         $subdomain = count($parts) > 2 ? $parts[0] : null;
         
         // Skip for main domain, super admin, www
-        if (in_array($subdomain, ['www', 'super', 'admin', null]) || $subdomain === 'localhost') {
+        if (in_array($subdomain, ['www', 'super', 'admin', null])) {
             return $next($request);
         }
         
