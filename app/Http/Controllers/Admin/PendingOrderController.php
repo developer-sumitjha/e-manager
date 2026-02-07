@@ -57,7 +57,11 @@ class PendingOrderController extends Controller
 
     public function create()
     {
-        $users = User::where('role', 'user')->get();
+        // Get customers for this tenant (including legacy 'user' role for backward compatibility)
+        $tenantId = auth()->user()->tenant_id;
+        $users = User::where('tenant_id', $tenantId)
+                     ->whereIn('role', ['customer', 'user'])
+                     ->get();
         $products = Product::where('is_active', true)->get();
         return view('admin.pending-orders.create', compact('users', 'products'));
     }
@@ -87,22 +91,37 @@ class PendingOrderController extends Controller
             'delivery_instructions' => 'nullable|string',
         ]);
 
-        // Find or create guest user for manual orders
+        // Get tenant_id from authenticated user
+        $tenantId = auth()->user()->tenant_id;
+        
+        // Find or create customer user for manual orders
+        // Check both phone and tenant_id to avoid matching users from other vendors
         $user = User::firstOrCreate(
-            ['phone' => $validated['customer_phone']],
+            [
+                'phone' => $validated['customer_phone'],
+                'tenant_id' => $tenantId,
+            ],
             [
                 'name' => $validated['customer_name'],
                 'email' => strtolower(str_replace(' ', '', $validated['customer_name'])) . '@guest.local',
                 'password' => \Hash::make(\Str::random(16)),
-                'role' => 'user',
+                'role' => 'customer',
+                'tenant_id' => $tenantId,
+                'is_active' => true,
             ]
         );
+        
+        // Update user name if it changed
+        if ($user->name !== $validated['customer_name']) {
+            $user->update(['name' => $validated['customer_name']]);
+        }
 
         // Generate order number
         $orderNumber = 'PND-' . str_pad(rand(1, 9999), 4, '0', STR_PAD_LEFT);
 
         // Create the order with all Gaaubesi-compliant fields
         $order = Order::create([
+            'tenant_id' => $tenantId,
             'user_id' => $user->id,
             'order_number' => $orderNumber,
             'subtotal' => $validated['total_amount'],
@@ -156,7 +175,11 @@ class PendingOrderController extends Controller
 
     public function edit(Order $pending_order)
     {
-        $users = User::where('role', 'user')->get();
+        // Get customers for this tenant (including legacy 'user' role for backward compatibility)
+        $tenantId = auth()->user()->tenant_id;
+        $users = User::where('tenant_id', $tenantId)
+                     ->whereIn('role', ['customer', 'user'])
+                     ->get();
         $products = Product::where('is_active', true)->get();
         $pending_order->load(['user', 'orderItems.product']);
         return view('admin.pending-orders.edit', compact('pending_order', 'users', 'products'));
@@ -597,7 +620,11 @@ class PendingOrderController extends Controller
 
     public function createBulk()
     {
-        $users = User::where('role', 'user')->get();
+        // Get customers for this tenant (including legacy 'user' role for backward compatibility)
+        $tenantId = auth()->user()->tenant_id;
+        $users = User::where('tenant_id', $tenantId)
+                     ->whereIn('role', ['customer', 'user'])
+                     ->get();
         // Get products - tenant scope is automatically applied via BelongsToTenant trait
         $products = Product::where('is_active', true)
                           ->orderBy('name')
@@ -626,16 +653,25 @@ class PendingOrderController extends Controller
 
         $createdCount = 0;
         $defaultNotes = $validated['default_notes'] ?? '';
+        
+        // Get tenant_id from authenticated user
+        $tenantId = auth()->user()->tenant_id;
 
         foreach ($validated['orders'] as $orderData) {
-            // Create or update user with phone number
+            // Create or update customer user with phone number and tenant_id
+            // Check both phone and tenant_id to avoid matching users from other vendors
             $user = User::firstOrCreate(
-                ['phone' => $orderData['customer_phone']],
+                [
+                    'phone' => $orderData['customer_phone'],
+                    'tenant_id' => $tenantId,
+                ],
                 [
                     'name' => $orderData['customer_name'],
                     'email' => Str::slug($orderData['customer_name']) . '@example.com',
                     'password' => bcrypt(Str::random(10)),
-                    'role' => 'user',
+                    'role' => 'customer',
+                    'tenant_id' => $tenantId,
+                    'is_active' => true,
                 ]
             );
             
@@ -648,6 +684,7 @@ class PendingOrderController extends Controller
             $subtotal = 0;
 
             $order = Order::create([
+                'tenant_id' => $tenantId,
                 'user_id' => $user->id,
                 'order_number' => $orderNumber,
                 'subtotal' => 0, // Will be updated

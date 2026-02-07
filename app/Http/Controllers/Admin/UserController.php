@@ -9,9 +9,61 @@ use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
-    public function index()
+    /**
+     * Get the current tenant ID from authenticated user
+     */
+    protected function getTenantId()
     {
-        $users = User::latest()->paginate(10);
+        return auth()->user()->tenant_id ?? null;
+    }
+
+    /**
+     * Check if user belongs to the current tenant
+     */
+    protected function belongsToTenant(User $user)
+    {
+        $tenantId = $this->getTenantId();
+        
+        // If no tenant_id, allow access (for super admin or non-tenant users)
+        if ($tenantId === null) {
+            return true;
+        }
+        
+        return $user->tenant_id === $tenantId;
+    }
+
+    public function index(Request $request)
+    {
+        $query = User::query();
+        
+        // Filter by tenant_id if user has one (vendor/admin)
+        $tenantId = $this->getTenantId();
+        if ($tenantId !== null) {
+            $query->where('tenant_id', $tenantId);
+        }
+        
+        // Search functionality
+        if ($request->has('q') && $request->q != '') {
+            $search = $request->q;
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+        
+        // Role filter
+        if ($request->has('role') && $request->role != '') {
+            $query->where('role', $request->role);
+        }
+        
+        // Status filter
+        if ($request->has('active') && $request->active != '') {
+            $query->where('is_active', $request->active == '1');
+        }
+        
+        // Load orders count for display
+        $users = $query->withCount('orders')->latest()->paginate(10);
+        
         return view('admin.users.index', compact('users'));
     }
 
@@ -37,6 +89,12 @@ class UserController extends Controller
             unset($validated['permissions']);
         }
 
+        // Automatically set tenant_id if user has one (vendor/admin creating users)
+        $tenantId = $this->getTenantId();
+        if ($tenantId !== null) {
+            $validated['tenant_id'] = $tenantId;
+        }
+
         User::create($validated);
 
         return redirect()->route('admin.users.index')->with('success', 'User created successfully.');
@@ -44,17 +102,32 @@ class UserController extends Controller
 
     public function show(User $user)
     {
+        // Check if user belongs to current tenant
+        if (!$this->belongsToTenant($user)) {
+            abort(403, 'You do not have permission to view this user.');
+        }
+        
         $user->load('orders');
         return view('admin.users.show', compact('user'));
     }
 
     public function edit(User $user)
     {
+        // Check if user belongs to current tenant
+        if (!$this->belongsToTenant($user)) {
+            abort(403, 'You do not have permission to edit this user.');
+        }
+        
         return view('admin.users.edit', compact('user'));
     }
 
     public function update(Request $request, User $user)
     {
+        // Check if user belongs to current tenant
+        if (!$this->belongsToTenant($user)) {
+            abort(403, 'You do not have permission to update this user.');
+        }
+        
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . $user->id,
@@ -73,6 +146,9 @@ class UserController extends Controller
         if (($validated['role'] ?? $user->role) !== 'employee') {
             $validated['permissions'] = [];
         }
+        
+        // Ensure tenant_id is not changed
+        unset($validated['tenant_id']);
 
         $user->update($validated);
 
@@ -81,6 +157,11 @@ class UserController extends Controller
 
     public function destroy(User $user)
     {
+        // Check if user belongs to current tenant
+        if (!$this->belongsToTenant($user)) {
+            abort(403, 'You do not have permission to delete this user.');
+        }
+        
         // Prevent deleting yourself
         if ($user->id === auth()->id()) {
             return redirect()->route('admin.users.index')->with('error', 'You cannot delete yourself.');
@@ -92,6 +173,14 @@ class UserController extends Controller
 
     public function toggleStatus(Request $request, User $user)
     {
+        // Check if user belongs to current tenant
+        if (!$this->belongsToTenant($user)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You do not have permission to update this user.'
+            ], 403);
+        }
+        
         $request->validate([
             'is_active' => 'required|boolean'
         ]);
@@ -110,6 +199,12 @@ class UserController extends Controller
     public function export(Request $request)
     {
         $users = User::query();
+        
+        // Filter by tenant_id if user has one (vendor/admin)
+        $tenantId = $this->getTenantId();
+        if ($tenantId !== null) {
+            $users->where('tenant_id', $tenantId);
+        }
         
         // Apply filters
         if ($request->has('search') && $request->search) {

@@ -5,8 +5,11 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\Product;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class OrderController extends Controller
 {
@@ -113,6 +116,31 @@ class OrderController extends Controller
         try {
             \DB::beginTransaction();
             
+            // Get tenant_id from authenticated user
+            $tenantId = auth()->user()->tenant_id;
+            
+            // Find or create customer user for manual orders
+            // Check both phone and tenant_id to avoid matching users from other vendors
+            $user = User::firstOrCreate(
+                [
+                    'phone' => $validated['receiver_phone'],
+                    'tenant_id' => $tenantId,
+                ],
+                [
+                    'name' => $validated['receiver_name'],
+                    'email' => strtolower(str_replace(' ', '', $validated['receiver_name'])) . '@guest.local',
+                    'password' => Hash::make(Str::random(16)),
+                    'role' => 'customer',
+                    'tenant_id' => $tenantId,
+                    'is_active' => true,
+                ]
+            );
+            
+            // Update user name if it changed
+            if ($user->name !== $validated['receiver_name']) {
+                $user->update(['name' => $validated['receiver_name']]);
+            }
+            
             // Generate order number
             $lastOrder = Order::latest()->first();
             $nextNumber = $lastOrder ? intval(substr($lastOrder->order_number, 4)) + 1 : 1;
@@ -120,8 +148,8 @@ class OrderController extends Controller
             
             // Create order
             $order = Order::create([
-                'tenant_id' => auth()->user()->tenant_id,
-                'user_id' => null, // Manual order, no user
+                'tenant_id' => $tenantId,
+                'user_id' => $user->id,
                 'order_number' => $orderNumber,
                 'subtotal' => $validated['subtotal'],
                 'tax' => $validated['tax'] ?? 0,
