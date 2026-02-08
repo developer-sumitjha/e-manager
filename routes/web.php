@@ -8,17 +8,23 @@ use App\Http\Controllers\Admin\OrderController;
 
 // Public Routes - Super Admin Public Frontend (Landing Page)
 Route::any('/', function (\Illuminate\Http\Request $request) {
-    // Get hostname
+    // Get hostname - try multiple methods for reliability
     $host = $request->getHost();
     $hostHeader = $request->header('Host');
     $httpHost = $request->server('HTTP_HOST');
-    $hostname = $host ?: ($hostHeader ?: $httpHost);
+    $serverName = $request->server('SERVER_NAME');
+    
+    // Use the most reliable source, prioritizing HTTP_HOST
+    $hostname = $httpHost ?: ($hostHeader ?: ($host ?: $serverName));
+    
+    // Remove port if present (e.g., primax.claudnova.com:443 -> primax.claudnova.com)
+    $hostname = preg_replace('/:\d+$/', '', $hostname);
     
     // Extract subdomain
     $parts = explode('.', $hostname);
     
     // Remove 'www' prefix if present
-    if (isset($parts[0]) && $parts[0] === 'www') {
+    if (isset($parts[0]) && strtolower($parts[0]) === 'www') {
         $parts = array_slice($parts, 1);
     }
     
@@ -28,20 +34,35 @@ Route::any('/', function (\Illuminate\Http\Request $request) {
     $subdomain = null;
     if (!$isIpAddress && count($parts) > 1) {
         // Handle localhost subdomains (e.g., vendor1.localhost)
-        $isLocalhostSubdomain = (count($parts) === 2 && end($parts) === 'localhost');
+        $isLocalhostSubdomain = (count($parts) === 2 && strtolower(end($parts)) === 'localhost');
         
-        // Handle production subdomains (e.g., vendor1.example.com)
+        // Handle production subdomains (e.g., vendor1.example.com or primax.claudnova.com)
+        // For production: if we have 3+ parts, the first is the subdomain
         $isProductionSubdomain = count($parts) >= 3;
         
         if ($isLocalhostSubdomain || $isProductionSubdomain) {
             $subdomain = $parts[0];
             
             // Skip special subdomains
-            if (in_array($subdomain, ['www', 'super', 'admin'])) {
+            if (in_array(strtolower($subdomain), ['www', 'super', 'admin'])) {
                 $subdomain = null;
             }
         }
     }
+    
+    // Log for debugging (remove in production if not needed)
+    \Log::info('Root Route - Subdomain Detection', [
+        'hostname' => $hostname,
+        'host' => $host,
+        'hostHeader' => $hostHeader,
+        'httpHost' => $httpHost,
+        'serverName' => $serverName,
+        'parts' => $parts,
+        'extracted_subdomain' => $subdomain,
+        'is_ip' => $isIpAddress,
+        'is_localhost_subdomain' => isset($isLocalhostSubdomain) ? $isLocalhostSubdomain : false,
+        'is_production_subdomain' => isset($isProductionSubdomain) ? $isProductionSubdomain : false,
+    ]);
     
     // If we have a subdomain, check if it's a valid tenant and show storefront directly
     if ($subdomain !== null) {
@@ -50,9 +71,22 @@ Route::any('/', function (\Illuminate\Http\Request $request) {
             ->first();
         
         if ($tenant) {
+            // Log successful tenant match
+            \Log::info('Root Route - Tenant Found', [
+                'subdomain' => $subdomain,
+                'tenant_id' => $tenant->id,
+                'tenant_name' => $tenant->name,
+            ]);
+            
             // Show storefront directly without redirect
             $storefrontController = app(\App\Http\Controllers\StorefrontController::class);
             return $storefrontController->show($tenant->subdomain);
+        } else {
+            // Log when subdomain found but no tenant
+            \Log::warning('Root Route - Subdomain Found But No Tenant', [
+                'subdomain' => $subdomain,
+                'hostname' => $hostname,
+            ]);
         }
     }
     
@@ -60,14 +94,74 @@ Route::any('/', function (\Illuminate\Http\Request $request) {
     return view('welcome');
 })->name('public.landing');
 
-// Debug route
-Route::get('/debug', function () {
-    $tenant = \App\Models\Tenant::first();
+// Debug route - Enhanced for subdomain detection
+Route::get('/debug', function (\Illuminate\Http\Request $request) {
+    // Get hostname - try multiple methods
+    $host = $request->getHost();
+    $hostHeader = $request->header('Host');
+    $httpHost = $request->server('HTTP_HOST');
+    $serverName = $request->server('SERVER_NAME');
+    
+    $hostname = $httpHost ?: ($hostHeader ?: ($host ?: $serverName));
+    $hostname = preg_replace('/:\d+$/', '', $hostname);
+    
+    $parts = explode('.', $hostname);
+    $partsWithoutWww = $parts;
+    if (isset($parts[0]) && strtolower($parts[0]) === 'www') {
+        $partsWithoutWww = array_slice($parts, 1);
+    }
+    
+    $isIpAddress = filter_var($hostname, FILTER_VALIDATE_IP) !== false;
+    $isLocalhostSubdomain = (count($partsWithoutWww) === 2 && strtolower(end($partsWithoutWww)) === 'localhost');
+    $isProductionSubdomain = count($partsWithoutWww) >= 3;
+    
+    $extractedSubdomain = null;
+    if (!$isIpAddress && ($isLocalhostSubdomain || $isProductionSubdomain)) {
+        $extractedSubdomain = $partsWithoutWww[0];
+        if (in_array(strtolower($extractedSubdomain), ['www', 'super', 'admin'])) {
+            $extractedSubdomain = null;
+        }
+    }
+    
+    // Check for tenant
+    $tenant = null;
+    if ($extractedSubdomain) {
+        $tenant = \App\Models\Tenant::whereRaw('LOWER(subdomain) = ?', [strtolower($extractedSubdomain)])
+            ->whereIn('status', ['trial', 'active'])
+            ->first();
+    }
+    
+    // Get all tenants for reference
+    $allTenants = \App\Models\Tenant::select('id', 'name', 'subdomain', 'status')->get();
+    
     return response()->json([
-        'tenant' => $tenant ? $tenant->subdomain : 'No tenant',
-        'redirect_url' => $tenant ? route('storefront.preview', $tenant->subdomain) : 'No redirect',
-        'app_url' => config('app.url')
-    ]);
+        'hostname_detection' => [
+            'getHost()' => $host,
+            'header(Host)' => $hostHeader,
+            'HTTP_HOST' => $httpHost,
+            'SERVER_NAME' => $serverName,
+            'final_hostname' => $hostname,
+            'full_url' => $request->fullUrl(),
+        ],
+        'subdomain_extraction' => [
+            'host_parts' => $parts,
+            'host_parts_without_www' => $partsWithoutWww,
+            'extracted_subdomain' => $extractedSubdomain,
+            'is_ip' => $isIpAddress,
+            'is_localhost_subdomain' => $isLocalhostSubdomain,
+            'is_production_subdomain' => $isProductionSubdomain,
+        ],
+        'tenant_match' => [
+            'subdomain' => $extractedSubdomain,
+            'tenant_found' => $tenant !== null,
+            'tenant_id' => $tenant ? $tenant->id : null,
+            'tenant_name' => $tenant ? $tenant->name : null,
+            'tenant_subdomain' => $tenant ? $tenant->subdomain : null,
+            'tenant_status' => $tenant ? $tenant->status : null,
+        ],
+        'all_tenants' => $allTenants,
+        'app_url' => config('app.url'),
+    ], JSON_PRETTY_PRINT);
 });
 
 // Test hostname extraction route (for debugging vendor login subdomain issue)
