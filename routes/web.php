@@ -21,6 +21,36 @@ Route::get('/debug', function () {
     ]);
 });
 
+// Test hostname extraction route (for debugging vendor login subdomain issue)
+Route::get('/test-hostname', function (\Illuminate\Http\Request $request) {
+    $host = $request->getHost();
+    $hostHeader = $request->header('Host');
+    $httpHost = $request->server('HTTP_HOST');
+    $serverName = $request->server('SERVER_NAME');
+    $hostname = $host ?: ($hostHeader ?: $httpHost);
+    $parts = explode('.', $hostname);
+    
+    // Remove www if present
+    $partsWithoutWww = $parts;
+    if (isset($parts[0]) && $parts[0] === 'www') {
+        $partsWithoutWww = array_slice($parts, 1);
+    }
+    
+    return response()->json([
+        'getHost()' => $host,
+        'header(Host)' => $hostHeader,
+        'HTTP_HOST' => $httpHost,
+        'SERVER_NAME' => $serverName,
+        'final_hostname' => $hostname,
+        'full_url' => $request->fullUrl(),
+        'host_parts' => $parts,
+        'host_parts_without_www' => $partsWithoutWww,
+        'extracted_subdomain' => count($partsWithoutWww) >= 3 ? $partsWithoutWww[0] : (count($partsWithoutWww) === 2 && end($partsWithoutWww) === 'localhost' ? $partsWithoutWww[0] : null),
+        'is_localhost_subdomain' => count($partsWithoutWww) === 2 && end($partsWithoutWww) === 'localhost',
+        'is_production_subdomain' => count($partsWithoutWww) >= 3,
+    ]);
+});
+
 // Test storefront route
 Route::get('/test-storefront/{subdomain}', function ($subdomain) {
     return response()->json([

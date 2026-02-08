@@ -26,8 +26,29 @@ class AuthController extends Controller
         ]);
 
         // Extract subdomain from request hostname
+        // Try multiple methods to get the hostname
         $host = $request->getHost();
-        $parts = explode('.', $host);
+        $hostHeader = $request->header('Host');
+        $httpHost = $request->server('HTTP_HOST');
+        
+        // Use the most reliable source
+        $hostname = $host ?: ($hostHeader ?: $httpHost);
+        
+        // DEBUG: Log hostname information (remove after debugging)
+        \Log::info('Vendor Login - Hostname Debug', [
+            'getHost()' => $host,
+            'header(Host)' => $hostHeader,
+            'HTTP_HOST' => $httpHost,
+            'final_hostname' => $hostname,
+            'full_url' => $request->fullUrl(),
+        ]);
+        
+        $parts = explode('.', $hostname);
+        
+        // Remove 'www' prefix if present
+        if (isset($parts[0]) && $parts[0] === 'www') {
+            $parts = array_slice($parts, 1);
+        }
         
         // Extract subdomain (first part before the main domain)
         // For example: subdomain.example.com -> subdomain
@@ -36,32 +57,40 @@ class AuthController extends Controller
         $requestSubdomain = null;
         
         // Check if host is a pure IP address (no subdomain possible)
-        $isIpAddress = filter_var($host, FILTER_VALIDATE_IP) !== false;
+        $isIpAddress = filter_var($hostname, FILTER_VALIDATE_IP) !== false;
         
-        if (!$isIpAddress) {
+        if (!$isIpAddress && count($parts) > 1) {
             // Extract subdomain based on number of parts and domain structure
             // vendor1.localhost -> ['vendor1', 'localhost'] -> count = 2, subdomain = vendor1
             // vendor1.example.com -> ['vendor1', 'example', 'com'] -> count = 3, subdomain = vendor1
             // localhost -> ['localhost'] -> count = 1, no subdomain
             // example.com -> ['example', 'com'] -> count = 2, no subdomain (main domain)
             
-            if (count($parts) > 1) {
-                // Check if this is a localhost subdomain (vendor1.localhost)
-                $isLocalhostSubdomain = (count($parts) === 2 && $parts[1] === 'localhost');
+            // Check if this is a localhost subdomain (vendor1.localhost)
+            $isLocalhostSubdomain = (count($parts) === 2 && end($parts) === 'localhost');
+            
+            // Check if this is a production subdomain (vendor1.example.com - 3+ parts)
+            $isProductionSubdomain = count($parts) >= 3;
+            
+            if ($isLocalhostSubdomain || $isProductionSubdomain) {
+                $requestSubdomain = $parts[0];
                 
-                // Check if this is a production subdomain (vendor1.example.com - 3+ parts)
-                $isProductionSubdomain = count($parts) >= 3;
-                
-                if ($isLocalhostSubdomain || $isProductionSubdomain) {
-                    $requestSubdomain = $parts[0];
-                    
-                    // Skip subdomain validation for special subdomains
-                    if (in_array($requestSubdomain, ['www', 'super', 'admin'])) {
-                        $requestSubdomain = null;
-                    }
+                // Skip subdomain validation for special subdomains
+                if (in_array($requestSubdomain, ['www', 'super', 'admin'])) {
+                    $requestSubdomain = null;
                 }
             }
         }
+        
+        // DEBUG: Log subdomain extraction (remove after debugging)
+        \Log::info('Vendor Login - Subdomain Extraction', [
+            'hostname' => $hostname,
+            'parts' => $parts,
+            'extracted_subdomain' => $requestSubdomain,
+            'is_ip' => $isIpAddress,
+            'is_localhost_subdomain' => isset($isLocalhostSubdomain) ? $isLocalhostSubdomain : false,
+            'is_production_subdomain' => isset($isProductionSubdomain) ? $isProductionSubdomain : false,
+        ]);
 
         // Try to authenticate as a vendor (admin user of a tenant)
         $user = User::where('email', $request->email)
@@ -72,11 +101,26 @@ class AuthController extends Controller
             // Check tenant status
             $tenant = $user->tenant;
             
+            // DEBUG: Log tenant and subdomain matching (remove after debugging)
+            \Log::info('Vendor Login - Subdomain Validation', [
+                'user_email' => $request->email,
+                'tenant_subdomain' => $tenant->subdomain,
+                'request_subdomain' => $requestSubdomain,
+                'match' => $tenant->subdomain === $requestSubdomain,
+            ]);
+            
             // Validate that the user's tenant subdomain matches the request subdomain
             // This is a security requirement: users can only log in from their own subdomain
             if ($requestSubdomain !== null) {
                 // We have a subdomain in the request, it must match the user's tenant subdomain
                 if ($tenant->subdomain !== $requestSubdomain) {
+                    \Log::warning('Vendor Login - Subdomain Mismatch', [
+                        'user_email' => $request->email,
+                        'tenant_subdomain' => $tenant->subdomain,
+                        'request_subdomain' => $requestSubdomain,
+                        'hostname' => $hostname,
+                    ]);
+                    
                     return back()
                         ->withInput($request->only('email'))
                         ->withErrors(['email' => 'You can only log in from your own vendor subdomain. Please use the correct subdomain URL.']);
@@ -84,11 +128,13 @@ class AuthController extends Controller
             } else {
                 // No subdomain in request (pure localhost or IP without subdomain)
                 // For security, we should require subdomain-based login
-                // Allow only if explicitly accessing from main domain (which should be restricted anyway)
-                // But to be safe, we'll require subdomain matching
+                // Get the main domain from config or request
+                $mainDomain = config('app.url') ? parse_url(config('app.url'), PHP_URL_HOST) : $hostname;
+                $mainDomain = str_replace(['http://', 'https://'], '', $mainDomain);
+                
                 return back()
                     ->withInput($request->only('email'))
-                    ->withErrors(['email' => 'You must log in from your vendor subdomain. Please use: ' . $tenant->subdomain . '.' . ($host === 'localhost' ? 'localhost' : 'yourdomain.com')]);
+                    ->withErrors(['email' => 'You must log in from your vendor subdomain. Please use: ' . $tenant->subdomain . '.' . ($hostname === 'localhost' ? 'localhost' : $mainDomain)]);
             }
             
             if ($tenant->status === 'suspended') {
