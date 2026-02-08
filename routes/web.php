@@ -94,6 +94,74 @@ Route::any('/', function (\Illuminate\Http\Request $request) {
     return view('welcome');
 })->name('public.landing');
 
+// Test root route logic - mirrors the exact root route logic
+Route::get('/test-root-logic', function (\Illuminate\Http\Request $request) {
+    // This is the EXACT same logic as the root route
+    $host = $request->getHost();
+    $hostHeader = $request->header('Host');
+    $httpHost = $request->server('HTTP_HOST');
+    $serverName = $request->server('SERVER_NAME');
+    
+    $hostname = $httpHost ?: ($hostHeader ?: ($host ?: $serverName));
+    $hostname = preg_replace('/:\d+$/', '', $hostname);
+    
+    $parts = explode('.', $hostname);
+    
+    if (isset($parts[0]) && strtolower($parts[0]) === 'www') {
+        $parts = array_slice($parts, 1);
+    }
+    
+    $isIpAddress = filter_var($hostname, FILTER_VALIDATE_IP) !== false;
+    
+    $subdomain = null;
+    if (!$isIpAddress && count($parts) > 1) {
+        $isLocalhostSubdomain = (count($parts) === 2 && strtolower(end($parts)) === 'localhost');
+        $isProductionSubdomain = count($parts) >= 3;
+        
+        if ($isLocalhostSubdomain || $isProductionSubdomain) {
+            $subdomain = $parts[0];
+            
+            if (in_array(strtolower($subdomain), ['www', 'super', 'admin'])) {
+                $subdomain = null;
+            }
+        }
+    }
+    
+    $tenant = null;
+    $willShowStorefront = false;
+    if ($subdomain !== null) {
+        $tenant = \App\Models\Tenant::whereRaw('LOWER(subdomain) = ?', [strtolower($subdomain)])
+            ->whereIn('status', ['trial', 'active'])
+            ->first();
+        
+        if ($tenant) {
+            $willShowStorefront = true;
+        }
+    }
+    
+    return response()->json([
+        'root_route_logic' => [
+            'hostname' => $hostname,
+            'parts' => $parts,
+            'parts_count' => count($parts),
+            'extracted_subdomain' => $subdomain,
+            'is_ip' => $isIpAddress,
+            'is_localhost_subdomain' => isset($isLocalhostSubdomain) ? $isLocalhostSubdomain : false,
+            'is_production_subdomain' => isset($isProductionSubdomain) ? $isProductionSubdomain : false,
+        ],
+        'tenant_check' => [
+            'tenant_found' => $tenant !== null,
+            'tenant_id' => $tenant ? $tenant->id : null,
+            'tenant_subdomain' => $tenant ? $tenant->subdomain : null,
+            'tenant_status' => $tenant ? $tenant->status : null,
+            'will_show_storefront' => $willShowStorefront,
+        ],
+        'message' => $willShowStorefront 
+            ? 'Root route SHOULD show storefront for this subdomain' 
+            : 'Root route will show welcome page',
+    ], JSON_PRETTY_PRINT);
+});
+
 // Debug route - Enhanced for subdomain detection
 Route::get('/debug', function (\Illuminate\Http\Request $request) {
     // Get hostname - try multiple methods
