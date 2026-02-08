@@ -192,6 +192,63 @@ unset($__errorArgs, $__bag); ?>
 
                         <hr>
 
+                        <h5 class="mb-3">Status & Subscription</h5>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Status *</label>
+                                <select name="status" class="form-select <?php $__errorArgs = ['status'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>" required>
+                                    <option value="pending" <?php echo e(old('status', $tenant->status) == 'pending' ? 'selected' : ''); ?>>Pending</option>
+                                    <option value="trial" <?php echo e(old('status', $tenant->status) == 'trial' ? 'selected' : ''); ?>>Trial</option>
+                                    <option value="active" <?php echo e(old('status', $tenant->status) == 'active' ? 'selected' : ''); ?>>Active</option>
+                                    <option value="suspended" <?php echo e(old('status', $tenant->status) == 'suspended' ? 'selected' : ''); ?>>Suspended</option>
+                                    <option value="cancelled" <?php echo e(old('status', $tenant->status) == 'cancelled' ? 'selected' : ''); ?>>Cancelled</option>
+                                </select>
+                                <?php $__errorArgs = ['status'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                                    <div class="invalid-feedback"><?php echo e($message); ?></div>
+                                <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Subscription Expiry Date</label>
+                                <input type="datetime-local" name="subscription_ends_at" class="form-control <?php $__errorArgs = ['subscription_ends_at'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>" 
+                                    value="<?php echo e(old('subscription_ends_at', $tenant->subscription_ends_at ? $tenant->subscription_ends_at->format('Y-m-d\TH:i') : '')); ?>">
+                                <?php $__errorArgs = ['subscription_ends_at'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                                    <div class="invalid-feedback"><?php echo e($message); ?></div>
+                                <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
+                                <small class="form-text text-muted">Leave empty if no expiry date</small>
+                            </div>
+                        </div>
+
+                        <hr>
+
                         <h5 class="mb-3">Plan & Limits</h5>
                         <div class="row">
                             <div class="col-md-6 mb-3">

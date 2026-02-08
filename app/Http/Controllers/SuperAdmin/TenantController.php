@@ -173,11 +173,21 @@ class TenantController extends Controller
             'owner_name' => 'required|string',
             'owner_email' => 'required|email',
             'owner_phone' => 'required|string',
+            'status' => 'required|in:pending,active,suspended,cancelled,trial',
+            'subscription_ends_at' => 'nullable|date',
             'current_plan_id' => 'required|exists:subscription_plans,id',
             'max_orders' => 'required|integer|min:0',
             'max_products' => 'required|integer|min:0',
             'max_users' => 'required|integer|min:1',
         ]);
+
+        // Convert subscription_ends_at to null if empty, otherwise parse the datetime
+        if (empty($validated['subscription_ends_at'])) {
+            $validated['subscription_ends_at'] = null;
+        } else {
+            // Ensure proper datetime format for database
+            $validated['subscription_ends_at'] = \Carbon\Carbon::parse($validated['subscription_ends_at']);
+        }
 
         $tenant->update($validated);
         $tenant->logActivity('updated', 'Tenant information updated by super admin');
