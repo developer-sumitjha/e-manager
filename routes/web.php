@@ -7,7 +7,56 @@ use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\OrderController;
 
 // Public Routes - Super Admin Public Frontend (Landing Page)
-Route::any('/', function () {
+Route::any('/', function (\Illuminate\Http\Request $request) {
+    // Get hostname
+    $host = $request->getHost();
+    $hostHeader = $request->header('Host');
+    $httpHost = $request->server('HTTP_HOST');
+    $hostname = $host ?: ($hostHeader ?: $httpHost);
+    
+    // Extract subdomain
+    $parts = explode('.', $hostname);
+    
+    // Remove 'www' prefix if present
+    if (isset($parts[0]) && $parts[0] === 'www') {
+        $parts = array_slice($parts, 1);
+    }
+    
+    // Check if it's a pure IP address (no subdomain possible)
+    $isIpAddress = filter_var($hostname, FILTER_VALIDATE_IP) !== false;
+    
+    $subdomain = null;
+    if (!$isIpAddress && count($parts) > 1) {
+        // Handle localhost subdomains (e.g., vendor1.localhost)
+        $isLocalhostSubdomain = (count($parts) === 2 && end($parts) === 'localhost');
+        
+        // Handle production subdomains (e.g., vendor1.example.com)
+        $isProductionSubdomain = count($parts) >= 3;
+        
+        if ($isLocalhostSubdomain || $isProductionSubdomain) {
+            $subdomain = $parts[0];
+            
+            // Skip special subdomains
+            if (in_array($subdomain, ['www', 'super', 'admin'])) {
+                $subdomain = null;
+            }
+        }
+    }
+    
+    // If we have a subdomain, check if it's a valid tenant and show storefront directly
+    if ($subdomain !== null) {
+        $tenant = \App\Models\Tenant::whereRaw('LOWER(subdomain) = ?', [strtolower($subdomain)])
+            ->whereIn('status', ['trial', 'active'])
+            ->first();
+        
+        if ($tenant) {
+            // Show storefront directly without redirect
+            $storefrontController = app(\App\Http\Controllers\StorefrontController::class);
+            return $storefrontController->show($tenant->subdomain);
+        }
+    }
+    
+    // No valid subdomain or tenant found, show main landing page
     return view('welcome');
 })->name('public.landing');
 
