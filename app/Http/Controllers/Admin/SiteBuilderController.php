@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\SiteSettings;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
@@ -470,30 +471,65 @@ class SiteBuilderController extends Controller
      */
     public function uploadSlideImage(Request $request)
     {
-        $user = Auth::user();
-        $tenantId = $user->tenant_id;
-        
-        $validator = Validator::make($request->all(), [
-            'slide_image' => 'required|image|mimes:jpeg,jpg,png,webp|max:5120',
-            'slide_index' => 'nullable|integer',
-        ]);
-        
-        if ($validator->fails()) {
+        try {
+            $user = Auth::user();
+            $tenantId = $user->tenant_id;
+            
+            $validator = Validator::make($request->all(), [
+                'slide_image' => 'required|image|mimes:jpeg,jpg,png,webp|max:5120',
+                'slide_index' => 'nullable|integer',
+            ]);
+            
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validation failed',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+            
+            if (!$request->hasFile('slide_image')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No image file provided'
+                ], 422);
+            }
+            
+            $file = $request->file('slide_image');
+            
+            // Ensure the directory exists
+            $directory = 'site-assets/slides';
+            if (!Storage::disk('public')->exists($directory)) {
+                Storage::disk('public')->makeDirectory($directory);
+            }
+            
+            // Store slide image
+            $path = $file->store($directory, 'public');
+            
+            if (!$path) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to store image file'
+                ], 500);
+            }
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Slide image uploaded successfully',
+                'image_path' => $path,
+                'image_url' => Storage::disk('public')->url($path)
+            ]);
+            
+        } catch (\Exception $e) {
+            \Log::error('Error uploading slide image: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
+            
             return response()->json([
                 'success' => false,
-                'errors' => $validator->errors()
-            ], 422);
+                'message' => 'Upload failed: ' . $e->getMessage()
+            ], 500);
         }
-        
-        // Store slide image
-        $path = $request->file('slide_image')->store('site-assets/slides', 'public');
-        
-        return response()->json([
-            'success' => true,
-            'message' => 'Slide image uploaded successfully',
-            'image_path' => $path,
-            'image_url' => Storage::url($path)
-        ]);
     }
     
     /**

@@ -355,7 +355,21 @@
                 
                 $bgStyle = '';
                 if ($bgType === 'image' && !empty($bgImage)) {
-                    $bgUrl = asset('storage/' . $bgImage);
+                    // Generate URL - use Storage::url() for better server compatibility
+                    try {
+                        $bgUrl = \Illuminate\Support\Facades\Storage::disk('public')->url($bgImage);
+                        // If Storage::url() returns a path starting with /storage, use it as-is
+                        // Otherwise, ensure it's a full URL
+                        if (strpos($bgUrl, 'http') !== 0) {
+                            // It's a relative path, make it absolute
+                            $bgUrl = asset(ltrim($bgUrl, '/'));
+                        }
+                    } catch (\Exception $e) {
+                        // Fallback to asset() if Storage fails
+                        $bgUrl = asset('storage/' . ltrim($bgImage, '/'));
+                    }
+                    // Escape single quotes in URL for CSS
+                    $bgUrl = str_replace("'", "\\'", $bgUrl);
                     $bgStyle = "background-image: url('{$bgUrl}'); background-position: {$bgPosition}; background-size: {$bgSize}; background-repeat: no-repeat;";
                 } else {
                     $bgStyle = "background-color: {$bgColor};";

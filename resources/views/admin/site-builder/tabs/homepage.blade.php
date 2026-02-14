@@ -633,7 +633,27 @@ function setupBackgroundImageUpload() {
         const input = uploadArea.querySelector('.slide-bg-image-input');
         const slideIndex = uploadArea.getAttribute('data-slide-index');
         const preview = document.querySelector(`.slide-bg-image-preview[data-slide-index="${slideIndex}"]`);
-        const pathInput = uploadArea.closest('.form-group').querySelector('.slide-bg-image-path');
+        
+        // Find the path input - try multiple selectors to ensure we find it
+        let pathInput = uploadArea.closest('.form-group')?.querySelector('.slide-bg-image-path');
+        if (!pathInput) {
+            // Try finding it in the parent container
+            const slideItem = uploadArea.closest('.slide-item');
+            if (slideItem) {
+                pathInput = slideItem.querySelector(`input.slide-bg-image-path[name*="[${slideIndex}]"]`) || 
+                           slideItem.querySelector('.slide-bg-image-path');
+            }
+        }
+        
+        if (!input) {
+            console.error('Background image input not found for slide:', slideIndex);
+            return;
+        }
+        
+        if (!pathInput) {
+            console.error('Background image path input not found for slide:', slideIndex);
+            return;
+        }
         
         if (!input.hasAttribute('data-bg-listener-added')) {
             input.setAttribute('data-bg-listener-added', 'true');
@@ -643,6 +663,12 @@ function setupBackgroundImageUpload() {
             input.addEventListener('change', function(e) {
                 const file = e.target.files[0];
                 if (file) {
+                    // Validate file size (5MB max)
+                    if (file.size > 5 * 1024 * 1024) {
+                        alert('File size exceeds 5MB limit. Please choose a smaller image.');
+                        return;
+                    }
+                    
                     const reader = new FileReader();
                     reader.onload = function(e) {
                         if (preview) {
@@ -662,6 +688,11 @@ function setupBackgroundImageUpload() {
 
 // Upload background image
 function uploadBackgroundImage(slideIndex, file, pathInput) {
+    if (!file || !pathInput) {
+        console.error('Missing file or pathInput for background image upload');
+        return;
+    }
+    
     const formData = new FormData();
     formData.append('slide_image', file);
     formData.append('slide_index', slideIndex);
@@ -675,14 +706,30 @@ function uploadBackgroundImage(slideIndex, file, pathInput) {
         },
         body: formData
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
     .then(data => {
-        if (data.success && pathInput) {
-            pathInput.value = data.image_path;
+        if (data.success && data.image_path) {
+            if (pathInput) {
+                pathInput.value = data.image_path;
+                console.log('Background image uploaded successfully:', data.image_path);
+            } else {
+                console.error('pathInput not found for slide index:', slideIndex);
+            }
+        } else {
+            console.error('Upload failed:', data.message || 'Unknown error');
+            if (data.errors) {
+                console.error('Validation errors:', data.errors);
+            }
         }
     })
     .catch(error => {
         console.error('Error uploading background image:', error);
+        alert('Failed to upload background image. Please try again.');
     });
 }
 
@@ -746,6 +793,9 @@ function saveHomepage() {
         slides.push(slideData);
     });
     
+    // Debug: Log slides data before saving
+    console.log('Slides data to save:', slides);
+    
     formData.append('hero_slides', JSON.stringify(slides));
     
     showSaveIndicator('saving');
@@ -762,16 +812,24 @@ function saveHomepage() {
         },
         body: formData
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
     .then(data => {
         if (data.success) {
             showSaveIndicator('saved');
             showAlert('Homepage settings saved successfully!');
+            console.log('Homepage saved successfully. Slides data:', slides);
         } else {
+            console.error('Save failed:', data);
             throw new Error(data.message || 'Failed to save');
         }
     })
     .catch(error => {
+        console.error('Error saving homepage:', error);
         showSaveIndicator('saved');
         showAlert('Error: ' + error.message, 'danger');
     });
