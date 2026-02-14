@@ -91,7 +91,6 @@
     
     .hero-slides-carousel .carousel-item {
         min-height: <?php echo e(($settings->additional_settings['slide_height'] ?? 500) . ($settings->additional_settings['slide_height_unit'] ?? 'px')); ?>;
-        background: var(--background-color);
         position: relative;
     }
     
@@ -347,7 +346,22 @@
         <?php endif; ?>
         <div class="carousel-inner">
             <?php $__currentLoopData = $heroSlides; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $slide): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-            <div class="carousel-item <?php echo e($index === 0 ? 'active' : ''); ?>" data-slide-index="<?php echo e($index); ?>" style="<?php if(($slide['background_type'] ?? 'color') === 'image' && !empty($slide['background_image'])): ?>background-image: url('<?php echo e(asset('storage/' . $slide['background_image'])); ?>'); background-position: <?php echo e($slide['background_position'] ?? 'center'); ?>; background-size: <?php echo e($slide['background_size'] ?? 'cover'); ?>; background-repeat: no-repeat;<?php else: ?> background-color: <?php echo e($slide['background_color'] ?? '#ffffff'); ?>;<?php endif; ?>">
+            <?php
+                $bgType = $slide['background_type'] ?? 'color';
+                $bgImage = $slide['background_image'] ?? '';
+                $bgColor = $slide['background_color'] ?? '#ffffff';
+                $bgPosition = $slide['background_position'] ?? 'center';
+                $bgSize = $slide['background_size'] ?? 'cover';
+                
+                $bgStyle = '';
+                if ($bgType === 'image' && !empty($bgImage)) {
+                    $bgUrl = asset('storage/' . $bgImage);
+                    $bgStyle = "background-image: url('{$bgUrl}'); background-position: {$bgPosition}; background-size: {$bgSize}; background-repeat: no-repeat;";
+                } else {
+                    $bgStyle = "background-color: {$bgColor};";
+                }
+            ?>
+            <div class="carousel-item <?php echo e($index === 0 ? 'active' : ''); ?>" data-slide-index="<?php echo e($index); ?>" style="<?php echo e($bgStyle); ?>">
                 <div class="container">
                     <div class="hero-slide-content">
                         

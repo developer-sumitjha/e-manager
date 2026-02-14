@@ -93,7 +93,6 @@
     
     .hero-slides-carousel .carousel-item {
         min-height: {{ ($settings->additional_settings['slide_height'] ?? 500) . ($settings->additional_settings['slide_height_unit'] ?? 'px') }};
-        background: var(--background-color);
         position: relative;
     }
     
@@ -349,7 +348,22 @@
         @endif
         <div class="carousel-inner">
             @foreach($heroSlides as $index => $slide)
-            <div class="carousel-item {{ $index === 0 ? 'active' : '' }}" data-slide-index="{{ $index }}" style="@if(($slide['background_type'] ?? 'color') === 'image' && !empty($slide['background_image']))background-image: url('{{ asset('storage/' . $slide['background_image']) }}'); background-position: {{ $slide['background_position'] ?? 'center' }}; background-size: {{ $slide['background_size'] ?? 'cover' }}; background-repeat: no-repeat;@else background-color: {{ $slide['background_color'] ?? '#ffffff' }};@endif">
+            @php
+                $bgType = $slide['background_type'] ?? 'color';
+                $bgImage = $slide['background_image'] ?? '';
+                $bgColor = $slide['background_color'] ?? '#ffffff';
+                $bgPosition = $slide['background_position'] ?? 'center';
+                $bgSize = $slide['background_size'] ?? 'cover';
+                
+                $bgStyle = '';
+                if ($bgType === 'image' && !empty($bgImage)) {
+                    $bgUrl = asset('storage/' . $bgImage);
+                    $bgStyle = "background-image: url('{$bgUrl}'); background-position: {$bgPosition}; background-size: {$bgSize}; background-repeat: no-repeat;";
+                } else {
+                    $bgStyle = "background-color: {$bgColor};";
+                }
+            @endphp
+            <div class="carousel-item {{ $index === 0 ? 'active' : '' }}" data-slide-index="{{ $index }}" style="{{ $bgStyle }}">
                 <div class="container">
                     <div class="hero-slide-content">
                         {{-- Left Column: Content --}}
