@@ -92,7 +92,7 @@
     }
     
     .hero-slides-carousel .carousel-item {
-        min-height: 500px;
+        min-height: {{ ($settings->additional_settings['slide_height'] ?? 500) . ($settings->additional_settings['slide_height_unit'] ?? 'px') }};
         background: var(--background-color);
         position: relative;
     }
@@ -100,7 +100,7 @@
     .hero-slide-content {
         display: flex;
         align-items: center;
-        min-height: 500px;
+        min-height: {{ ($settings->additional_settings['slide_height'] ?? 500) . ($settings->additional_settings['slide_height_unit'] ?? 'px') }};
         padding: 3rem 2rem;
     }
     
@@ -307,7 +307,12 @@
         .hero-banner { padding: 2rem 1rem; }
         .hero-banner h1 { font-size: 1.75rem; }
         .hero-slide-content {
-            min-height: 400px;
+            @php
+                $slideHeight = $settings->additional_settings['slide_height'] ?? 500;
+                $slideUnit = $settings->additional_settings['slide_height_unit'] ?? 'px';
+                $mobileHeight = $slideUnit === 'px' ? min($slideHeight * 0.7, 400) : ($slideUnit === 'vh' ? min($slideHeight * 0.7, 40) : ($slideUnit === '%' ? min($slideHeight * 0.7, 40) : min($slideHeight * 0.7, 25)));
+            @endphp
+            min-height: {{ $mobileHeight }}{{ $slideUnit }};
         }
         .hero-slide-left h1 {
             font-size: 1.75rem;
@@ -344,33 +349,29 @@
         @endif
         <div class="carousel-inner">
             @foreach($heroSlides as $index => $slide)
-            <div class="carousel-item {{ $index === 0 ? 'active' : '' }}" data-slide-index="{{ $index }}" style="background-color: {{ $slide['background_color'] ?? '#ffffff' }};">
+            <div class="carousel-item {{ $index === 0 ? 'active' : '' }}" data-slide-index="{{ $index }}" style="@if(($slide['background_type'] ?? 'color') === 'image' && !empty($slide['background_image']))background-image: url('{{ asset('storage/' . $slide['background_image']) }}'); background-position: {{ $slide['background_position'] ?? 'center' }}; background-size: {{ $slide['background_size'] ?? 'cover' }}; background-repeat: no-repeat;@else background-color: {{ $slide['background_color'] ?? '#ffffff' }};@endif">
                 <div class="container">
                     <div class="hero-slide-content">
                         {{-- Left Column: Content --}}
-                        <div class="hero-slide-left">
+                        <div class="hero-slide-left" style="@if(empty($slide['image']))padding-right: 0; text-align: center;@endif">
                             @if(!empty($slide['heading']))
                             <h1 style="color: {{ $slide['text_color'] ?? '#000000' }};">{{ $slide['heading'] }}</h1>
                             @endif
                             @if(!empty($slide['subheading']))
                             <p style="color: {{ $slide['text_color'] ?? '#000000' }};">{{ $slide['subheading'] }}</p>
                             @endif
-                            @if(!empty($slide['button_text']))
-                            <a href="{{ $slide['button_link'] ?? '/products' }}" class="btn" style="background-color: {{ $slide['button_bg_color'] ?? '#000000' }}; color: {{ $slide['button_text_color'] ?? '#ffffff' }};">
+                            @if(!empty($slide['button_text']) && !empty($slide['button_link']))
+                            <a href="{{ $slide['button_link'] }}" class="btn" style="background-color: {{ $slide['button_bg_color'] ?? '#000000' }}; color: {{ $slide['button_text_color'] ?? '#ffffff' }};">
                                 {{ $slide['button_text'] }}
                             </a>
                             @endif
                         </div>
                         {{-- Right Column: Image --}}
+                        @if(!empty($slide['image']))
                         <div class="hero-slide-right">
-                            @if(!empty($slide['image']))
                             <img src="{{ asset('storage/' . $slide['image']) }}" alt="{{ $slide['heading'] ?? 'Slide ' . ($index + 1) }}" loading="{{ $index === 0 ? 'eager' : 'lazy' }}">
-                            @else
-                            <div style="width: 100%; height: 300px; background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.5rem;">
-                                <i class="fas fa-image"></i>
-                            </div>
-                            @endif
                         </div>
+                        @endif
                     </div>
                 </div>
             </div>

@@ -448,6 +448,12 @@ class SiteBuilderController extends Controller
         if ($request->has('hero_slides')) {
             $additionalSettings['hero_slides'] = json_decode($request->hero_slides, true);
         }
+        if ($request->has('slide_height')) {
+            $additionalSettings['slide_height'] = (float) $request->slide_height;
+        }
+        if ($request->has('slide_height_unit')) {
+            $additionalSettings['slide_height_unit'] = $request->slide_height_unit;
+        }
         $data['additional_settings'] = $additionalSettings;
         
         $settings->update($data);

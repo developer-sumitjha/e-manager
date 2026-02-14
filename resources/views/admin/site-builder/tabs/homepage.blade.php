@@ -19,6 +19,25 @@
                 <small class="text-muted d-block mt-2">Enable hero slides carousel on homepage</small>
             </div>
             
+            <div class="form-group mb-3">
+                <label class="form-label">Slide Height</label>
+                <div class="row">
+                    <div class="col-md-8">
+                        <input type="number" class="form-control" name="slide_height" id="slideHeight" value="{{ $settings->additional_settings['slide_height'] ?? '500' }}" min="0" step="0.1" placeholder="500">
+                    </div>
+                    <div class="col-md-4">
+                        <select class="form-control" name="slide_height_unit" id="slideHeightUnit">
+                            <option value="px" {{ ($settings->additional_settings['slide_height_unit'] ?? 'px') === 'px' ? 'selected' : '' }}>px</option>
+                            <option value="vh" {{ ($settings->additional_settings['slide_height_unit'] ?? 'px') === 'vh' ? 'selected' : '' }}>vh</option>
+                            <option value="%" {{ ($settings->additional_settings['slide_height_unit'] ?? 'px') === '%' ? 'selected' : '' }}>%</option>
+                            <option value="rem" {{ ($settings->additional_settings['slide_height_unit'] ?? 'px') === 'rem' ? 'selected' : '' }}>rem</option>
+                            <option value="em" {{ ($settings->additional_settings['slide_height_unit'] ?? 'px') === 'em' ? 'selected' : '' }}>em</option>
+                        </select>
+                    </div>
+                </div>
+                <small class="text-muted d-block mt-2">Set the height for all slides. Default: 500px. Use vh for viewport height, % for percentage, rem/em for relative units.</small>
+            </div>
+            
             <div id="slidesContainer">
                 @php
                     $slides = $settings->additional_settings['hero_slides'] ?? [];
@@ -27,8 +46,8 @@
                             [
                                 'heading' => $settings->banner_title ?? '',
                                 'subheading' => $settings->banner_subtitle ?? '',
-                                'button_text' => $settings->banner_button_text ?? 'Shop Now',
-                                'button_link' => $settings->banner_button_link ?? '/products',
+                                'button_text' => $settings->banner_button_text ?? '',
+                                'button_link' => $settings->banner_button_link ?? '',
                                 'image' => $settings->banner_image ?? '',
                                 'background_color' => '#ffffff',
                                 'text_color' => '#000000',
@@ -70,18 +89,28 @@
                                         <div class="col-md-6">
                                             <div class="form-group mb-3">
                                                 <label class="form-label">Button Text</label>
-                                                <input type="text" class="form-control slide-button-text" name="slides[{{ $index }}][button_text]" value="{{ $slide['button_text'] ?? 'Shop Now' }}" placeholder="Shop Now">
+                                                <input type="text" class="form-control slide-button-text" name="slides[{{ $index }}][button_text]" value="{{ $slide['button_text'] ?? '' }}" placeholder="Shop Now">
                                             </div>
                                         </div>
                                         <div class="col-md-6">
                                             <div class="form-group mb-3">
                                                 <label class="form-label">Button Link</label>
-                                                <input type="text" class="form-control slide-button-link" name="slides[{{ $index }}][button_link]" value="{{ $slide['button_link'] ?? '/products' }}" placeholder="/products">
+                                                <input type="text" class="form-control slide-button-link" name="slides[{{ $index }}][button_link]" value="{{ $slide['button_link'] ?? '' }}" placeholder="/products">
                                             </div>
                                         </div>
                                     </div>
                                     
                                     <div class="form-group mb-3">
+                                        <label class="form-label">Background Type</label>
+                                        <select class="form-control slide-bg-type" name="slides[{{ $index }}][background_type]" onchange="toggleBackgroundOptions({{ $index }})">
+                                            <option value="color" {{ ($slide['background_type'] ?? 'color') === 'color' ? 'selected' : '' }}>Background Color</option>
+                                            <option value="image" {{ ($slide['background_type'] ?? 'color') === 'image' ? 'selected' : '' }}>Background Image</option>
+                                        </select>
+                                        <small class="text-muted d-block mt-2">Choose background type for this slide</small>
+                                    </div>
+                                    
+                                    {{-- Background Color Option --}}
+                                    <div class="form-group mb-3 slide-bg-color-option" style="display: {{ ($slide['background_type'] ?? 'color') === 'color' ? 'block' : 'none' }};">
                                         <label class="form-label">Background Color</label>
                                         <div class="color-picker-wrapper">
                                             <input type="color" class="form-control color-input slide-bg-color" name="slides[{{ $index }}][background_color]" value="{{ $slide['background_color'] ?? '#ffffff' }}" style="width: 80px; height: 45px; padding: 0; border: 1px solid #000000; border-radius: 8px; cursor: pointer;">
@@ -89,6 +118,61 @@
                                             <input type="text" class="form-control slide-bg-color-text" value="{{ $slide['background_color'] ?? '#ffffff' }}" placeholder="#ffffff" style="flex: 1;">
                                         </div>
                                         <small class="text-muted d-block mt-2">Choose a background color for this slide</small>
+                                    </div>
+                                    
+                                    {{-- Background Image Options --}}
+                                    <div class="slide-bg-image-option" style="display: {{ ($slide['background_type'] ?? 'color') === 'image' ? 'block' : 'none' }};">
+                                        <div class="form-group mb-3">
+                                            <label class="form-label">Background Image</label>
+                                            <div class="file-upload-area slide-bg-image-upload" data-slide-index="{{ $index }}" style="cursor: pointer;">
+                                                <input type="file" name="slide_bg_images[{{ $index }}]" class="slide-bg-image-input" accept="image/*" style="display: none;" data-slide-index="{{ $index }}">
+                                                <div class="file-upload-icon">
+                                                    <i class="fas fa-cloud-upload-alt"></i>
+                                                </div>
+                                                <p class="mb-0"><strong>Click to upload</strong> or drag and drop</p>
+                                                <p class="text-muted small mb-0">Recommended: 1920x1080px, JPG or PNG up to 5MB</p>
+                                            </div>
+                                            <div class="slide-bg-image-preview mt-3" data-slide-index="{{ $index }}" style="display: {{ !empty($slide['background_image']) ? 'block' : 'none' }}; max-width: 100%; border: 1px solid #000000; border-radius: 12px; overflow: hidden;">
+                                                @if(!empty($slide['background_image']))
+                                                    <img src="{{ asset('storage/' . $slide['background_image']) }}" alt="Background Image" style="width: 100%; height: auto; display: block;">
+                                                @else
+                                                    <img src="" alt="Background Preview" style="width: 100%; height: auto; display: block;">
+                                                @endif
+                                            </div>
+                                            <input type="hidden" class="slide-bg-image-path" name="slides[{{ $index }}][background_image]" value="{{ $slide['background_image'] ?? '' }}">
+                                        </div>
+                                        
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="form-group mb-3">
+                                                    <label class="form-label">Background Position</label>
+                                                    <select class="form-control slide-bg-position" name="slides[{{ $index }}][background_position]">
+                                                        <option value="center" {{ ($slide['background_position'] ?? 'center') === 'center' ? 'selected' : '' }}>Center</option>
+                                                        <option value="top" {{ ($slide['background_position'] ?? 'center') === 'top' ? 'selected' : '' }}>Top</option>
+                                                        <option value="bottom" {{ ($slide['background_position'] ?? 'center') === 'bottom' ? 'selected' : '' }}>Bottom</option>
+                                                        <option value="left" {{ ($slide['background_position'] ?? 'center') === 'left' ? 'selected' : '' }}>Left</option>
+                                                        <option value="right" {{ ($slide['background_position'] ?? 'center') === 'right' ? 'selected' : '' }}>Right</option>
+                                                        <option value="top left" {{ ($slide['background_position'] ?? 'center') === 'top left' ? 'selected' : '' }}>Top Left</option>
+                                                        <option value="top right" {{ ($slide['background_position'] ?? 'center') === 'top right' ? 'selected' : '' }}>Top Right</option>
+                                                        <option value="bottom left" {{ ($slide['background_position'] ?? 'center') === 'bottom left' ? 'selected' : '' }}>Bottom Left</option>
+                                                        <option value="bottom right" {{ ($slide['background_position'] ?? 'center') === 'bottom right' ? 'selected' : '' }}>Bottom Right</option>
+                                                    </select>
+                                                    <small class="text-muted d-block mt-2">Position of the background image</small>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="form-group mb-3">
+                                                    <label class="form-label">Background Size</label>
+                                                    <select class="form-control slide-bg-size" name="slides[{{ $index }}][background_size]">
+                                                        <option value="cover" {{ ($slide['background_size'] ?? 'cover') === 'cover' ? 'selected' : '' }}>Cover</option>
+                                                        <option value="contain" {{ ($slide['background_size'] ?? 'cover') === 'contain' ? 'selected' : '' }}>Contain</option>
+                                                        <option value="auto" {{ ($slide['background_size'] ?? 'cover') === 'auto' ? 'selected' : '' }}>Auto</option>
+                                                        <option value="100% 100%" {{ ($slide['background_size'] ?? 'cover') === '100% 100%' ? 'selected' : '' }}>Stretch</option>
+                                                    </select>
+                                                    <small class="text-muted d-block mt-2">Size of the background image</small>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                     
                                     <div class="form-group mb-3">
@@ -136,7 +220,7 @@
                                         </div>
                                         <div class="slide-image-preview mt-3" data-slide-index="{{ $index }}" style="display: {{ !empty($slide['image']) ? 'block' : 'none' }}; max-width: 100%; border: 1px solid #000000; border-radius: 12px; overflow: hidden;">
                                             @if(!empty($slide['image']))
-                                                <img src="{{ Storage::url($slide['image']) }}" alt="Slide Image" style="width: 100%; height: auto; display: block;">
+                                                <img src="{{ asset('storage/' . $slide['image']) }}" alt="Slide Image" style="width: 100%; height: auto; display: block;">
                                             @else
                                                 <img src="" alt="Slide Preview" style="width: 100%; height: auto; display: block;">
                                             @endif
@@ -216,6 +300,10 @@
 </div>
 
 <script>
+@php
+    $updateRoute = request()->routeIs('vendor.*') ? route('vendor.site-builder.update-homepage') : route('admin.site-builder.update-homepage');
+    $uploadRoute = request()->routeIs('vendor.*') ? route('vendor.site-builder.upload-slide-image') : route('admin.site-builder.upload-slide-image');
+@endphp
 let slideIndex = {{ count($slides) }};
 
 // Add new slide
@@ -249,17 +337,27 @@ function addSlide() {
                                 <div class="col-md-6">
                                     <div class="form-group mb-3">
                                         <label class="form-label">Button Text</label>
-                                        <input type="text" class="form-control slide-button-text" name="slides[${slideIndex}][button_text]" value="Shop Now" placeholder="Shop Now">
+                                        <input type="text" class="form-control slide-button-text" name="slides[${slideIndex}][button_text]" value="" placeholder="Shop Now">
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-group mb-3">
                                         <label class="form-label">Button Link</label>
-                                        <input type="text" class="form-control slide-button-link" name="slides[${slideIndex}][button_link]" value="/products" placeholder="/products">
+                                        <input type="text" class="form-control slide-button-link" name="slides[${slideIndex}][button_link]" value="" placeholder="/products">
                                     </div>
                                 </div>
                             </div>
                             <div class="form-group mb-3">
+                                <label class="form-label">Background Type</label>
+                                <select class="form-control slide-bg-type" name="slides[${slideIndex}][background_type]" onchange="toggleBackgroundOptions(${slideIndex})">
+                                    <option value="color" selected>Background Color</option>
+                                    <option value="image">Background Image</option>
+                                </select>
+                                <small class="text-muted d-block mt-2">Choose background type for this slide</small>
+                            </div>
+                            
+                            {{-- Background Color Option --}}
+                            <div class="form-group mb-3 slide-bg-color-option">
                                 <label class="form-label">Background Color</label>
                                 <div class="color-picker-wrapper">
                                     <input type="color" class="form-control color-input slide-bg-color" name="slides[${slideIndex}][background_color]" value="#ffffff" style="width: 80px; height: 45px; padding: 0; border: 1px solid #000000; border-radius: 8px; cursor: pointer;">
@@ -267,6 +365,57 @@ function addSlide() {
                                     <input type="text" class="form-control slide-bg-color-text" value="#ffffff" placeholder="#ffffff" style="flex: 1;">
                                 </div>
                                 <small class="text-muted d-block mt-2">Choose a background color for this slide</small>
+                            </div>
+                            
+                            {{-- Background Image Options --}}
+                            <div class="slide-bg-image-option" style="display: none;">
+                                <div class="form-group mb-3">
+                                    <label class="form-label">Background Image</label>
+                                    <div class="file-upload-area slide-bg-image-upload" data-slide-index="${slideIndex}" style="cursor: pointer;">
+                                        <input type="file" name="slide_bg_images[${slideIndex}]" class="slide-bg-image-input" accept="image/*" style="display: none;" data-slide-index="${slideIndex}">
+                                        <div class="file-upload-icon">
+                                            <i class="fas fa-cloud-upload-alt"></i>
+                                        </div>
+                                        <p class="mb-0"><strong>Click to upload</strong> or drag and drop</p>
+                                        <p class="text-muted small mb-0">Recommended: 1920x1080px, JPG or PNG up to 5MB</p>
+                                    </div>
+                                    <div class="slide-bg-image-preview mt-3" data-slide-index="${slideIndex}" style="display: none; max-width: 100%; border: 1px solid #000000; border-radius: 12px; overflow: hidden;">
+                                        <img src="" alt="Background Preview" style="width: 100%; height: auto; display: block;">
+                                    </div>
+                                    <input type="hidden" class="slide-bg-image-path" name="slides[${slideIndex}][background_image]" value="">
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group mb-3">
+                                            <label class="form-label">Background Position</label>
+                                            <select class="form-control slide-bg-position" name="slides[${slideIndex}][background_position]">
+                                                <option value="center" selected>Center</option>
+                                                <option value="top">Top</option>
+                                                <option value="bottom">Bottom</option>
+                                                <option value="left">Left</option>
+                                                <option value="right">Right</option>
+                                                <option value="top left">Top Left</option>
+                                                <option value="top right">Top Right</option>
+                                                <option value="bottom left">Bottom Left</option>
+                                                <option value="bottom right">Bottom Right</option>
+                                            </select>
+                                            <small class="text-muted d-block mt-2">Position of the background image</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group mb-3">
+                                            <label class="form-label">Background Size</label>
+                                            <select class="form-control slide-bg-size" name="slides[${slideIndex}][background_size]">
+                                                <option value="cover" selected>Cover</option>
+                                                <option value="contain">Contain</option>
+                                                <option value="auto">Auto</option>
+                                                <option value="100% 100%">Stretch</option>
+                                            </select>
+                                            <small class="text-muted d-block mt-2">Size of the background image</small>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                             <div class="form-group mb-3">
                                 <label class="form-label">Text Color</label>
@@ -321,7 +470,14 @@ function addSlide() {
     container.insertAdjacentHTML('beforeend', slideHtml);
     slideIndex++;
     setupSlideImageUpload();
+    setupBackgroundImageUpload();
     setupBackgroundColorPicker();
+    
+    // Initialize background type toggle for the new slide
+    const newSlideItem = container.querySelector(`.slide-item[data-slide-index="${slideIndex - 1}"]`);
+    if (newSlideItem) {
+        toggleBackgroundOptions(slideIndex - 1);
+    }
 }
 
 // Remove slide
@@ -385,7 +541,7 @@ function uploadSlideImage(slideIndex, file, pathInput) {
     formData.append('slide_image', file);
     formData.append('slide_index', slideIndex);
     
-    fetch('{{ route('admin.site-builder.upload-slide-image') }}', {
+    fetch('{{ $uploadRoute }}', {
         method: 'POST',
         headers: {
             'X-CSRF-TOKEN': '{{ csrf_token() }}',
@@ -451,6 +607,85 @@ function setupColorPicker(selector, previewSelector, textSelector) {
     });
 }
 
+// Toggle background options based on type
+function toggleBackgroundOptions(slideIndex) {
+    const slideItem = document.querySelector(`.slide-item[data-slide-index="${slideIndex}"]`);
+    if (!slideItem) return;
+    
+    const bgTypeSelect = slideItem.querySelector('.slide-bg-type');
+    const colorOption = slideItem.querySelector('.slide-bg-color-option');
+    const imageOption = slideItem.querySelector('.slide-bg-image-option');
+    
+    if (bgTypeSelect && colorOption && imageOption) {
+        if (bgTypeSelect.value === 'color') {
+            colorOption.style.display = 'block';
+            imageOption.style.display = 'none';
+        } else {
+            colorOption.style.display = 'none';
+            imageOption.style.display = 'block';
+        }
+    }
+}
+
+// Setup background image upload for slides
+function setupBackgroundImageUpload() {
+    document.querySelectorAll('.slide-bg-image-upload').forEach(uploadArea => {
+        const input = uploadArea.querySelector('.slide-bg-image-input');
+        const slideIndex = uploadArea.getAttribute('data-slide-index');
+        const preview = document.querySelector(`.slide-bg-image-preview[data-slide-index="${slideIndex}"]`);
+        const pathInput = uploadArea.closest('.form-group').querySelector('.slide-bg-image-path');
+        
+        if (!input.hasAttribute('data-bg-listener-added')) {
+            input.setAttribute('data-bg-listener-added', 'true');
+            
+            uploadArea.addEventListener('click', () => input.click());
+            
+            input.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        if (preview) {
+                            preview.querySelector('img').src = e.target.result;
+                            preview.style.display = 'block';
+                        }
+                    };
+                    reader.readAsDataURL(file);
+                    
+                    // Upload image
+                    uploadBackgroundImage(slideIndex, file, pathInput);
+                }
+            });
+        }
+    });
+}
+
+// Upload background image
+function uploadBackgroundImage(slideIndex, file, pathInput) {
+    const formData = new FormData();
+    formData.append('slide_image', file);
+    formData.append('slide_index', slideIndex);
+    formData.append('is_background', '1');
+    
+    fetch('{{ $uploadRoute }}', {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'Accept': 'application/json'
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success && pathInput) {
+            pathInput.value = data.image_path;
+        }
+    })
+    .catch(error => {
+        console.error('Error uploading background image:', error);
+    });
+}
+
 // Setup all color pickers
 function setupBackgroundColorPicker() {
     setupColorPicker('.slide-bg-color', '.slide-bg-color-preview', '.slide-bg-color-text');
@@ -462,7 +697,17 @@ function setupBackgroundColorPicker() {
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
     setupSlideImageUpload();
+    setupBackgroundImageUpload();
     setupBackgroundColorPicker();
+    
+    // Initialize background type toggles for existing slides
+    document.querySelectorAll('.slide-bg-type').forEach(select => {
+        const slideItem = select.closest('.slide-item');
+        if (slideItem) {
+            const slideIndex = slideItem.getAttribute('data-slide-index');
+            toggleBackgroundOptions(slideIndex);
+        }
+    });
 });
 
 // Save homepage
@@ -476,17 +721,24 @@ function saveHomepage() {
     formData.append('show_testimonials', form.querySelector('input[name="show_testimonials"]').checked ? '1' : '0');
     formData.append('show_about_section', form.querySelector('input[name="show_about_section"]').checked ? '1' : '0');
     formData.append('show_hero_slides', document.getElementById('showHeroSlides').checked ? '1' : '0');
+    formData.append('slide_height', document.getElementById('slideHeight').value || '500');
+    formData.append('slide_height_unit', document.getElementById('slideHeightUnit').value || 'px');
     
     // Collect slides data
     const slides = [];
     document.querySelectorAll('.slide-item').forEach((slideItem, index) => {
+        const bgType = slideItem.querySelector('.slide-bg-type')?.value || 'color';
         const slideData = {
             heading: slideItem.querySelector('.slide-heading')?.value || '',
             subheading: slideItem.querySelector('.slide-subheading')?.value || '',
-            button_text: slideItem.querySelector('.slide-button-text')?.value || 'Shop Now',
-            button_link: slideItem.querySelector('.slide-button-link')?.value || '/products',
+            button_text: slideItem.querySelector('.slide-button-text')?.value || '',
+            button_link: slideItem.querySelector('.slide-button-link')?.value || '',
             image: slideItem.querySelector('.slide-image-path')?.value || '',
+            background_type: bgType,
             background_color: slideItem.querySelector('.slide-bg-color')?.value || '#ffffff',
+            background_image: slideItem.querySelector('.slide-bg-image-path')?.value || '',
+            background_position: slideItem.querySelector('.slide-bg-position')?.value || 'center',
+            background_size: slideItem.querySelector('.slide-bg-size')?.value || 'cover',
             text_color: slideItem.querySelector('.slide-text-color')?.value || '#000000',
             button_bg_color: slideItem.querySelector('.slide-btn-bg-color')?.value || '#000000',
             button_text_color: slideItem.querySelector('.slide-btn-text-color')?.value || '#ffffff'
@@ -498,7 +750,11 @@ function saveHomepage() {
     
     showSaveIndicator('saving');
     
-    fetch('{{ route('admin.site-builder.update-homepage') }}', {
+    @php
+        $updateRoute = request()->routeIs('vendor.*') ? route('vendor.site-builder.update-homepage') : route('admin.site-builder.update-homepage');
+        $uploadRoute = request()->routeIs('vendor.*') ? route('vendor.site-builder.upload-slide-image') : route('admin.site-builder.upload-slide-image');
+    @endphp
+    fetch('{{ $updateRoute }}', {
         method: 'POST',
         headers: {
             'X-CSRF-TOKEN': '{{ csrf_token() }}',

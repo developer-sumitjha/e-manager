@@ -90,7 +90,7 @@
     }
     
     .hero-slides-carousel .carousel-item {
-        min-height: 500px;
+        min-height: <?php echo e(($settings->additional_settings['slide_height'] ?? 500) . ($settings->additional_settings['slide_height_unit'] ?? 'px')); ?>;
         background: var(--background-color);
         position: relative;
     }
@@ -98,7 +98,7 @@
     .hero-slide-content {
         display: flex;
         align-items: center;
-        min-height: 500px;
+        min-height: <?php echo e(($settings->additional_settings['slide_height'] ?? 500) . ($settings->additional_settings['slide_height_unit'] ?? 'px')); ?>;
         padding: 3rem 2rem;
     }
     
@@ -305,7 +305,12 @@
         .hero-banner { padding: 2rem 1rem; }
         .hero-banner h1 { font-size: 1.75rem; }
         .hero-slide-content {
-            min-height: 400px;
+            <?php
+                $slideHeight = $settings->additional_settings['slide_height'] ?? 500;
+                $slideUnit = $settings->additional_settings['slide_height_unit'] ?? 'px';
+                $mobileHeight = $slideUnit === 'px' ? min($slideHeight * 0.7, 400) : ($slideUnit === 'vh' ? min($slideHeight * 0.7, 40) : ($slideUnit === '%' ? min($slideHeight * 0.7, 40) : min($slideHeight * 0.7, 25)));
+            ?>
+            min-height: <?php echo e($mobileHeight); ?><?php echo e($slideUnit); ?>;
         }
         .hero-slide-left h1 {
             font-size: 1.75rem;
@@ -342,34 +347,30 @@
         <?php endif; ?>
         <div class="carousel-inner">
             <?php $__currentLoopData = $heroSlides; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $slide): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-            <div class="carousel-item <?php echo e($index === 0 ? 'active' : ''); ?>" data-slide-index="<?php echo e($index); ?>" style="background-color: <?php echo e($slide['background_color'] ?? '#ffffff'); ?>;">
+            <div class="carousel-item <?php echo e($index === 0 ? 'active' : ''); ?>" data-slide-index="<?php echo e($index); ?>" style="<?php if(($slide['background_type'] ?? 'color') === 'image' && !empty($slide['background_image'])): ?>background-image: url('<?php echo e(asset('storage/' . $slide['background_image'])); ?>'); background-position: <?php echo e($slide['background_position'] ?? 'center'); ?>; background-size: <?php echo e($slide['background_size'] ?? 'cover'); ?>; background-repeat: no-repeat;<?php else: ?> background-color: <?php echo e($slide['background_color'] ?? '#ffffff'); ?>;<?php endif; ?>">
                 <div class="container">
                     <div class="hero-slide-content">
                         
-                        <div class="hero-slide-left">
+                        <div class="hero-slide-left" style="<?php if(empty($slide['image'])): ?>padding-right: 0; text-align: center;<?php endif; ?>">
                             <?php if(!empty($slide['heading'])): ?>
                             <h1 style="color: <?php echo e($slide['text_color'] ?? '#000000'); ?>;"><?php echo e($slide['heading']); ?></h1>
                             <?php endif; ?>
                             <?php if(!empty($slide['subheading'])): ?>
                             <p style="color: <?php echo e($slide['text_color'] ?? '#000000'); ?>;"><?php echo e($slide['subheading']); ?></p>
                             <?php endif; ?>
-                            <?php if(!empty($slide['button_text'])): ?>
-                            <a href="<?php echo e($slide['button_link'] ?? '/products'); ?>" class="btn" style="background-color: <?php echo e($slide['button_bg_color'] ?? '#000000'); ?>; color: <?php echo e($slide['button_text_color'] ?? '#ffffff'); ?>;">
+                            <?php if(!empty($slide['button_text']) && !empty($slide['button_link'])): ?>
+                            <a href="<?php echo e($slide['button_link']); ?>" class="btn" style="background-color: <?php echo e($slide['button_bg_color'] ?? '#000000'); ?>; color: <?php echo e($slide['button_text_color'] ?? '#ffffff'); ?>;">
                                 <?php echo e($slide['button_text']); ?>
 
                             </a>
                             <?php endif; ?>
                         </div>
                         
+                        <?php if(!empty($slide['image'])): ?>
                         <div class="hero-slide-right">
-                            <?php if(!empty($slide['image'])): ?>
                             <img src="<?php echo e(asset('storage/' . $slide['image'])); ?>" alt="<?php echo e($slide['heading'] ?? 'Slide ' . ($index + 1)); ?>" loading="<?php echo e($index === 0 ? 'eager' : 'lazy'); ?>">
-                            <?php else: ?>
-                            <div style="width: 100%; height: 300px; background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.5rem;">
-                                <i class="fas fa-image"></i>
-                            </div>
-                            <?php endif; ?>
                         </div>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>

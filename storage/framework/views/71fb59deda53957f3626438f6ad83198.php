@@ -1,9 +1,7 @@
-@extends('super-admin.layout')
+<?php $__env->startSection('title', 'Subscriptions Management'); ?>
+<?php $__env->startSection('page-title', 'Subscriptions Management'); ?>
 
-@section('title', 'Subscriptions Management')
-@section('page-title', 'Subscriptions Management')
-
-@section('content')
+<?php $__env->startSection('content'); ?>
 <div class="container-fluid">
     <!-- Statistics Cards -->
     <div class="row mb-4">
@@ -11,7 +9,7 @@
             <div class="card">
                 <div class="card-body">
                     <h6 class="text-muted mb-1">Total</h6>
-                    <h3 class="mb-0">{{ $stats['total'] }}</h3>
+                    <h3 class="mb-0"><?php echo e($stats['total']); ?></h3>
                 </div>
             </div>
         </div>
@@ -19,7 +17,7 @@
             <div class="card border-success">
                 <div class="card-body">
                     <h6 class="text-muted mb-1">Active</h6>
-                    <h3 class="text-success mb-0">{{ $stats['active'] }}</h3>
+                    <h3 class="text-success mb-0"><?php echo e($stats['active']); ?></h3>
                 </div>
             </div>
         </div>
@@ -27,7 +25,7 @@
             <div class="card border-warning">
                 <div class="card-body">
                     <h6 class="text-muted mb-1">On Trial</h6>
-                    <h3 class="text-warning mb-0">{{ $stats['trial'] }}</h3>
+                    <h3 class="text-warning mb-0"><?php echo e($stats['trial']); ?></h3>
                 </div>
             </div>
         </div>
@@ -35,7 +33,7 @@
             <div class="card border-danger">
                 <div class="card-body">
                     <h6 class="text-muted mb-1">Expired</h6>
-                    <h3 class="text-danger mb-0">{{ $stats['expired'] }}</h3>
+                    <h3 class="text-danger mb-0"><?php echo e($stats['expired']); ?></h3>
                 </div>
             </div>
         </div>
@@ -43,7 +41,7 @@
             <div class="card border-secondary">
                 <div class="card-body">
                     <h6 class="text-muted mb-1">Cancelled</h6>
-                    <h3 class="text-secondary mb-0">{{ $stats['cancelled'] }}</h3>
+                    <h3 class="text-secondary mb-0"><?php echo e($stats['cancelled']); ?></h3>
                 </div>
             </div>
         </div>
@@ -51,7 +49,7 @@
             <div class="card border-danger">
                 <div class="card-body">
                     <h6 class="text-muted mb-1">Past Due</h6>
-                    <h3 class="text-danger mb-0">{{ $stats['past_due'] }}</h3>
+                    <h3 class="text-danger mb-0"><?php echo e($stats['past_due']); ?></h3>
                 </div>
             </div>
         </div>
@@ -62,13 +60,13 @@
         <div class="card-body">
             <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
                 <div>
-                    <a href="{{ route('super.subscriptions.create') }}" class="btn btn-primary">
+                    <a href="<?php echo e(route('super.subscriptions.create')); ?>" class="btn btn-primary">
                         <i class="fas fa-plus"></i> Create New Subscription
                     </a>
                 </div>
                 <div class="d-flex gap-2">
-                    <form id="bulkActionForm" method="POST" action="{{ route('super.subscriptions.bulk-action') }}" class="d-flex gap-2">
-                        @csrf
+                    <form id="bulkActionForm" method="POST" action="<?php echo e(route('super.subscriptions.bulk-action')); ?>" class="d-flex gap-2">
+                        <?php echo csrf_field(); ?>
                         <select name="action" id="bulkAction" class="form-select form-select-sm" style="width: auto;" required>
                             <option value="">Bulk Actions</option>
                             <option value="activate">Activate</option>
@@ -89,32 +87,32 @@
         <div class="card-body">
             <form method="GET" class="row g-3">
                 <div class="col-md-3">
-                    <input type="text" name="search" class="form-control" placeholder="Search tenant, subdomain, or subscription ID..." value="{{ request('search') }}">
+                    <input type="text" name="search" class="form-control" placeholder="Search tenant, subdomain, or subscription ID..." value="<?php echo e(request('search')); ?>">
                 </div>
                 <div class="col-md-2">
                     <select name="status" class="form-select">
                         <option value="">All Status</option>
-                        <option value="trial" {{ request('status') == 'trial' ? 'selected' : '' }}>Trial</option>
-                        <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>Active</option>
-                        <option value="past_due" {{ request('status') == 'past_due' ? 'selected' : '' }}>Past Due</option>
-                        <option value="expired" {{ request('status') == 'expired' ? 'selected' : '' }}>Expired</option>
-                        <option value="cancelled" {{ request('status') == 'cancelled' ? 'selected' : '' }}>Cancelled</option>
+                        <option value="trial" <?php echo e(request('status') == 'trial' ? 'selected' : ''); ?>>Trial</option>
+                        <option value="active" <?php echo e(request('status') == 'active' ? 'selected' : ''); ?>>Active</option>
+                        <option value="past_due" <?php echo e(request('status') == 'past_due' ? 'selected' : ''); ?>>Past Due</option>
+                        <option value="expired" <?php echo e(request('status') == 'expired' ? 'selected' : ''); ?>>Expired</option>
+                        <option value="cancelled" <?php echo e(request('status') == 'cancelled' ? 'selected' : ''); ?>>Cancelled</option>
                     </select>
                 </div>
                 <div class="col-md-2">
                     <select name="expiry_status" class="form-select">
                         <option value="">All Expiry Status</option>
-                        <option value="active" {{ request('expiry_status') == 'active' ? 'selected' : '' }}>Active (Not Expired)</option>
-                        <option value="expiring_soon" {{ request('expiry_status') == 'expiring_soon' ? 'selected' : '' }}>Expiring Soon (7 days)</option>
-                        <option value="expired" {{ request('expiry_status') == 'expired' ? 'selected' : '' }}>Expired</option>
+                        <option value="active" <?php echo e(request('expiry_status') == 'active' ? 'selected' : ''); ?>>Active (Not Expired)</option>
+                        <option value="expiring_soon" <?php echo e(request('expiry_status') == 'expiring_soon' ? 'selected' : ''); ?>>Expiring Soon (7 days)</option>
+                        <option value="expired" <?php echo e(request('expiry_status') == 'expired' ? 'selected' : ''); ?>>Expired</option>
                     </select>
                 </div>
                 <div class="col-md-2">
                     <select name="plan" class="form-select">
                         <option value="">All Plans</option>
-                        @foreach($plans as $plan)
-                            <option value="{{ $plan->id }}" {{ request('plan') == $plan->id ? 'selected' : '' }}>{{ $plan->name }}</option>
-                        @endforeach
+                        <?php $__currentLoopData = $plans; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $plan): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <option value="<?php echo e($plan->id); ?>" <?php echo e(request('plan') == $plan->id ? 'selected' : ''); ?>><?php echo e($plan->name); ?></option>
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </select>
                 </div>
                 <div class="col-md-3">
@@ -122,7 +120,7 @@
                         <button type="submit" class="btn btn-primary flex-fill">
                             <i class="fas fa-filter"></i> Filter
                         </button>
-                        <a href="{{ route('super.subscriptions.index') }}" class="btn btn-secondary">
+                        <a href="<?php echo e(route('super.subscriptions.index')); ?>" class="btn btn-secondary">
                             <i class="fas fa-times"></i> Clear
                         </a>
                     </div>
@@ -135,7 +133,7 @@
     <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
             <h5 class="mb-0">Subscriptions List</h5>
-            <span class="text-muted">{{ $subscriptions->total() }} total</span>
+            <span class="text-muted"><?php echo e($subscriptions->total()); ?> total</span>
         </div>
         <div class="card-body">
             <div class="table-responsive">
@@ -158,82 +156,86 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @forelse($subscriptions as $subscription)
+                        <?php $__empty_1 = true; $__currentLoopData = $subscriptions; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $subscription): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
                         <tr>
                             <td>
-                                <input type="checkbox" name="subscription_ids[]" value="{{ $subscription->id }}" class="subscription-checkbox">
+                                <input type="checkbox" name="subscription_ids[]" value="<?php echo e($subscription->id); ?>" class="subscription-checkbox">
                             </td>
                             <td>
-                                <strong>{{ $subscription->subscription_id }}</strong>
+                                <strong><?php echo e($subscription->subscription_id); ?></strong>
                             </td>
                             <td>
-                                <strong>{{ $subscription->tenant->business_name }}</strong><br>
+                                <strong><?php echo e($subscription->tenant->business_name); ?></strong><br>
                                 <small class="text-muted">
-                                    <i class="fas fa-globe"></i> {{ $subscription->tenant->subdomain }}.emanager.com
+                                    <i class="fas fa-globe"></i> <?php echo e($subscription->tenant->subdomain); ?>.emanager.com
                                 </small>
                             </td>
                             <td>
-                                <span class="badge bg-info">{{ $subscription->plan->name }}</span>
+                                <span class="badge bg-info"><?php echo e($subscription->plan->name); ?></span>
                             </td>
                             <td>
-                                @if($subscription->status == 'active')
+                                <?php if($subscription->status == 'active'): ?>
                                     <span class="badge bg-success">Active</span>
-                                @elseif($subscription->status == 'trial')
+                                <?php elseif($subscription->status == 'trial'): ?>
                                     <span class="badge bg-warning">Trial</span>
-                                @elseif($subscription->status == 'past_due')
+                                <?php elseif($subscription->status == 'past_due'): ?>
                                     <span class="badge bg-danger">Past Due</span>
-                                @elseif($subscription->status == 'expired')
+                                <?php elseif($subscription->status == 'expired'): ?>
                                     <span class="badge bg-danger">Expired</span>
-                                @elseif($subscription->status == 'cancelled')
+                                <?php elseif($subscription->status == 'cancelled'): ?>
                                     <span class="badge bg-secondary">Cancelled</span>
-                                @endif
+                                <?php endif; ?>
                             </td>
-                            <td>{{ ucfirst($subscription->billing_cycle) }}</td>
+                            <td><?php echo e(ucfirst($subscription->billing_cycle)); ?></td>
                             <td>
-                                {{ $subscription->starts_at ? $subscription->starts_at->format('M d, Y') : 'N/A' }}
+                                <?php echo e($subscription->starts_at ? $subscription->starts_at->format('M d, Y') : 'N/A'); ?>
+
                             </td>
                             <td>
-                                @if($subscription->ends_at)
-                                    @if($subscription->ends_at->isPast())
+                                <?php if($subscription->ends_at): ?>
+                                    <?php if($subscription->ends_at->isPast()): ?>
                                         <span class="text-danger">
-                                            {{ $subscription->ends_at->format('M d, Y') }}
+                                            <?php echo e($subscription->ends_at->format('M d, Y')); ?>
+
                                             <i class="fas fa-exclamation-triangle" title="Expired"></i>
                                         </span>
-                                    @elseif($subscription->ends_at->diffInDays(now()) <= 7)
+                                    <?php elseif($subscription->ends_at->diffInDays(now()) <= 7): ?>
                                         <span class="text-warning">
-                                            {{ $subscription->ends_at->format('M d, Y') }}
+                                            <?php echo e($subscription->ends_at->format('M d, Y')); ?>
+
                                             <i class="fas fa-clock" title="Expiring Soon"></i>
                                         </span>
-                                    @else
-                                        {{ $subscription->ends_at->format('M d, Y') }}
-                                    @endif
-                                @else
+                                    <?php else: ?>
+                                        <?php echo e($subscription->ends_at->format('M d, Y')); ?>
+
+                                    <?php endif; ?>
+                                <?php else: ?>
                                     <span class="text-muted">N/A</span>
-                                @endif
+                                <?php endif; ?>
                             </td>
                             <td>
-                                @if($subscription->ends_at)
-                                    @php
+                                <?php if($subscription->ends_at): ?>
+                                    <?php
                                         $daysLeft = $subscription->ends_at->diffInDays(now(), false);
-                                    @endphp
-                                    @if($daysLeft < 0)
+                                    ?>
+                                    <?php if($daysLeft < 0): ?>
                                         <span class="text-danger">Expired</span>
-                                    @elseif($daysLeft <= 7)
-                                        <span class="text-warning">{{ $daysLeft }} days</span>
-                                    @else
-                                        <span class="text-success">{{ $daysLeft }} days</span>
-                                    @endif
-                                @else
+                                    <?php elseif($daysLeft <= 7): ?>
+                                        <span class="text-warning"><?php echo e($daysLeft); ?> days</span>
+                                    <?php else: ?>
+                                        <span class="text-success"><?php echo e($daysLeft); ?> days</span>
+                                    <?php endif; ?>
+                                <?php else: ?>
                                     <span class="text-muted">-</span>
-                                @endif
+                                <?php endif; ?>
                             </td>
-                            <td>Rs. {{ number_format($subscription->amount, 0) }}</td>
+                            <td>Rs. <?php echo e(number_format($subscription->amount, 0)); ?></td>
                             <td>
                                 <div class="btn-group btn-group-sm" role="group">
-                                    <a href="{{ route('super.subscriptions.show', $subscription) }}" class="btn btn-primary" title="View Details">
+                                    <a href="<?php echo e(route('super.subscriptions.show', $subscription)); ?>" class="btn btn-primary" title="View Details">
                                         <i class="fas fa-eye"></i>
                                     </a>
-                                    <a href="{{ route('super.subscriptions.edit', $subscription) }}" class="btn btn-info" title="Edit">
+                                    <a href="<?php echo e(route('super.subscriptions.edit', $subscription)); ?>" class="btn btn-info" title="Edit">
                                         <i class="fas fa-edit"></i>
                                     </a>
                                     <div class="btn-group btn-group-sm" role="group">
@@ -241,66 +243,67 @@
                                             <i class="fas fa-ellipsis-v"></i>
                                         </button>
                                         <ul class="dropdown-menu">
-                                            @if($subscription->status != 'active')
+                                            <?php if($subscription->status != 'active'): ?>
                                             <li>
-                                                <form action="{{ route('super.subscriptions.activate', $subscription) }}" method="POST" class="d-inline">
-                                                    @csrf
+                                                <form action="<?php echo e(route('super.subscriptions.activate', $subscription)); ?>" method="POST" class="d-inline">
+                                                    <?php echo csrf_field(); ?>
                                                     <button type="submit" class="dropdown-item text-success">
                                                         <i class="fas fa-check"></i> Activate
                                                     </button>
                                                 </form>
                                             </li>
-                                            @endif
-                                            @if($subscription->status == 'active' || $subscription->status == 'trial')
+                                            <?php endif; ?>
+                                            <?php if($subscription->status == 'active' || $subscription->status == 'trial'): ?>
                                             <li>
-                                                <button type="button" class="dropdown-item text-warning" onclick="extendSubscription({{ $subscription->id }})">
+                                                <button type="button" class="dropdown-item text-warning" onclick="extendSubscription(<?php echo e($subscription->id); ?>)">
                                                     <i class="fas fa-calendar-plus"></i> Extend
                                                 </button>
                                             </li>
                                             <li>
-                                                <form action="{{ route('super.subscriptions.cancel', $subscription) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to cancel this subscription?')">
-                                                    @csrf
+                                                <form action="<?php echo e(route('super.subscriptions.cancel', $subscription)); ?>" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to cancel this subscription?')">
+                                                    <?php echo csrf_field(); ?>
                                                     <button type="submit" class="dropdown-item text-danger">
                                                         <i class="fas fa-times"></i> Cancel
                                                     </button>
                                                 </form>
                                             </li>
-                                            @endif
-                                            @if($subscription->status == 'cancelled' || $subscription->status == 'expired')
+                                            <?php endif; ?>
+                                            <?php if($subscription->status == 'cancelled' || $subscription->status == 'expired'): ?>
                                             <li>
-                                                <form action="{{ route('super.subscriptions.renew', $subscription) }}" method="POST" class="d-inline">
-                                                    @csrf
+                                                <form action="<?php echo e(route('super.subscriptions.renew', $subscription)); ?>" method="POST" class="d-inline">
+                                                    <?php echo csrf_field(); ?>
                                                     <button type="submit" class="dropdown-item text-success">
                                                         <i class="fas fa-redo"></i> Renew
                                                     </button>
                                                 </form>
                                             </li>
-                                            @endif
+                                            <?php endif; ?>
                                         </ul>
                                     </div>
                                 </div>
                             </td>
                         </tr>
-                        @empty
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                         <tr>
                             <td colspan="11" class="text-center py-5">
                                 <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
                                 <p class="text-muted">No subscriptions found</p>
-                                <a href="{{ route('super.subscriptions.create') }}" class="btn btn-primary">
+                                <a href="<?php echo e(route('super.subscriptions.create')); ?>" class="btn btn-primary">
                                     <i class="fas fa-plus"></i> Create First Subscription
                                 </a>
                             </td>
                         </tr>
-                        @endforelse
+                        <?php endif; ?>
                     </tbody>
                 </table>
             </div>
 
-            @if($subscriptions->hasPages())
+            <?php if($subscriptions->hasPages()): ?>
             <div class="mt-4">
-                {{ $subscriptions->links() }}
+                <?php echo e($subscriptions->links()); ?>
+
             </div>
-            @endif
+            <?php endif; ?>
         </div>
     </div>
 </div>
@@ -310,7 +313,7 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <form id="extendForm" method="POST">
-                @csrf
+                <?php echo csrf_field(); ?>
                 <div class="modal-header">
                     <h5 class="modal-title">Extend Subscription</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -331,7 +334,7 @@
     </div>
 </div>
 
-@push('scripts')
+<?php $__env->startPush('scripts'); ?>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     // Select All functionality
@@ -402,5 +405,7 @@
         modal.show();
     }
 </script>
-@endpush
-@endsection
+<?php $__env->stopPush(); ?>
+<?php $__env->stopSection(); ?>
+
+<?php echo $__env->make('super-admin.layout', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH /Applications/XAMPP/xamppfiles/htdocs/e-manager/resources/views/super-admin/subscriptions/index.blade.php ENDPATH**/ ?>

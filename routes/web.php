@@ -627,11 +627,19 @@ Route::prefix('super')->name('super.')->group(function () {
         Route::resource('plans', App\Http\Controllers\SuperAdmin\PlanController::class);
         Route::post('plans/{plan}/toggle-status', [App\Http\Controllers\SuperAdmin\PlanController::class, 'toggleStatus'])->name('plans.toggle-status');
         
-        // Subscriptions
+        // Subscriptions Management
         Route::get('subscriptions', [App\Http\Controllers\SuperAdmin\SubscriptionController::class, 'index'])->name('subscriptions.index');
+        Route::get('subscriptions/create', [App\Http\Controllers\SuperAdmin\SubscriptionController::class, 'create'])->name('subscriptions.create');
+        Route::post('subscriptions', [App\Http\Controllers\SuperAdmin\SubscriptionController::class, 'store'])->name('subscriptions.store');
         Route::get('subscriptions/{subscription}', [App\Http\Controllers\SuperAdmin\SubscriptionController::class, 'show'])->name('subscriptions.show');
+        Route::get('subscriptions/{subscription}/edit', [App\Http\Controllers\SuperAdmin\SubscriptionController::class, 'edit'])->name('subscriptions.edit');
+        Route::put('subscriptions/{subscription}', [App\Http\Controllers\SuperAdmin\SubscriptionController::class, 'update'])->name('subscriptions.update');
+        Route::post('subscriptions/{subscription}/activate', [App\Http\Controllers\SuperAdmin\SubscriptionController::class, 'activate'])->name('subscriptions.activate');
         Route::post('subscriptions/{subscription}/cancel', [App\Http\Controllers\SuperAdmin\SubscriptionController::class, 'cancel'])->name('subscriptions.cancel');
         Route::post('subscriptions/{subscription}/renew', [App\Http\Controllers\SuperAdmin\SubscriptionController::class, 'renew'])->name('subscriptions.renew');
+        Route::post('subscriptions/{subscription}/extend', [App\Http\Controllers\SuperAdmin\SubscriptionController::class, 'extend'])->name('subscriptions.extend');
+        Route::post('subscriptions/{subscription}/update-status', [App\Http\Controllers\SuperAdmin\SubscriptionController::class, 'updateStatus'])->name('subscriptions.update-status');
+        Route::post('subscriptions/bulk-action', [App\Http\Controllers\SuperAdmin\SubscriptionController::class, 'bulkAction'])->name('subscriptions.bulk-action');
         
         // Payments
         Route::get('payments', [App\Http\Controllers\SuperAdmin\PaymentController::class, 'index'])->name('payments.index');
@@ -831,6 +839,8 @@ Route::prefix('vendor')->name('vendor.')->group(function () {
         // Site Builder
         Route::prefix('site-builder')->name('site-builder.')->group(function () {
             Route::get('/', [App\Http\Controllers\Admin\SiteBuilderController::class, 'vendorIndex'])->name('index');
+            Route::post('/homepage', [App\Http\Controllers\Admin\SiteBuilderController::class, 'updateHomepage'])->name('update-homepage');
+            Route::post('/slide-image', [App\Http\Controllers\Admin\SiteBuilderController::class, 'uploadSlideImage'])->name('upload-slide-image');
         });
     });
 });

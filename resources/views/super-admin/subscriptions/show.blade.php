@@ -127,21 +127,83 @@
 
             <hr>
 
-            <div class="d-flex gap-2">
-                @if($subscription->status == 'active' || $subscription->status == 'trial')
-                <form action="{{ route('super.subscriptions.cancel', $subscription) }}" method="POST" 
-                      onsubmit="return confirm('Are you sure you want to cancel this subscription?')">
+            <!-- Action Buttons -->
+            <div class="d-flex flex-wrap gap-2 mb-3">
+                <a href="{{ route('super.subscriptions.edit', $subscription) }}" class="btn btn-info">
+                    <i class="fas fa-edit"></i> Edit Subscription
+                </a>
+                
+                @if($subscription->status != 'active')
+                <form action="{{ route('super.subscriptions.activate', $subscription) }}" method="POST" class="d-inline">
                     @csrf
-                    <button type="submit" class="btn btn-danger">Cancel Subscription</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-check"></i> Activate
+                    </button>
                 </form>
                 @endif
 
-                @if($subscription->status == 'cancelled')
-                <form action="{{ route('super.subscriptions.renew', $subscription) }}" method="POST">
+                @if($subscription->status == 'active' || $subscription->status == 'trial')
+                <button type="button" class="btn btn-warning" onclick="extendSubscription({{ $subscription->id }})">
+                    <i class="fas fa-calendar-plus"></i> Extend
+                </button>
+                <form action="{{ route('super.subscriptions.cancel', $subscription) }}" method="POST" class="d-inline" 
+                      onsubmit="return confirm('Are you sure you want to cancel this subscription?')">
                     @csrf
-                    <button type="submit" class="btn btn-success">Renew Subscription</button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
                 </form>
                 @endif
+
+                @if($subscription->status == 'cancelled' || $subscription->status == 'expired')
+                <form action="{{ route('super.subscriptions.renew', $subscription) }}" method="POST" class="d-inline">
+                    @csrf
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-redo"></i> Renew
+                    </button>
+                </form>
+                @endif
+
+                <!-- Status Update Dropdown -->
+                <div class="btn-group">
+                    <button type="button" class="btn btn-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                        <i class="fas fa-exchange-alt"></i> Change Status
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li>
+                            <form action="{{ route('super.subscriptions.update-status', $subscription) }}" method="POST" class="d-inline">
+                                @csrf
+                                <input type="hidden" name="status" value="trial">
+                                <button type="submit" class="dropdown-item">Set to Trial</button>
+                            </form>
+                        </li>
+                        <li>
+                            <form action="{{ route('super.subscriptions.update-status', $subscription) }}" method="POST" class="d-inline">
+                                @csrf
+                                <input type="hidden" name="status" value="active">
+                                <button type="submit" class="dropdown-item">Set to Active</button>
+                            </form>
+                        </li>
+                        <li>
+                            <form action="{{ route('super.subscriptions.update-status', $subscription) }}" method="POST" class="d-inline">
+                                @csrf
+                                <input type="hidden" name="status" value="past_due">
+                                <button type="submit" class="dropdown-item">Set to Past Due</button>
+                            </form>
+                        </li>
+                        <li>
+                            <form action="{{ route('super.subscriptions.update-status', $subscription) }}" method="POST" class="d-inline">
+                                @csrf
+                                <input type="hidden" name="status" value="expired">
+                                <button type="submit" class="dropdown-item">Set to Expired</button>
+                            </form>
+                        </li>
+                    </ul>
+                </div>
+
+                <a href="{{ route('super.tenants.show', $subscription->tenant) }}" class="btn btn-outline-primary">
+                    <i class="fas fa-building"></i> View Tenant
+                </a>
             </div>
         </div>
     </div>
@@ -184,6 +246,44 @@
     </div>
     @endif
 </div>
+
+<!-- Extend Subscription Modal -->
+<div class="modal fade" id="extendModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="extendForm" method="POST">
+                @csrf
+                <div class="modal-header">
+                    <h5 class="modal-title">Extend Subscription</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="months" class="form-label">Extend by (months)</label>
+                        <input type="number" class="form-control" id="months" name="months" min="1" max="12" value="1" required>
+                        <small class="text-muted">Enter number of months to extend (1-12)</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Extend Subscription</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    function extendSubscription(subscriptionId) {
+        const form = document.getElementById('extendForm');
+        form.action = `/super/subscriptions/${subscriptionId}/extend`;
+        const modal = new bootstrap.Modal(document.getElementById('extendModal'));
+        modal.show();
+    }
+</script>
+@endpush
 @endsection
 
 

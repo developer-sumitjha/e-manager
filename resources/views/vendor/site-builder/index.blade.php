@@ -491,10 +491,7 @@
                 @include('admin.site-builder.tabs.navigation')
 
                 <!-- Homepage Tab -->
-                <div class="tab-content" id="homepage-tab">
-                    <h5 class="mb-3">Homepage Settings</h5>
-                    <p class="text-muted">Homepage layout customization options will be available here.</p>
-                </div>
+                @include('admin.site-builder.tabs.homepage')
 
                 <!-- Products Tab -->
                 <div class="tab-content" id="products-tab">
