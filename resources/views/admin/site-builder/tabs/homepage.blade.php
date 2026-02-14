@@ -130,7 +130,7 @@
                                                     <i class="fas fa-cloud-upload-alt"></i>
                                                 </div>
                                                 <p class="mb-0"><strong>Click to upload</strong> or drag and drop</p>
-                                                <p class="text-muted small mb-0">Recommended: 1920x1080px, JPG or PNG up to 5MB</p>
+                                                <p class="text-muted small mb-0">Recommended: 1920x1080px, JPG or PNG up to 2MB</p>
                                             </div>
                                             <div class="slide-bg-image-preview mt-3" data-slide-index="{{ $index }}" style="display: {{ !empty($slide['background_image']) ? 'block' : 'none' }}; max-width: 100%; border: 1px solid #000000; border-radius: 12px; overflow: hidden;">
                                                 @if(!empty($slide['background_image']))
@@ -216,7 +216,7 @@
                                                 <i class="fas fa-cloud-upload-alt"></i>
                                             </div>
                                             <p class="mb-0"><strong>Click to upload</strong> or drag and drop</p>
-                                            <p class="text-muted small mb-0">Recommended: 1200x600px, JPG or PNG up to 5MB</p>
+                                            <p class="text-muted small mb-0">Recommended: 1200x600px, JPG or PNG up to 2MB</p>
                                         </div>
                                         <div class="slide-image-preview mt-3" data-slide-index="{{ $index }}" style="display: {{ !empty($slide['image']) ? 'block' : 'none' }}; max-width: 100%; border: 1px solid #000000; border-radius: 12px; overflow: hidden;">
                                             @if(!empty($slide['image']))
@@ -377,7 +377,7 @@ function addSlide() {
                                             <i class="fas fa-cloud-upload-alt"></i>
                                         </div>
                                         <p class="mb-0"><strong>Click to upload</strong> or drag and drop</p>
-                                        <p class="text-muted small mb-0">Recommended: 1920x1080px, JPG or PNG up to 5MB</p>
+                                        <p class="text-muted small mb-0">Recommended: 1920x1080px, JPG or PNG up to 2MB</p>
                                     </div>
                                     <div class="slide-bg-image-preview mt-3" data-slide-index="${slideIndex}" style="display: none; max-width: 100%; border: 1px solid #000000; border-radius: 12px; overflow: hidden;">
                                         <img src="" alt="Background Preview" style="width: 100%; height: auto; display: block;">
@@ -454,7 +454,7 @@ function addSlide() {
                                         <i class="fas fa-cloud-upload-alt"></i>
                                     </div>
                                     <p class="mb-0"><strong>Click to upload</strong> or drag and drop</p>
-                                    <p class="text-muted small mb-0">Recommended: 1200x600px, JPG or PNG up to 5MB</p>
+                                    <p class="text-muted small mb-0">Recommended: 1200x600px, JPG or PNG up to 2MB</p>
                                 </div>
                                 <div class="slide-image-preview mt-3" data-slide-index="${slideIndex}" style="display: none; max-width: 100%; border: 1px solid #000000; border-radius: 12px; overflow: hidden;">
                                     <img src="" alt="Slide Preview" style="width: 100%; height: auto; display: block;">
@@ -663,9 +663,12 @@ function setupBackgroundImageUpload() {
             input.addEventListener('change', function(e) {
                 const file = e.target.files[0];
                 if (file) {
-                    // Validate file size (5MB max)
-                    if (file.size > 5 * 1024 * 1024) {
-                        alert('File size exceeds 5MB limit. Please choose a smaller image.');
+                    // Validate file size (2MB max)
+                    const maxSize = 2 * 1024 * 1024; // 2MB in bytes
+                    if (file.size > maxSize) {
+                        const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
+                        alert(`File size (${fileSizeMB}MB) exceeds 2MB limit. Please compress the image or choose a smaller file.`);
+                        input.value = ''; // Clear the input
                         return;
                     }
                     
@@ -708,7 +711,16 @@ function uploadBackgroundImage(slideIndex, file, pathInput) {
     })
     .then(response => {
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            // Handle specific HTTP errors
+            if (response.status === 413) {
+                throw new Error('File is too large. Maximum size is 2MB. Please compress your image and try again.');
+            } else if (response.status === 422) {
+                return response.json().then(data => {
+                    throw new Error(data.message || 'Validation failed. Please check the file format and size.');
+                });
+            } else {
+                throw new Error(`Server error (${response.status}). Please try again or contact support.`);
+            }
         }
         return response.json();
     })
@@ -719,17 +731,20 @@ function uploadBackgroundImage(slideIndex, file, pathInput) {
                 console.log('Background image uploaded successfully:', data.image_path);
             } else {
                 console.error('pathInput not found for slide index:', slideIndex);
+                alert('Upload successful but failed to save path. Please refresh and try again.');
             }
         } else {
-            console.error('Upload failed:', data.message || 'Unknown error');
+            const errorMsg = data.message || 'Unknown error occurred';
+            console.error('Upload failed:', errorMsg);
             if (data.errors) {
                 console.error('Validation errors:', data.errors);
             }
+            alert('Upload failed: ' + errorMsg);
         }
     })
     .catch(error => {
         console.error('Error uploading background image:', error);
-        alert('Failed to upload background image. Please try again.');
+        alert(error.message || 'Failed to upload background image. Please try again.');
     });
 }
 

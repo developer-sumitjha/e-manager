@@ -476,7 +476,7 @@ class SiteBuilderController extends Controller
             $tenantId = $user->tenant_id;
             
             $validator = Validator::make($request->all(), [
-                'slide_image' => 'required|image|mimes:jpeg,jpg,png,webp|max:5120',
+                'slide_image' => 'required|image|mimes:jpeg,jpg,png,webp|max:2048', // Reduced to 2MB for better server compatibility
                 'slide_index' => 'nullable|integer',
             ]);
             
