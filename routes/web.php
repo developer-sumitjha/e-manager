@@ -6,6 +6,34 @@ use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\OrderController;
 
+// IMPORTANT: Domain routes must be defined FIRST to avoid conflicts with root route
+// Storefront Routes - Subdomain-based (clean URLs when accessed via subdomain)
+// These routes work when accessed via subdomain (e.g., primax.localhost/product/...)
+Route::domain('{subdomain}.localhost')->group(function () {
+    Route::get('/', [App\Http\Controllers\StorefrontController::class, 'show'])->name('storefront.subdomain.preview');
+    // Test route to verify domain routing works
+    Route::get('/test-domain', function ($subdomain) {
+        return response()->json([
+            'subdomain' => $subdomain,
+            'hostname' => request()->getHost(),
+            'path' => request()->path(),
+            'message' => 'Domain route is working'
+        ]);
+    });
+    Route::get('/product/{slug}', [App\Http\Controllers\StorefrontController::class, 'product'])->name('storefront.subdomain.product');
+    Route::get('/category/{slug}', [App\Http\Controllers\StorefrontController::class, 'category'])->name('storefront.subdomain.category');
+    Route::get('/cart', [App\Http\Controllers\StorefrontController::class, 'cart'])->name('storefront.subdomain.cart');
+    Route::post('/cart/add', [App\Http\Controllers\StorefrontController::class, 'addToCart'])->name('storefront.subdomain.cart.add')->middleware('throttle:30,1');
+    Route::post('/cart/update', [App\Http\Controllers\StorefrontController::class, 'updateCart'])->name('storefront.subdomain.cart.update')->middleware('throttle:20,1');
+    Route::post('/cart/remove', [App\Http\Controllers\StorefrontController::class, 'removeFromCart'])->name('storefront.subdomain.cart.remove')->middleware('throttle:20,1');
+    Route::post('/cart/clear', [App\Http\Controllers\StorefrontController::class, 'clearCart'])->name('storefront.subdomain.cart.clear')->middleware('throttle:10,1');
+    Route::get('/checkout', [App\Http\Controllers\StorefrontController::class, 'checkout'])->name('storefront.subdomain.checkout');
+    Route::post('/checkout/process', [App\Http\Controllers\StorefrontController::class, 'processCheckout'])->name('storefront.subdomain.checkout.process');
+    Route::get('/checkout/success', [App\Http\Controllers\StorefrontController::class, 'checkoutSuccess'])->name('storefront.subdomain.checkout.success');
+    Route::post('/cart/coupon/apply', [App\Http\Controllers\CouponController::class, 'apply'])->name('storefront.subdomain.coupon.apply')->middleware('throttle:10,1');
+    Route::post('/cart/coupon/remove', [App\Http\Controllers\CouponController::class, 'remove'])->name('storefront.subdomain.coupon.remove')->middleware('throttle:10,1');
+});
+
 // Public Routes - Super Admin Public Frontend (Landing Page)
 Route::any('/', function (\Illuminate\Http\Request $request) {
     // Get hostname - try multiple methods for reliability
@@ -277,7 +305,8 @@ Route::view('/services', 'public.services')->name('public.services');
 Route::view('/about', 'public.about')->name('public.about');
 Route::view('/contact', 'public.contact')->name('public.contact');
 
-// Storefront Preview Route
+
+// Storefront Routes - Path-based (for when accessed without subdomain, e.g., localhost/storefront/primax/...)
 Route::prefix('storefront/{subdomain}')->group(function () {
     Route::get('/', [App\Http\Controllers\StorefrontController::class, 'show'])->name('storefront.preview');
     Route::get('/product/{slug}', [App\Http\Controllers\StorefrontController::class, 'product'])->name('storefront.product');
@@ -492,6 +521,7 @@ Route::middleware(['auth', 'admin_employee', 'subscription.active'])->prefix('ad
         Route::post('/banner-image', [App\Http\Controllers\Admin\SiteBuilderController::class, 'uploadBannerImage'])->name('upload-banner-image');
         Route::post('/navigation', [App\Http\Controllers\Admin\SiteBuilderController::class, 'updateNavigation'])->name('update-navigation');
         Route::post('/homepage', [App\Http\Controllers\Admin\SiteBuilderController::class, 'updateHomepage'])->name('update-homepage');
+        Route::post('/slide-image', [App\Http\Controllers\Admin\SiteBuilderController::class, 'uploadSlideImage'])->name('upload-slide-image');
         Route::post('/products', [App\Http\Controllers\Admin\SiteBuilderController::class, 'updateProducts'])->name('update-products');
         Route::post('/footer', [App\Http\Controllers\Admin\SiteBuilderController::class, 'updateFooter'])->name('update-footer');
         Route::post('/seo', [App\Http\Controllers\Admin\SiteBuilderController::class, 'updateSeo'])->name('update-seo');
@@ -797,7 +827,11 @@ Route::prefix('vendor')->name('vendor.')->group(function () {
         Route::get('dashboard', function () {
             return redirect()->route('admin.dashboard');
         })->name('dashboard');
-        // Add more vendor routes here as needed
+        
+        // Site Builder
+        Route::prefix('site-builder')->name('site-builder.')->group(function () {
+            Route::get('/', [App\Http\Controllers\Admin\SiteBuilderController::class, 'vendorIndex'])->name('index');
+        });
     });
 });
 

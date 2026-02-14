@@ -1,85 +1,148 @@
 <?php $__env->startSection('title', 'Site Builder'); ?>
 
 <?php $__env->startSection('styles'); ?>
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-    :root {
-        --builder-primary: #667eea;
-        --builder-secondary: #764ba2;
-        --builder-success: #10b981;
-        --builder-danger: #ef4444;
-        --builder-warning: #f59e0b;
+    /* Black and White Theme - Matching Dashboard */
+    * {
+        box-sizing: border-box;
+    }
+    
+    body {
+        font-family: 'Open Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        background: #ffffff;
+        color: #000000;
     }
     
     .site-builder-container {
-        background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+        background: #ffffff;
         min-height: calc(100vh - 100px);
         padding: 2rem 0;
+        width: 100%;
+        overflow-x: visible;
+    }
+    
+    .site-builder-container .container-fluid {
+        width: 100%;
+        max-width: 100%;
+        padding-left: 1.5rem;
+        padding-right: 1.5rem;
+        overflow-x: visible;
     }
     
     .builder-header {
-        background: white;
-        border-radius: 16px;
+        background: #ffffff;
+        border: 1px solid #000000;
+        border-radius: 12px;
         padding: 2rem;
         margin-bottom: 2rem;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
     
     .builder-header h1 {
         font-size: 2rem;
-        font-weight: 800;
-        background: linear-gradient(135deg, var(--builder-primary), var(--builder-secondary));
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
+        font-weight: 700;
+        color: #000000;
         margin-bottom: 0.5rem;
+        background: none;
+        -webkit-background-clip: unset;
+        -webkit-text-fill-color: #000000;
+        background-clip: unset;
     }
     
     .builder-tabs {
-        background: white;
-        border-radius: 16px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        background: #ffffff;
+        border: 1px solid #000000;
+        border-radius: 12px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        width: 100%;
         overflow: hidden;
     }
     
+    .tabs-nav-wrapper {
+        width: 100%;
+        overflow-x: scroll !important;
+        overflow-y: hidden !important;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
+        scrollbar-color: #000000 #f5f5f5;
+        position: relative;
+        display: block;
+    }
+    
+    /* Force scrollbar to always be visible when content overflows */
+    .tabs-nav-wrapper:has(.tabs-nav[style*="width"]) {
+        overflow-x: scroll !important;
+    }
+    
+    .tabs-nav-wrapper::-webkit-scrollbar {
+        height: 8px;
+    }
+    
+    .tabs-nav-wrapper::-webkit-scrollbar-track {
+        background: #f5f5f5;
+        border-radius: 4px;
+    }
+    
+    .tabs-nav-wrapper::-webkit-scrollbar-thumb {
+        background: #000000;
+        border-radius: 4px;
+    }
+    
+    .tabs-nav-wrapper::-webkit-scrollbar-thumb:hover {
+        background: #333333;
+    }
+    
     .tabs-nav {
-        display: flex;
-        flex-wrap: wrap;
-        background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
-        border-bottom: 2px solid rgba(102, 126, 234, 0.2);
+        display: flex !important;
+        flex-wrap: nowrap !important;
+        background: #ffffff;
+        border-bottom: 2px solid #000000;
         padding: 0;
         margin: 0;
         list-style: none;
+        width: max-content !important;
+        min-width: 100%;
+        white-space: nowrap;
+        position: relative;
     }
     
     .tab-item {
-        flex: 1;
+        flex: 0 0 auto;
         min-width: 120px;
+        white-space: nowrap;
+        position: relative;
+        z-index: 2;
+        flex-shrink: 0;
     }
     
     .tab-link {
+        white-space: nowrap;
         display: flex;
         align-items: center;
         justify-content: center;
         gap: 0.5rem;
         padding: 1rem 1.5rem;
-        color: #6B7280;
+        color: #666666;
         text-decoration: none;
         font-weight: 600;
         font-size: 14px;
-        transition: all 0.3s ease;
+        transition: all 0.2s ease;
         border-bottom: 3px solid transparent;
         cursor: pointer;
         background: transparent;
+        box-sizing: border-box;
     }
     
     .tab-link:hover {
-        background: rgba(102, 126, 234, 0.1);
-        color: var(--builder-primary);
+        background: #f5f5f5;
+        color: #000000;
     }
     
     .tab-link.active {
-        background: white;
-        color: var(--builder-primary);
-        border-bottom-color: var(--builder-primary);
+        background: #ffffff;
+        color: #000000;
+        border-bottom-color: #000000;
     }
     
     .tab-link i {
@@ -105,7 +168,8 @@
     }
     
     .form-section {
-        background: rgba(249, 250, 251, 0.5);
+        background: #ffffff;
+        border: 1px solid #e0e0e0;
         border-radius: 12px;
         padding: 1.5rem;
         margin-bottom: 1.5rem;
@@ -114,7 +178,7 @@
     .form-section-title {
         font-size: 18px;
         font-weight: 700;
-        color: #1e293b;
+        color: #000000;
         margin-bottom: 1rem;
         display: flex;
         align-items: center;
@@ -122,7 +186,7 @@
     }
     
     .form-section-title i {
-        color: var(--builder-primary);
+        color: #000000;
     }
     
     .form-group {
@@ -132,7 +196,7 @@
     .form-label {
         display: block;
         font-weight: 600;
-        color: #374151;
+        color: #000000;
         margin-bottom: 0.5rem;
         font-size: 14px;
     }
@@ -140,16 +204,18 @@
     .form-control, .form-select {
         width: 100%;
         padding: 0.75rem 1rem;
-        border: 2px solid #e5e7eb;
+        border: 1px solid #000000;
         border-radius: 8px;
         font-size: 14px;
-        transition: all 0.3s ease;
+        transition: all 0.2s ease;
+        background: #ffffff;
+        color: #000000;
     }
     
     .form-control:focus, .form-select:focus {
         outline: none;
-        border-color: var(--builder-primary);
-        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        border-color: #000000;
+        box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.1);
     }
     
     .color-picker-wrapper {
@@ -166,39 +232,39 @@
         width: 60px;
         height: 45px;
         border-radius: 8px;
-        border: 2px solid #e5e7eb;
+        border: 1px solid #000000;
         cursor: pointer;
-        transition: all 0.3s ease;
+        transition: all 0.2s ease;
     }
     
     .color-preview:hover {
         transform: scale(1.1);
-        border-color: var(--builder-primary);
+        border-color: #333333;
     }
     
     .file-upload-area {
-        border: 2px dashed #d1d5db;
+        border: 2px dashed #000000;
         border-radius: 12px;
         padding: 2rem;
         text-align: center;
         cursor: pointer;
-        transition: all 0.3s ease;
-        background: white;
+        transition: all 0.2s ease;
+        background: #ffffff;
     }
     
     .file-upload-area:hover {
-        border-color: var(--builder-primary);
-        background: rgba(102, 126, 234, 0.05);
+        border-color: #333333;
+        background: #f5f5f5;
     }
     
     .file-upload-area.drag-over {
-        border-color: var(--builder-success);
-        background: rgba(16, 185, 129, 0.1);
+        border-color: #000000;
+        background: #f0f0f0;
     }
     
     .file-upload-icon {
         font-size: 48px;
-        color: #9ca3af;
+        color: #666666;
         margin-bottom: 1rem;
     }
     
@@ -207,7 +273,7 @@
         border-radius: 12px;
         overflow: hidden;
         max-width: 300px;
-        border: 2px solid #e5e7eb;
+        border: 1px solid #000000;
     }
     
     .image-preview-box img {
@@ -221,44 +287,48 @@
         border-radius: 8px;
         font-weight: 600;
         font-size: 14px;
-        border: none;
+        border: 1.5px solid;
         cursor: pointer;
-        transition: all 0.3s ease;
+        transition: all 0.2s ease;
         display: inline-flex;
         align-items: center;
         gap: 0.5rem;
     }
     
     .btn-builder-primary {
-        background: linear-gradient(135deg, var(--builder-primary), var(--builder-secondary));
-        color: white;
-        box-shadow: 0 4px 6px rgba(102, 126, 234, 0.3);
+        background: #000000;
+        color: #ffffff;
+        border-color: #000000;
     }
     
     .btn-builder-primary:hover {
+        background: #333333;
+        border-color: #333333;
         transform: translateY(-2px);
-        box-shadow: 0 6px 12px rgba(102, 126, 234, 0.4);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     }
     
     .btn-builder-success {
-        background: var(--builder-success);
-        color: white;
+        background: #000000;
+        color: #ffffff;
+        border-color: #000000;
     }
     
     .btn-builder-success:hover {
-        background: #059669;
+        background: #333333;
+        border-color: #333333;
         transform: translateY(-2px);
     }
     
     .btn-builder-outline {
-        background: white;
-        color: var(--builder-primary);
-        border: 2px solid var(--builder-primary);
+        background: #ffffff;
+        color: #000000;
+        border: 1.5px solid #000000;
     }
     
     .btn-builder-outline:hover {
-        background: var(--builder-primary);
-        color: white;
+        background: #000000;
+        color: #ffffff;
     }
     
     .toggle-switch {
@@ -281,9 +351,10 @@
         left: 0;
         right: 0;
         bottom: 0;
-        background-color: #cbd5e1;
+        background-color: #e0e0e0;
         transition: .4s;
         border-radius: 30px;
+        border: 1px solid #000000;
     }
     
     .toggle-slider:before {
@@ -293,13 +364,14 @@
         width: 22px;
         left: 4px;
         bottom: 4px;
-        background-color: white;
+        background-color: #ffffff;
         transition: .4s;
         border-radius: 50%;
+        border: 1px solid #000000;
     }
     
     input:checked + .toggle-slider {
-        background: linear-gradient(135deg, var(--builder-primary), var(--builder-secondary));
+        background: #000000;
     }
     
     input:checked + .toggle-slider:before {
@@ -314,6 +386,7 @@
         align-items: center;
         gap: 1rem;
         animation: slideInDown 0.3s ease;
+        border: 1px solid;
     }
     
     @keyframes slideInDown {
@@ -322,15 +395,15 @@
     }
     
     .alert-success {
-        background: rgba(16, 185, 129, 0.1);
-        border: 2px solid var(--builder-success);
-        color: #065f46;
+        background: #ffffff;
+        border-color: #000000;
+        color: #000000;
     }
     
     .alert-danger {
-        background: rgba(239, 68, 68, 0.1);
-        border: 2px solid var(--builder-danger);
-        color: #991b1b;
+        background: #ffffff;
+        border-color: #000000;
+        color: #000000;
     }
     
     .preview-button {
@@ -338,24 +411,25 @@
         bottom: 2rem;
         right: 2rem;
         padding: 1rem 2rem;
-        background: linear-gradient(135deg, var(--builder-success), #059669);
-        color: white;
-        border-radius: 50px;
-        font-weight: 700;
+        background: #000000;
+        color: #ffffff;
+        border-radius: 12px;
+        font-weight: 600;
         font-size: 16px;
-        box-shadow: 0 8px 16px rgba(16, 185, 129, 0.4);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         cursor: pointer;
         z-index: 1000;
-        transition: all 0.3s ease;
+        transition: all 0.2s ease;
         display: flex;
         align-items: center;
         gap: 0.5rem;
-        border: none;
+        border: 1px solid #000000;
     }
     
     .preview-button:hover {
-        transform: translateY(-4px) scale(1.05);
-        box-shadow: 0 12px 24px rgba(16, 185, 129, 0.5);
+        background: #333333;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
     }
     
     .save-indicator {
@@ -363,9 +437,10 @@
         top: 2rem;
         right: 2rem;
         padding: 0.75rem 1.5rem;
-        background: white;
-        border-radius: 50px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        background: #ffffff;
+        border: 1px solid #000000;
+        border-radius: 12px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         font-weight: 600;
         font-size: 14px;
         z-index: 1000;
@@ -377,23 +452,67 @@
         display: flex;
         align-items: center;
         gap: 0.5rem;
-        color: var(--builder-warning);
+        color: #666666;
     }
     
     .save-indicator.saved {
         display: flex;
         align-items: center;
         gap: 0.5rem;
-        color: var(--builder-success);
+        color: #000000;
     }
     
+    /* Buttons - Matching Dashboard */
+    .btn {
+        border-radius: 8px;
+        font-weight: 500;
+        padding: 0.625rem 1.25rem;
+        font-size: 0.875rem;
+        transition: all 0.2s ease;
+        border-width: 1.5px;
+    }
+    
+    .btn-outline-primary {
+        color: #000000;
+        border-color: #000000;
+        background: #ffffff;
+    }
+    
+    .btn-outline-primary:hover,
+    .btn-outline-primary.active {
+        background: #000000;
+        border-color: #000000;
+        color: #ffffff;
+    }
+    
+    .btn-outline-secondary {
+        color: #666666;
+        border-color: #666666;
+        background: #ffffff;
+    }
+    
+    .btn-outline-secondary:hover {
+        background: #666666;
+        border-color: #666666;
+        color: #ffffff;
+    }
+    
+    /* Text Colors */
+    .text-muted {
+        color: #666666 !important;
+    }
+    
+    /* Responsive */
     @media (max-width: 768px) {
         .tabs-nav {
             overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scroll-snap-type: x mandatory;
         }
         
         .tab-item {
-            flex: none;
+            flex: 0 0 auto;
+            scroll-snap-align: start;
         }
         
         .preview-button {
@@ -402,6 +521,31 @@
             padding: 0.75rem 1.5rem;
             font-size: 14px;
         }
+        
+        .builder-header {
+            padding: 1.5rem;
+        }
+        
+        .tab-content {
+            padding: 1.5rem;
+        }
+    }
+    
+    /* Ensure tabs are always scrollable */
+    .builder-tabs .tabs-nav-wrapper {
+        border-radius: 12px 12px 0 0;
+        overflow-x: scroll !important;
+        overflow-y: hidden !important;
+    }
+    
+    .builder-tabs .tabs-nav {
+        width: max-content !important;
+        min-width: 100% !important;
+        display: flex !important;
+    }
+    
+    .builder-tabs .tabs-nav .tab-item:last-child {
+        margin-right: 0;
     }
 </style>
 <?php $__env->stopSection(); ?>
@@ -417,8 +561,8 @@
                 </h1>
                 <p class="text-muted mb-0">Customize your storefront with ease - no coding required!</p>
             </div>
-            <div>
-                <a href="<?php echo e(route('admin.site-pages.index')); ?>" class="btn btn-outline-primary me-2">
+            <div class="d-flex gap-2">
+                <a href="<?php echo e(route('admin.site-pages.index')); ?>" class="btn btn-outline-primary">
                     <i class="fas fa-file-alt"></i> Manage Pages
                 </a>
                 <a href="<?php echo e(route('admin.dashboard')); ?>" class="btn btn-outline-secondary">
@@ -437,136 +581,9 @@
         <div id="alertArea"></div>
         
         
-        <div class="builder-header" style="border: 2px dashed rgba(102,126,234,0.2);">
-            <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-3">
-                <div>
-                    <h2 class="m-0" style="font-weight:800; background: linear-gradient(135deg, var(--builder-primary), var(--builder-secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
-                        <i class="fas fa-store"></i> Store Templates
-                    </h2>
-                    <div class="text-muted">Choose a starting template. You can customize everything later.</div>
-                </div>
-                <div class="d-flex align-items-center gap-2">
-                    <span class="badge bg-primary">New</span>
-                </div>
-            </div>
-
-            <div class="row g-3">
-                <div class="col-12 col-md-6 col-xl-3">
-                    <div class="card h-100 shadow-sm border-0 template-card" data-template="classic">
-                        <div class="position-relative">
-                            <img src="https://dummyimage.com/600x360/f3f4f6/8b5cf6&text=Classic" class="card-img-top" alt="Classic">
-                            <span class="position-absolute top-0 start-0 m-2 badge bg-dark">Glimpse</span>
-                        </div>
-                        <div class="card-body">
-                            <h5 class="card-title m-0">Classic</h5>
-                            <div class="text-muted small">Clean and minimal storefront layout</div>
-                        </div>
-                        <div class="card-footer bg-white border-0 pt-0">
-                            <div class="d-grid gap-2">
-                                <button class="btn btn-sm btn-outline-secondary" onclick="viewTemplate('classic')">
-                                    <i class="fas fa-eye"></i> View Template
-                                </button>
-                                <button class="btn btn-sm btn-outline-primary" onclick="applyTemplate('classic')">
-                                    <i class="fas fa-check"></i> Use Template
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-12 col-md-6 col-xl-3">
-                    <div class="card h-100 shadow-sm border-0 template-card" data-template="modern">
-                        <div class="position-relative">
-                            <img src="https://dummyimage.com/600x360/eef2ff/6366f1&text=Modern" class="card-img-top" alt="Modern">
-                            <span class="position-absolute top-0 start-0 m-2 badge bg-dark">Glimpse</span>
-                        </div>
-                        <div class="card-body">
-                            <h5 class="card-title m-0">Modern</h5>
-                            <div class="text-muted small">Bold hero, cards, and rounded sections</div>
-                        </div>
-                        <div class="card-footer bg-white border-0 pt-0">
-                            <div class="d-grid gap-2">
-                                <button class="btn btn-sm btn-outline-secondary" onclick="viewTemplate('modern')">
-                                    <i class="fas fa-eye"></i> View Template
-                                </button>
-                                <button class="btn btn-sm btn-outline-primary" onclick="applyTemplate('modern')">
-                                    <i class="fas fa-check"></i> Use Template
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-12 col-md-6 col-xl-3">
-                    <div class="card h-100 shadow-sm border-0 template-card" data-template="fashion">
-                        <div class="position-relative">
-                            <img src="https://dummyimage.com/600x360/fff1f2/f43f5e&text=Fashion" class="card-img-top" alt="Fashion">
-                            <span class="position-absolute top-0 start-0 m-2 badge bg-dark">Glimpse</span>
-                        </div>
-                        <div class="card-body">
-                            <h5 class="card-title m-0">Fashion</h5>
-                            <div class="text-muted small">Large imagery and editorial typography</div>
-                        </div>
-                        <div class="card-footer bg-white border-0 pt-0">
-                            <div class="d-grid gap-2">
-                                <button class="btn btn-sm btn-outline-secondary" onclick="viewTemplate('fashion')">
-                                    <i class="fas fa-eye"></i> View Template
-                                </button>
-                                <button class="btn btn-sm btn-outline-primary" onclick="applyTemplate('fashion')">
-                                    <i class="fas fa-check"></i> Use Template
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-12 col-md-6 col-xl-3">
-                    <div class="card h-100 shadow-sm border-0 template-card" data-template="electronics">
-                        <div class="position-relative">
-                            <img src="https://dummyimage.com/600x360/eff6ff/0ea5e9&text=Electronics" class="card-img-top" alt="Electronics">
-                            <span class="position-absolute top-0 start-0 m-2 badge bg-dark">Glimpse</span>
-                        </div>
-                        <div class="card-body">
-                            <h5 class="card-title m-0">Electronics</h5>
-                            <div class="text-muted small">Feature grid and promo highlight sections</div>
-                        </div>
-                        <div class="card-footer bg-white border-0 pt-0">
-                            <div class="d-grid gap-2">
-                                <button class="btn btn-sm btn-outline-secondary" onclick="viewTemplate('electronics')">
-                                    <i class="fas fa-eye"></i> View Template
-                                </button>
-                                <button class="btn btn-sm btn-outline-primary" onclick="applyTemplate('electronics')">
-                                    <i class="fas fa-check"></i> Use Template
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-12 col-md-6 col-xl-3">
-                    <div class="card h-100 shadow-sm border-0 template-card" data-template="grocery">
-                        <div class="position-relative">
-                            <img src="https://dummyimage.com/600x360/ecfeff/14b8a6&text=Grocery" class="card-img-top" alt="Grocery">
-                            <span class="position-absolute top-0 start-0 m-2 badge bg-dark">Glimpse</span>
-                        </div>
-                        <div class="card-body">
-                            <h5 class="card-title m-0">Grocery</h5>
-                            <div class="text-muted small">Category first, quick add-to-cart layout</div>
-                        </div>
-                        <div class="card-footer bg-white border-0 pt-0">
-                            <div class="d-grid gap-2">
-                                <button class="btn btn-sm btn-outline-secondary" onclick="viewTemplate('grocery')">
-                                    <i class="fas fa-eye"></i> View Template
-                                </button>
-                                <button class="btn btn-sm btn-outline-primary" onclick="applyTemplate('grocery')">
-                                    <i class="fas fa-check"></i> Use Template
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        
         <div class="builder-tabs">
-            <ul class="tabs-nav" role="tablist">
+            <div class="tabs-nav-wrapper">
+                <ul class="tabs-nav" role="tablist">
                 <li class="tab-item">
                     <a class="tab-link active" data-tab="general">
                         <i class="fas fa-info-circle"></i>
@@ -628,6 +645,7 @@
                     </a>
                 </li>
             </ul>
+            </div>
             
             <div class="tab-content">
                 
@@ -672,7 +690,55 @@
 <?php $__env->stopSection(); ?>
 
 <?php $__env->startSection('scripts'); ?>
+<!-- Sortable.js for drag and drop -->
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
 <script>
+// Ensure tabs navigation is scrollable
+function setupTabsScrolling() {
+    const tabsNav = document.querySelector('.tabs-nav');
+    const tabsNavWrapper = document.querySelector('.tabs-nav-wrapper');
+    
+    if (tabsNav && tabsNavWrapper) {
+        // Reset width to auto first to get accurate measurements
+        tabsNav.style.width = 'auto';
+        
+        // Calculate actual width of all tab items
+        let tabsWidth = 0;
+        Array.from(tabsNav.children).forEach(item => {
+            tabsWidth += item.offsetWidth;
+        });
+        
+        const wrapperWidth = tabsNavWrapper.offsetWidth;
+        
+        // Set explicit width to ensure scrolling works
+        if (tabsWidth > wrapperWidth) {
+            tabsNav.style.width = tabsWidth + 'px';
+            tabsNav.style.minWidth = wrapperWidth + 'px';
+        } else {
+            tabsNav.style.width = '100%';
+            tabsNav.style.minWidth = '100%';
+        }
+        
+        // Force wrapper to allow scrolling
+        tabsNavWrapper.style.overflowX = 'auto';
+        tabsNavWrapper.style.overflowY = 'hidden';
+        
+        // Ensure scrollbar is visible
+        if (tabsWidth > wrapperWidth) {
+            tabsNavWrapper.style.overflowX = 'scroll';
+        }
+    }
+}
+
+// Run on page load
+document.addEventListener('DOMContentLoaded', setupTabsScrolling);
+
+// Run on window resize
+window.addEventListener('resize', setupTabsScrolling);
+
+// Run after a short delay to ensure all styles are applied
+setTimeout(setupTabsScrolling, 100);
+
 // Tab Switching
 document.querySelectorAll('.tab-link').forEach(link => {
     link.addEventListener('click', function(e) {

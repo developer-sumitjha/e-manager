@@ -333,6 +333,9 @@
                 <i class="fas fa-store"></i> {{ $tenant->business_name }}
             </a>
             <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="{{ route('vendor.site-builder.index') }}">
+                    <i class="fas fa-paint-brush"></i> Site Builder
+                </a>
                 <div class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
                         <i class="fas fa-user"></i> {{ Auth::user()->name }}
@@ -526,8 +529,8 @@
                                 </a>
                             </div>
                             <div class="col-md-3 mb-2">
-                                <a href="#" class="btn btn-outline-info w-100">
-                                    <i class="fas fa-chart-bar"></i> Reports
+                                <a href="{{ route('vendor.site-builder.index') }}" class="btn btn-outline-info w-100">
+                                    <i class="fas fa-paint-brush"></i> Site Builder
                                 </a>
                             </div>
                             <div class="col-md-3 mb-2">

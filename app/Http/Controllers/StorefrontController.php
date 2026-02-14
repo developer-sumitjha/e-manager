@@ -21,8 +21,29 @@ class StorefrontController extends Controller
     /**
      * Show storefront preview
      */
-    public function show($subdomain)
+    public function show($subdomain = null)
     {
+        // Handle both subdomain-based and path-based routes
+        // Get subdomain from route parameter (works for both domain and prefix routes)
+        if ($subdomain === null) {
+            $subdomain = request()->route('subdomain');
+        }
+        
+        // If still null, try to get from hostname (for domain routes)
+        if ($subdomain === null) {
+            $hostname = request()->getHost();
+            $parts = explode('.', $hostname);
+            if (count($parts) === 2 && strtolower(end($parts)) === 'localhost') {
+                $subdomain = $parts[0];
+            } elseif (count($parts) >= 3) {
+                $subdomain = $parts[0];
+            }
+        }
+        
+        if (!$subdomain) {
+            abort(404, 'Store not found');
+        }
+        
         // Find tenant by subdomain
         $tenant = Tenant::where('subdomain', $subdomain)->firstOrFail();
         
@@ -99,8 +120,54 @@ class StorefrontController extends Controller
     /**
      * Product detail page
      */
-    public function product($subdomain, $slug)
+    public function product($subdomain, $slug = null)
     {
+        // Handle both subdomain-based and path-based routes
+        // For subdomain routes (Route::domain): product($subdomain, $slug) - subdomain comes from domain
+        // For path routes (Route::prefix): product($subdomain, $slug) - subdomain comes from path
+        
+        // Get slug from route parameter if not provided
+        if ($slug === null) {
+            $slug = request()->route('slug');
+        }
+        
+        // For path-based routes, subdomain is passed as first param
+        // For domain-based routes, subdomain is also passed as first param from domain binding
+        // So $subdomain should already be set, but let's validate
+        if (empty($subdomain)) {
+            $subdomain = request()->route('subdomain');
+            if (empty($subdomain)) {
+                // Fallback: extract from hostname
+                $hostname = request()->getHost();
+                $parts = explode('.', $hostname);
+                if (count($parts) === 2 && strtolower(end($parts)) === 'localhost') {
+                    $subdomain = $parts[0];
+                } elseif (count($parts) >= 3) {
+                    $subdomain = $parts[0];
+                }
+            }
+        }
+        
+        // Debug logging (remove in production)
+        \Log::info('StorefrontController::product called', [
+            'subdomain_param' => $subdomain,
+            'slug_param' => $slug,
+            'route_subdomain' => request()->route('subdomain'),
+            'route_slug' => request()->route('slug'),
+            'hostname' => request()->getHost(),
+            'path' => request()->path(),
+            'url' => request()->url()
+        ]);
+        
+        // Validate we have both
+        if (!$subdomain || !$slug) {
+            \Log::error('StorefrontController::product - Missing parameters', [
+                'subdomain' => $subdomain,
+                'slug' => $slug
+            ]);
+            abort(404, 'Product not found');
+        }
+        
         $tenant = Tenant::where('subdomain', $subdomain)->firstOrFail();
         $settings = SiteSettings::where('tenant_id', $tenant->id)->first();
         $product = Product::where('tenant_id', $tenant->id)->where('slug', $slug)->firstOrFail();
@@ -123,7 +190,7 @@ class StorefrontController extends Controller
     /**
      * Category listing with pagination, search, and sort
      */
-    public function category(Request $request, $subdomain, $slug)
+    public function category(Request $request, $subdomain = null, $slug = null)
     {
         $tenant = Tenant::where('subdomain', $subdomain)->firstOrFail();
         $settings = SiteSettings::where('tenant_id', $tenant->id)->first();
@@ -154,8 +221,29 @@ class StorefrontController extends Controller
     /**
      * Show cart
      */
-    public function cart($subdomain)
+    public function cart($subdomain = null)
     {
+        // Handle both subdomain-based and path-based routes
+        // Get subdomain from route parameter
+        if ($subdomain === null) {
+            $subdomain = request()->route('subdomain');
+        }
+        
+        // If still null, try to get from hostname
+        if ($subdomain === null) {
+            $hostname = request()->getHost();
+            $parts = explode('.', $hostname);
+            if (count($parts) === 2 && strtolower(end($parts)) === 'localhost') {
+                $subdomain = $parts[0];
+            } elseif (count($parts) >= 3) {
+                $subdomain = $parts[0];
+            }
+        }
+        
+        if (!$subdomain) {
+            abort(404, 'Store not found');
+        }
+        
         $tenant = Tenant::where('subdomain', $subdomain)->firstOrFail();
         $settings = SiteSettings::where('tenant_id', $tenant->id)->first();
         $cart = Session::get('cart', []);
@@ -176,8 +264,25 @@ class StorefrontController extends Controller
     /**
      * Add to cart
      */
-    public function addToCart(Request $request, $subdomain)
+    public function addToCart(Request $request, $subdomain = null)
     {
+        // Handle both subdomain-based and path-based routes
+        if ($subdomain === null) {
+            // Try to get from route parameter
+            $subdomain = $request->route('subdomain');
+            
+            // If still null, try to get from hostname
+            if ($subdomain === null) {
+                $hostname = $request->getHost();
+                $parts = explode('.', $hostname);
+                if (count($parts) === 2 && strtolower(end($parts)) === 'localhost') {
+                    $subdomain = $parts[0];
+                } elseif (count($parts) >= 3) {
+                    $subdomain = $parts[0];
+                }
+            }
+        }
+        
         $tenant = Tenant::where('subdomain', $subdomain)->firstOrFail();
         $request->validate([
             'product_id' => 'required|integer',
@@ -303,8 +408,28 @@ class StorefrontController extends Controller
     /**
      * Checkout page
      */
-    public function checkout($subdomain)
+    public function checkout($subdomain = null)
     {
+        // Handle both subdomain-based and path-based routes
+        if ($subdomain === null) {
+            $subdomain = request()->route('subdomain');
+        }
+        
+        // If still null, try to get from hostname
+        if ($subdomain === null) {
+            $hostname = request()->getHost();
+            $parts = explode('.', $hostname);
+            if (count($parts) === 2 && strtolower(end($parts)) === 'localhost') {
+                $subdomain = $parts[0];
+            } elseif (count($parts) >= 3) {
+                $subdomain = $parts[0];
+            }
+        }
+        
+        if (!$subdomain) {
+            abort(404, 'Store not found');
+        }
+        
         $tenant = Tenant::where('subdomain', $subdomain)->firstOrFail();
         $settings = SiteSettings::where('tenant_id', $tenant->id)->first();
         $cart = Session::get('cart', []);
@@ -337,8 +462,28 @@ class StorefrontController extends Controller
     /**
      * Process checkout
      */
-    public function processCheckout(Request $request, $subdomain)
+    public function processCheckout(Request $request, $subdomain = null)
     {
+        // Handle both subdomain-based and path-based routes
+        if ($subdomain === null) {
+            $subdomain = request()->route('subdomain');
+        }
+        
+        // If still null, try to get from hostname
+        if ($subdomain === null) {
+            $hostname = request()->getHost();
+            $parts = explode('.', $hostname);
+            if (count($parts) === 2 && strtolower(end($parts)) === 'localhost') {
+                $subdomain = $parts[0];
+            } elseif (count($parts) >= 3) {
+                $subdomain = $parts[0];
+            }
+        }
+        
+        if (!$subdomain) {
+            abort(404, 'Store not found');
+        }
+        
         $tenant = Tenant::where('subdomain', $subdomain)->firstOrFail();
         $cart = Session::get('cart', []);
         
@@ -352,12 +497,15 @@ class StorefrontController extends Controller
         $cart = array_filter($cart);
         
         if (empty($cart)) {
-            return redirect()->route('storefront.cart', $tenant->subdomain)
+            return redirect(\App\Helpers\StorefrontHelper::route('storefront.cart', [$tenant->subdomain]))
                 ->with('error', 'Your cart is empty.');
         }
 
+        // Check if shipping is same as billing
+        $sameAsBilling = $request->has('same_as_billing') && $request->input('same_as_billing') == '1';
+        
         // Validate checkout data
-        $request->validate([
+        $validationRules = [
             'billing_first_name' => 'required|string|max:255',
             'billing_last_name' => 'required|string|max:255',
             'billing_email' => 'required|email|max:255',
@@ -367,18 +515,39 @@ class StorefrontController extends Controller
             'billing_state' => 'required|string|max:100',
             'billing_postal_code' => 'required|string|max:20',
             'billing_country' => 'required|string|max:100',
-            'shipping_first_name' => 'required|string|max:255',
-            'shipping_last_name' => 'required|string|max:255',
-            'shipping_email' => 'required|email|max:255',
-            'shipping_phone' => 'required|string|max:20',
-            'shipping_address' => 'required|string|max:500',
-            'shipping_city' => 'required|string|max:100',
-            'shipping_state' => 'required|string|max:100',
-            'shipping_postal_code' => 'required|string|max:20',
-            'shipping_country' => 'required|string|max:100',
             'shipping_method_id' => 'required|integer|exists:shipping_methods,id',
             'payment_method' => 'required|in:cod,esewa,khalti',
-        ]);
+        ];
+        
+        // Shipping fields are only required if not same as billing
+        if (!$sameAsBilling) {
+            $validationRules['shipping_first_name'] = 'required|string|max:255';
+            $validationRules['shipping_last_name'] = 'required|string|max:255';
+            $validationRules['shipping_email'] = 'required|email|max:255';
+            $validationRules['shipping_phone'] = 'required|string|max:20';
+            $validationRules['shipping_address'] = 'required|string|max:500';
+            $validationRules['shipping_city'] = 'required|string|max:100';
+            $validationRules['shipping_state'] = 'required|string|max:100';
+            $validationRules['shipping_postal_code'] = 'required|string|max:20';
+            $validationRules['shipping_country'] = 'required|string|max:100';
+        }
+        
+        $request->validate($validationRules);
+        
+        // If same as billing, copy billing data to shipping
+        if ($sameAsBilling) {
+            $request->merge([
+                'shipping_first_name' => $request->billing_first_name,
+                'shipping_last_name' => $request->billing_last_name,
+                'shipping_email' => $request->billing_email,
+                'shipping_phone' => $request->billing_phone,
+                'shipping_address' => $request->billing_address,
+                'shipping_city' => $request->billing_city,
+                'shipping_state' => $request->billing_state,
+                'shipping_postal_code' => $request->billing_postal_code,
+                'shipping_country' => $request->billing_country,
+            ]);
+        }
 
         // Calculate totals
         $subtotal = array_sum(array_map(function($item) { return $item['quantity'] * $item['price']; }, $cart));
@@ -406,21 +575,49 @@ class StorefrontController extends Controller
         $tax = max(0, ($subtotal - $discount)) * ($taxRate / 100.0);
         $total = max(0, $subtotal - $discount) + $shippingCost + $tax;
 
-        // Create order
-        $order = Order::create([
+        // Build notes with additional information
+        $notes = [];
+        if ($shippingMethod) {
+            $notes[] = 'Shipping Method: ' . $shippingMethod->name;
+        }
+        if ($discount > 0) {
+            $notes[] = 'Discount: Rs. ' . number_format($discount, 2);
+        }
+        if (isset($coupon['code'])) {
+            $notes[] = 'Coupon Code: ' . $coupon['code'];
+        }
+        $notesString = !empty($notes) ? implode(' | ', $notes) : null;
+        
+        // Build shipping address string (combine all shipping fields)
+        $shippingAddressParts = [
+            $request->shipping_first_name . ' ' . $request->shipping_last_name,
+            $request->shipping_address,
+            $request->shipping_city,
+            $request->shipping_state,
+            $request->shipping_postal_code,
+            $request->shipping_country
+        ];
+        $shippingAddress = implode(', ', array_filter($shippingAddressParts));
+        if ($request->shipping_phone) {
+            $shippingAddress .= ' | Phone: ' . $request->shipping_phone;
+        }
+        if ($request->shipping_email) {
+            $shippingAddress .= ' | Email: ' . $request->shipping_email;
+        }
+        
+        // Create order - only use fields that exist in the database
+        $orderData = [
             'tenant_id' => $tenant->id,
-            'user_id' => Auth::check() ? Auth::user()->id : null, // Associate with logged-in user if available
+            'user_id' => Auth::check() ? Auth::user()->id : null,
             'order_number' => 'ORD-' . time() . '-' . rand(1000, 9999),
             'status' => 'pending',
-            'payment_status' => 'pending',
+            'payment_status' => 'unpaid', // payment_status enum: 'unpaid', 'paid', 'refunded'
             'payment_method' => $request->payment_method,
-            'shipping_method' => $shippingMethod ? $shippingMethod->name : 'N/A',
             'subtotal' => $subtotal,
             'shipping_cost' => $shippingCost,
             'tax_amount' => $tax,
             'total' => $total,
-            'discount_total' => $discount,
-            'coupon_code' => $coupon['code'] ?? null,
+            'notes' => $notesString,
             'billing_first_name' => $request->billing_first_name,
             'billing_last_name' => $request->billing_last_name,
             'billing_email' => $request->billing_email,
@@ -430,22 +627,18 @@ class StorefrontController extends Controller
             'billing_state' => $request->billing_state,
             'billing_postal_code' => $request->billing_postal_code,
             'billing_country' => $request->billing_country,
-            'shipping_first_name' => $request->shipping_first_name,
-            'shipping_last_name' => $request->shipping_last_name,
-            'shipping_email' => $request->shipping_email,
-            'shipping_phone' => $request->shipping_phone,
-            'shipping_address' => $request->shipping_address,
-            'shipping_city' => $request->shipping_city,
-            'shipping_state' => $request->shipping_state,
-            'shipping_postal_code' => $request->shipping_postal_code,
-            'shipping_country' => $request->shipping_country,
-        ]);
+            'shipping_address' => $shippingAddress,
+        ];
+        
+        // Only add shipping columns if they exist (check by trying to set them, or use only shipping_address)
+        // For now, we'll use only shipping_address to avoid errors
+        $order = Order::create($orderData);
 
         // Create order items and reduce stock
         foreach ($cart as $item) {
             $product = Product::find($item['product_id']);
             if ($product && !$product->reduceStock($item['quantity'])) {
-                return redirect()->route('storefront.cart', $tenant->subdomain)
+                return redirect(\App\Helpers\StorefrontHelper::route('storefront.cart', [$tenant->subdomain]))
                     ->with('error', 'Insufficient stock for ' . $product->name);
             }
             
@@ -463,7 +656,7 @@ class StorefrontController extends Controller
 
         // Handle payment based on method
         if ($request->payment_method === 'cod') {
-            return redirect()->route('storefront.checkout.success', $tenant->subdomain)
+            return redirect(\App\Helpers\StorefrontHelper::route('storefront.checkout.success', [$tenant->subdomain]))
                 ->with('order_id', $order->id);
         } else {
             // For eSewa and Khalti, redirect to payment gateway
@@ -477,15 +670,35 @@ class StorefrontController extends Controller
     /**
      * Checkout success page
      */
-    public function checkoutSuccess($subdomain)
+    public function checkoutSuccess($subdomain = null)
     {
+        // Handle both subdomain-based and path-based routes
+        if ($subdomain === null) {
+            $subdomain = request()->route('subdomain');
+        }
+        
+        // If still null, try to get from hostname
+        if ($subdomain === null) {
+            $hostname = request()->getHost();
+            $parts = explode('.', $hostname);
+            if (count($parts) === 2 && strtolower(end($parts)) === 'localhost') {
+                $subdomain = $parts[0];
+            } elseif (count($parts) >= 3) {
+                $subdomain = $parts[0];
+            }
+        }
+        
+        if (!$subdomain) {
+            abort(404, 'Store not found');
+        }
+        
         $tenant = Tenant::where('subdomain', $subdomain)->firstOrFail();
         $settings = SiteSettings::where('tenant_id', $tenant->id)->first();
         $orderId = session('order_id');
         $order = Order::where('tenant_id', $tenant->id)->find($orderId);
         
         if (!$order) {
-            return redirect()->route('storefront.preview', $tenant->subdomain);
+            return redirect(\App\Helpers\StorefrontHelper::route('storefront.preview', [$tenant->subdomain]));
         }
 
         return view('storefront.checkout-success', compact('tenant', 'settings', 'order'));

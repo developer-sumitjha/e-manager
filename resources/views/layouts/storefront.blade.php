@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     @php
         // Ensure $tenant and $settings exist to avoid undefined variable errors
         $tenant = $tenant ?? \App\Models\Tenant::first();
@@ -79,13 +80,44 @@
                 <!-- Navigation -->
                 <nav class="main-nav">
                     <ul class="nav-list">
-                        <li><a href="{{ route('storefront.preview', $tenant->subdomain) }}">Home</a></li>
+                        @php
+                            $navigationLinks = $settings->navigation_links ?? [];
+                            // Default menu items if none exist
+                            if (empty($navigationLinks)) {
+                                $navigationLinks = [
+                                    ['label' => 'Home', 'url' => '/', 'type' => 'link', 'order' => 1],
+                                    ['label' => 'Products', 'url' => '#products', 'type' => 'link', 'order' => 2],
+                                    ['label' => 'About', 'url' => '#about', 'type' => 'link', 'order' => 3],
+                                    ['label' => 'Contact', 'url' => '#contact', 'type' => 'link', 'order' => 4],
+                                ];
+                            }
+                            // Sort by order
+                            usort($navigationLinks, function($a, $b) {
+                                return ($a['order'] ?? 999) <=> ($b['order'] ?? 999);
+                            });
+                        @endphp
+                        @foreach($navigationLinks as $item)
+                            @php
+                                $url = $item['url'] ?? '#';
+                                // Handle different URL types
+                                if ($url === '/' || $url === '') {
+                                    $url = \App\Helpers\StorefrontHelper::route('storefront.preview', [$tenant->subdomain]);
+                                } elseif (strpos($url, '#') === 0) {
+                                    // Anchor link - keep as is
+                                    $url = $url;
+                                } elseif (strpos($url, 'http') === 0) {
+                                    // External URL - keep as is
+                                    $url = $url;
+                                } else {
+                                    // Internal path - prepend base URL if needed
+                                    $url = \App\Helpers\StorefrontHelper::route('storefront.preview', [$tenant->subdomain]) . (strpos($url, '/') === 0 ? '' : '/') . ltrim($url, '/');
+                                }
+                            @endphp
+                            <li><a href="{{ $url }}">{{ $item['label'] ?? 'Menu Item' }}</a></li>
+                        @endforeach
                         @if($settings->show_categories_menu ?? true)
                             <li><a href="#categories">Categories</a></li>
                         @endif
-                        <li><a href="#products">Products</a></li>
-                        <li><a href="#about">About</a></li>
-                        <li><a href="#contact">Contact</a></li>
                     </ul>
                 </nav>
                 
@@ -93,14 +125,19 @@
                 <div class="header-actions">
                     <!-- Search Bar -->
                     @if($settings->show_search_bar ?? true)
-                        <form class="search-form" method="GET" action="{{ route('storefront.preview', $tenant->subdomain) }}">
-                            <div class="search-input-group">
-                                <input type="text" name="q" value="{{ request('q') }}" placeholder="Search products..." class="search-input">
-                                <button type="submit" class="search-btn">
-                                    <i class="fas fa-search"></i>
-                                </button>
-                            </div>
-                        </form>
+                        <div class="search-section">
+                            <button class="search-icon-btn" id="searchToggleBtn" aria-label="Search">
+                                <i class="fas fa-search"></i>
+                            </button>
+                            <form class="search-form" id="searchForm" method="GET" action="{{ route('storefront.preview', $tenant->subdomain) }}">
+                                <div class="search-input-group">
+                                    <input type="text" name="q" value="{{ request('q') }}" placeholder="Search products..." class="search-input" id="searchInput">
+                                    <button type="submit" class="search-btn">
+                                        <i class="fas fa-search"></i>
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
                     @endif
                     
                     <!-- Cart Icon -->
@@ -108,7 +145,16 @@
                         <div class="cart-section">
                             <button class="cart-btn" data-bs-toggle="dropdown" aria-expanded="false">
                                 <i class="fas fa-shopping-cart"></i>
-                                <span class="cart-count" id="cart-count">{{ count($cart ?? []) }}</span>
+                                @php
+                                    // Calculate cart count as sum of quantities (not count of items)
+                                    $displayCartCount = 0;
+                                    if (isset($cart) && is_array($cart) && !empty($cart)) {
+                                        $displayCartCount = array_sum(array_map(function($item) {
+                                            return isset($item['quantity']) ? (int)$item['quantity'] : 0;
+                                        }, $cart));
+                                    }
+                                @endphp
+                                <span class="cart-count" id="cart-count">{{ $displayCartCount }}</span>
                             </button>
                             <div class="dropdown-menu dropdown-menu-end cart-dropdown">
                                 <div class="cart-dropdown-header">
@@ -132,7 +178,7 @@
                                             <div class="cart-total">
                                                 <strong>Total: Rs. {{ number_format(array_sum(array_map(function($item) { return $item['quantity'] * $item['price']; }, $cart)), 2) }}</strong>
                                             </div>
-                                            <a href="{{ route('storefront.cart', $tenant->subdomain) }}" class="btn btn-primary btn-sm w-100">View Cart</a>
+                                            <a href="{{ \App\Helpers\StorefrontHelper::route('storefront.cart', [$tenant->subdomain]) }}" class="btn btn-primary btn-sm w-100">View Cart</a>
                                         </div>
                                     @else
                                         <div class="cart-empty">
@@ -190,13 +236,44 @@
             <div class="collapse mobile-menu" id="mobileMenu">
                 <nav class="mobile-nav">
                     <ul class="mobile-nav-list">
-                        <li><a href="{{ route('storefront.preview', $tenant->subdomain) }}">Home</a></li>
+                        @php
+                            $navigationLinks = $settings->navigation_links ?? [];
+                            // Default menu items if none exist
+                            if (empty($navigationLinks)) {
+                                $navigationLinks = [
+                                    ['label' => 'Home', 'url' => '/', 'type' => 'link', 'order' => 1],
+                                    ['label' => 'Products', 'url' => '#products', 'type' => 'link', 'order' => 2],
+                                    ['label' => 'About', 'url' => '#about', 'type' => 'link', 'order' => 3],
+                                    ['label' => 'Contact', 'url' => '#contact', 'type' => 'link', 'order' => 4],
+                                ];
+                            }
+                            // Sort by order
+                            usort($navigationLinks, function($a, $b) {
+                                return ($a['order'] ?? 999) <=> ($b['order'] ?? 999);
+                            });
+                        @endphp
+                        @foreach($navigationLinks as $item)
+                            @php
+                                $url = $item['url'] ?? '#';
+                                // Handle different URL types
+                                if ($url === '/' || $url === '') {
+                                    $url = \App\Helpers\StorefrontHelper::route('storefront.preview', [$tenant->subdomain]);
+                                } elseif (strpos($url, '#') === 0) {
+                                    // Anchor link - keep as is
+                                    $url = $url;
+                                } elseif (strpos($url, 'http') === 0) {
+                                    // External URL - keep as is
+                                    $url = $url;
+                                } else {
+                                    // Internal path - prepend base URL if needed
+                                    $url = \App\Helpers\StorefrontHelper::route('storefront.preview', [$tenant->subdomain]) . (strpos($url, '/') === 0 ? '' : '/') . ltrim($url, '/');
+                                }
+                            @endphp
+                            <li><a href="{{ $url }}">{{ $item['label'] ?? 'Menu Item' }}</a></li>
+                        @endforeach
                         @if($settings->show_categories_menu ?? true)
                             <li><a href="#categories">Categories</a></li>
                         @endif
-                        <li><a href="#products">Products</a></li>
-                        <li><a href="#about">About</a></li>
-                        <li><a href="#contact">Contact</a></li>
                     </ul>
                 </nav>
             </div>
@@ -282,6 +359,45 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
     <!-- Custom Storefront JS -->
+    <script>
+        // Make subdomain and CSRF token available to JavaScript
+        @php
+            $isSubdomain = \App\Helpers\StorefrontHelper::isSubdomainAccess();
+            $subdomain = $tenant->subdomain ?? '';
+            
+            // Use StorefrontHelper to generate cart URL with base path included
+            $cartUrl = \App\Helpers\StorefrontHelper::route('storefront.cart.add', [$subdomain]);
+            
+            $baseUrl = $isSubdomain 
+                ? url('/')
+                : url('/storefront/' . $subdomain);
+        @endphp
+        @php
+            // Calculate initial cart count (sum of all quantities)
+            $cartCount = 0;
+            if (isset($cart) && is_array($cart) && !empty($cart)) {
+                // Check if cart is indexed array (array_values was called) or associative array
+                $firstKey = array_key_first($cart);
+                if (is_numeric($firstKey) && isset($cart[$firstKey]['quantity'])) {
+                    // Indexed array - sum quantities directly
+                    $cartCount = array_sum(array_column($cart, 'quantity'));
+                } else {
+                    // Associative array (product_id => item) - sum quantities
+                    $cartCount = array_sum(array_map(function($item) {
+                        return isset($item['quantity']) ? (int)$item['quantity'] : 0;
+                    }, $cart));
+                }
+            }
+        @endphp
+        window.STOREFRONT_CONFIG = {
+            subdomain: '{{ $tenant->subdomain ?? '' }}',
+            cartUrl: '{{ $cartUrl }}',
+            baseUrl: '{{ $baseUrl }}',
+            csrfToken: '{{ csrf_token() }}',
+            isSubdomain: {{ $isSubdomain ? 'true' : 'false' }},
+            initialCartCount: {{ $cartCount }}
+        };
+    </script>
     <script src="{{ asset('js/storefront.js') }}"></script>
     
     @stack('scripts')

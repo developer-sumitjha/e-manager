@@ -65,8 +65,7 @@ class SitePageController extends Controller
             'meta_title' => 'nullable|string|max:255',
             'meta_description' => 'nullable|string',
             'meta_keywords' => 'nullable|string',
-            'is_active' => 'nullable|boolean',
-            'show_in_menu' => 'nullable|boolean',
+            'is_active' => 'nullable',
             'menu_order' => 'nullable|integer|min:0',
             'template' => 'nullable|in:default,full-width,sidebar',
             'contact_email' => 'nullable|email',
@@ -79,8 +78,8 @@ class SitePageController extends Controller
         ]);
         
         $validated['tenant_id'] = $tenantId;
-        $validated['is_active'] = $request->has('is_active');
-        $validated['show_in_menu'] = $request->has('show_in_menu');
+        // Convert checkbox to boolean (checked = true, unchecked = false)
+        $validated['is_active'] = $request->has('is_active') && $request->input('is_active') !== '0';
         
         // Generate slug if not provided
         if (empty($validated['slug'])) {
@@ -149,8 +148,7 @@ class SitePageController extends Controller
             'meta_title' => 'nullable|string|max:255',
             'meta_description' => 'nullable|string',
             'meta_keywords' => 'nullable|string',
-            'is_active' => 'nullable|boolean',
-            'show_in_menu' => 'nullable|boolean',
+            'is_active' => 'nullable',
             'menu_order' => 'nullable|integer|min:0',
             'template' => 'nullable|in:default,full-width,sidebar',
             'contact_email' => 'nullable|email',
@@ -162,8 +160,8 @@ class SitePageController extends Controller
             'banner_image' => 'nullable|image|mimes:jpeg,png,jpg|max:5120',
         ]);
         
-        $validated['is_active'] = $request->has('is_active');
-        $validated['show_in_menu'] = $request->has('show_in_menu');
+        // Convert checkbox to boolean (checked = true, unchecked = false)
+        $validated['is_active'] = $request->has('is_active') && $request->input('is_active') !== '0';
         
         // Update slug if changed
         if (!empty($validated['slug'])) {

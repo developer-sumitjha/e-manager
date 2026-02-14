@@ -1,20 +1,18 @@
-@extends('layouts.storefront')
+<?php $__env->startSection('title', 'Shopping Cart — ' . $tenant->business_name); ?>
+<?php $__env->startSection('meta_description', 'Review your shopping cart items and proceed to checkout'); ?>
+<?php $__env->startSection('meta_keywords', 'cart, shopping, checkout, ' . $tenant->business_name); ?>
 
-@section('title', 'Shopping Cart — ' . $tenant->business_name)
-@section('meta_description', 'Review your shopping cart items and proceed to checkout')
-@section('meta_keywords', 'cart, shopping, checkout, ' . $tenant->business_name)
-
-@section('content')
+<?php $__env->startSection('content'); ?>
 <div class="container py-4">
     <!-- Breadcrumb -->
     <nav aria-label="breadcrumb" class="mb-4">
         <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="{{ \App\Helpers\StorefrontHelper::route('storefront.preview', [$tenant->subdomain]) }}">Home</a></li>
+            <li class="breadcrumb-item"><a href="<?php echo e(\App\Helpers\StorefrontHelper::route('storefront.preview', [$tenant->subdomain])); ?>">Home</a></li>
             <li class="breadcrumb-item active" aria-current="page">Shopping Cart</li>
         </ol>
     </nav>
 
-    @php
+    <?php
         // Initialize subtotal outside of conditional blocks
         $subtotal = 0;
         if (!empty($cart) && is_array($cart)) {
@@ -34,64 +32,65 @@
                 $discount = min($coupon['value'] ?? 0, $subtotal);
             }
         }
-    @endphp
+    ?>
 
     <div class="row">
         <div class="col-lg-8">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h1 class="h3 mb-0">Shopping Cart</h1>
-                <span class="text-muted">{{ count($cart ?? []) }} item(s)</span>
+                <span class="text-muted"><?php echo e(count($cart ?? [])); ?> item(s)</span>
             </div>
 
-            @if(empty($cart))
+            <?php if(empty($cart)): ?>
                 <div class="empty-state">
                     <i class="fas fa-shopping-cart"></i>
                     <h3>Your cart is empty</h3>
                     <p>Looks like you haven't added any items to your cart yet.</p>
-                    <a href="{{ \App\Helpers\StorefrontHelper::route('storefront.preview', [$tenant->subdomain]) }}" class="btn btn-primary">
+                    <a href="<?php echo e(\App\Helpers\StorefrontHelper::route('storefront.preview', [$tenant->subdomain])); ?>" class="btn btn-primary">
                         <i class="fas fa-arrow-left"></i> Continue Shopping
                     </a>
                 </div>
-            @else
+            <?php else: ?>
                 <div class="cart-items">
-                    @foreach($cart as $item)
-                        @php($itemSubtotal = $item['price'] * $item['quantity'])
-                        <div class="cart-item-card" data-product-id="{{ $item['product_id'] }}">
+                    <?php $__currentLoopData = $cart; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $item): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                        <?php ($itemSubtotal = $item['price'] * $item['quantity']); ?>
+                        <div class="cart-item-card" data-product-id="<?php echo e($item['product_id']); ?>">
                             <div class="row align-items-center">
                                 <div class="col-md-2">
                                     <div class="cart-item-image">
-                                        @if(!empty($item['image']))
-                                            <img src="{{ $item['image'] }}" alt="{{ $item['name'] }}" class="img-fluid rounded">
-                                        @else
+                                        <?php if(!empty($item['image'])): ?>
+                                            <img src="<?php echo e($item['image']); ?>" alt="<?php echo e($item['name']); ?>" class="img-fluid rounded">
+                                        <?php else: ?>
                                             <div class="placeholder-image">
                                                 <i class="fas fa-image"></i>
                                             </div>
-                                        @endif
+                                        <?php endif; ?>
                                     </div>
                                 </div>
                                 <div class="col-md-4">
                                     <div class="cart-item-details">
                                         <h5 class="cart-item-name">
-                                            <a href="{{ \App\Helpers\StorefrontHelper::route('storefront.product', [$tenant->subdomain, $item['slug']]) }}" class="text-decoration-none">
-                                                {{ $item['name'] }}
+                                            <a href="<?php echo e(\App\Helpers\StorefrontHelper::route('storefront.product', [$tenant->subdomain, $item['slug']])); ?>" class="text-decoration-none">
+                                                <?php echo e($item['name']); ?>
+
                                             </a>
                                         </h5>
-                                        <p class="cart-item-sku text-muted small">SKU: {{ $item['sku'] ?? 'N/A' }}</p>
+                                        <p class="cart-item-sku text-muted small">SKU: <?php echo e($item['sku'] ?? 'N/A'); ?></p>
                                     </div>
                                 </div>
                                 <div class="col-md-2">
                                     <div class="cart-item-price">
-                                        <span class="price">Rs. {{ number_format($item['price'], 2) }}</span>
+                                        <span class="price">Rs. <?php echo e(number_format($item['price'], 2)); ?></span>
                                     </div>
                                 </div>
                                 <div class="col-md-2">
                                     <div class="cart-item-quantity">
-                                        <form action="{{ \App\Helpers\StorefrontHelper::route('storefront.cart.update', [$tenant->subdomain]) }}" method="post" class="quantity-form">
-                                            @csrf
-                                            <input type="hidden" name="product_id" value="{{ $item['product_id'] }}">
+                                        <form action="<?php echo e(\App\Helpers\StorefrontHelper::route('storefront.cart.update', [$tenant->subdomain])); ?>" method="post" class="quantity-form">
+                                            <?php echo csrf_field(); ?>
+                                            <input type="hidden" name="product_id" value="<?php echo e($item['product_id']); ?>">
                                             <div class="input-group input-group-sm">
                                                 <button type="button" class="btn btn-outline-secondary quantity-btn" data-action="decrease">-</button>
-                                                <input type="number" name="qty" value="{{ $item['quantity'] }}" min="1" class="form-control text-center quantity-input">
+                                                <input type="number" name="qty" value="<?php echo e($item['quantity']); ?>" min="1" class="form-control text-center quantity-input">
                                                 <button type="button" class="btn btn-outline-secondary quantity-btn" data-action="increase">+</button>
                                             </div>
                                         </form>
@@ -99,14 +98,14 @@
                                 </div>
                                 <div class="col-md-1">
                                     <div class="cart-item-subtotal">
-                                        <span class="subtotal">Rs. {{ number_format($itemSubtotal, 2) }}</span>
+                                        <span class="subtotal">Rs. <?php echo e(number_format($itemSubtotal, 2)); ?></span>
                                     </div>
                                 </div>
                                 <div class="col-md-1">
                                     <div class="cart-item-actions">
-                                        <form action="{{ \App\Helpers\StorefrontHelper::route('storefront.cart.remove', [$tenant->subdomain]) }}" method="post" class="d-inline remove-form">
-                                            @csrf
-                                            <input type="hidden" name="product_id" value="{{ $item['product_id'] }}">
+                                        <form action="<?php echo e(\App\Helpers\StorefrontHelper::route('storefront.cart.remove', [$tenant->subdomain])); ?>" method="post" class="d-inline remove-form">
+                                            <?php echo csrf_field(); ?>
+                                            <input type="hidden" name="product_id" value="<?php echo e($item['product_id']); ?>">
                                             <button type="button" class="btn btn-outline-danger btn-sm remove-item" title="Remove item">
                                                 <i class="fas fa-trash"></i>
                                             </button>
@@ -115,14 +114,14 @@
                                 </div>
                             </div>
                         </div>
-                    @endforeach
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                 </div>
 
                 <!-- Cart Actions -->
                 <div class="cart-actions mt-4">
                     <div class="row">
                         <div class="col-md-6">
-                            <a href="{{ \App\Helpers\StorefrontHelper::route('storefront.preview', [$tenant->subdomain]) }}" class="btn btn-outline-primary">
+                            <a href="<?php echo e(\App\Helpers\StorefrontHelper::route('storefront.preview', [$tenant->subdomain])); ?>" class="btn btn-outline-primary">
                                 <i class="fas fa-arrow-left"></i> Continue Shopping
                             </a>
                         </div>
@@ -133,7 +132,7 @@
                         </div>
                     </div>
                 </div>
-            @endif
+            <?php endif; ?>
         </div>
 
         <!-- Order Summary -->
@@ -144,76 +143,84 @@
                         <h5 class="mb-0">Order Summary</h5>
                     </div>
                     <div class="card-body">
-                        @if(!empty($cart))
+                        <?php if(!empty($cart)): ?>
                             <div class="summary-row">
-                                <span>Subtotal ({{ count($cart) }} items)</span>
-                                <span id="cart-subtotal">Rs. {{ number_format($subtotal, 2) }}</span>
+                                <span>Subtotal (<?php echo e(count($cart)); ?> items)</span>
+                                <span id="cart-subtotal">Rs. <?php echo e(number_format($subtotal, 2)); ?></span>
                             </div>
 
                             <!-- Coupon Section -->
                             <div class="coupon-section mt-3">
                                 <h6>Have a coupon?</h6>
-                                <form action="{{ \App\Helpers\StorefrontHelper::route('storefront.coupon.apply', [$tenant->subdomain]) }}" method="post" class="coupon-form">
-                                    @csrf
+                                <form action="<?php echo e(\App\Helpers\StorefrontHelper::route('storefront.coupon.apply', [$tenant->subdomain])); ?>" method="post" class="coupon-form">
+                                    <?php echo csrf_field(); ?>
                                     <div class="input-group">
-                                        <input type="text" name="coupon_code" class="form-control" placeholder="Enter coupon code" value="{{ isset($coupon) && is_array($coupon) ? ($coupon['code'] ?? '') : '' }}">
+                                        <input type="text" name="coupon_code" class="form-control" placeholder="Enter coupon code" value="<?php echo e(isset($coupon) && is_array($coupon) ? ($coupon['code'] ?? '') : ''); ?>">
                                         <button type="submit" class="btn btn-outline-primary">Apply</button>
                                     </div>
-                                    @error('coupon_code')
-                                        <div class="text-danger small mt-1">{{ $message }}</div>
-                                    @enderror
-                                    @if(session('coupon_error'))
-                                        <div class="text-danger small mt-1">{{ session('coupon_error') }}</div>
-                                    @endif
-                                    @if(session('coupon_success'))
-                                        <div class="text-success small mt-1">{{ session('coupon_success') }}</div>
-                                    @endif
+                                    <?php $__errorArgs = ['coupon_code'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                                        <div class="text-danger small mt-1"><?php echo e($message); ?></div>
+                                    <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
+                                    <?php if(session('coupon_error')): ?>
+                                        <div class="text-danger small mt-1"><?php echo e(session('coupon_error')); ?></div>
+                                    <?php endif; ?>
+                                    <?php if(session('coupon_success')): ?>
+                                        <div class="text-success small mt-1"><?php echo e(session('coupon_success')); ?></div>
+                                    <?php endif; ?>
                                 </form>
                                 
-                                @if(isset($coupon) && is_array($coupon) && !empty($coupon))
+                                <?php if(isset($coupon) && is_array($coupon) && !empty($coupon)): ?>
                                     <div class="applied-coupon mt-2">
                                         <div class="d-flex justify-content-between align-items-center">
                                             <span class="text-success">
-                                                <i class="fas fa-check-circle"></i> {{ $coupon['code'] ?? '' }}
+                                                <i class="fas fa-check-circle"></i> <?php echo e($coupon['code'] ?? ''); ?>
+
                                             </span>
-                                            <form action="{{ \App\Helpers\StorefrontHelper::route('storefront.coupon.remove', [$tenant->subdomain]) }}" method="post" class="d-inline">
-                                                @csrf
+                                            <form action="<?php echo e(\App\Helpers\StorefrontHelper::route('storefront.coupon.remove', [$tenant->subdomain])); ?>" method="post" class="d-inline">
+                                                <?php echo csrf_field(); ?>
                                                 <button type="submit" class="btn btn-sm btn-outline-danger" title="Remove Coupon">
                                                     <i class="fas fa-times"></i>
                                                 </button>
                                             </form>
                                         </div>
                                     </div>
-                                @endif
+                                <?php endif; ?>
                             </div>
 
-                            @if(isset($coupon) && is_array($coupon) && !empty($coupon) && $discount > 0)
+                            <?php if(isset($coupon) && is_array($coupon) && !empty($coupon) && $discount > 0): ?>
                                 <div class="summary-row">
-                                    <span>Discount ({{ $coupon['code'] ?? '' }})</span>
-                                    <span class="text-success">- Rs. {{ number_format($discount, 2) }}</span>
+                                    <span>Discount (<?php echo e($coupon['code'] ?? ''); ?>)</span>
+                                    <span class="text-success">- Rs. <?php echo e(number_format($discount, 2)); ?></span>
                                 </div>
                                 <div class="summary-row">
                                     <span>Total after discount</span>
-                                    <span id="cart-total">Rs. {{ number_format($subtotal - $discount, 2) }}</span>
+                                    <span id="cart-total">Rs. <?php echo e(number_format($subtotal - $discount, 2)); ?></span>
                                 </div>
-                            @else
+                            <?php else: ?>
                                 <div class="summary-row total-row">
                                     <span><strong>Total</strong></span>
-                                    <span id="cart-total"><strong>Rs. {{ number_format($subtotal, 2) }}</strong></span>
+                                    <span id="cart-total"><strong>Rs. <?php echo e(number_format($subtotal, 2)); ?></strong></span>
                                 </div>
-                            @endif
+                            <?php endif; ?>
 
                             <div class="checkout-section mt-4">
-                                <a href="{{ \App\Helpers\StorefrontHelper::route('storefront.checkout', [$tenant->subdomain]) }}" class="btn btn-success w-100 btn-lg">
+                                <a href="<?php echo e(\App\Helpers\StorefrontHelper::route('storefront.checkout', [$tenant->subdomain])); ?>" class="btn btn-success w-100 btn-lg">
                                     <i class="fas fa-credit-card"></i> Proceed to Checkout
                                 </a>
                             </div>
-                        @else
+                        <?php else: ?>
                             <div class="text-center text-muted">
                                 <i class="fas fa-shopping-cart fa-2x mb-2"></i>
                                 <p>Your cart is empty</p>
                             </div>
-                        @endif
+                        <?php endif; ?>
                     </div>
                 </div>
 
@@ -231,9 +238,9 @@
         </div>
     </div>
 </div>
-@endsection
+<?php $__env->stopSection(); ?>
 
-@push('styles')
+<?php $__env->startPush('styles'); ?>
 <style>
 .cart-item-card {
     background: white;
@@ -409,9 +416,9 @@
     }
 }
 </style>
-@endpush
+<?php $__env->stopPush(); ?>
 
-@push('scripts')
+<?php $__env->startPush('scripts'); ?>
 <script>
 // Quantity controls
 document.addEventListener('click', function(e) {
@@ -452,7 +459,7 @@ document.addEventListener('click', function(e) {
 document.getElementById('clearCart')?.addEventListener('click', function() {
     if (confirm('Are you sure you want to clear your entire cart?')) {
         // This would need to be implemented in the controller
-        fetch('{{ \App\Helpers\StorefrontHelper::route("storefront.cart.clear", [$tenant->subdomain]) }}', {
+        fetch('<?php echo e(\App\Helpers\StorefrontHelper::route("storefront.cart.clear", [$tenant->subdomain])); ?>', {
             method: 'POST',
             headers: {
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
@@ -496,4 +503,5 @@ document.querySelector('.coupon-form')?.addEventListener('submit', function(e) {
     }, 2000);
 });
 </script>
-@endpush
+<?php $__env->stopPush(); ?>
+<?php echo $__env->make('layouts.storefront', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH /Applications/XAMPP/xamppfiles/htdocs/e-manager/resources/views/storefront/cart.blade.php ENDPATH**/ ?>

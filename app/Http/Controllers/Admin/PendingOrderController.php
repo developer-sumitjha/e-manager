@@ -25,6 +25,10 @@ class PendingOrderController extends Controller
             $search = $request->search;
             $query->where(function($q) use ($search) {
                 $q->where('order_number', 'like', "%{$search}%")
+                  ->orWhere('billing_email', 'like', "%{$search}%")
+                  ->orWhere('billing_phone', 'like', "%{$search}%")
+                  ->orWhere('billing_first_name', 'like', "%{$search}%")
+                  ->orWhere('billing_last_name', 'like', "%{$search}%")
                   ->orWhereHas('user', function($q) use ($search) {
                       $q->where('name', 'like', "%{$search}%")
                         ->orWhere('email', 'like', "%{$search}%")
@@ -33,8 +37,17 @@ class PendingOrderController extends Controller
             });
         }
 
-        // Filter by order type (manual orders)
-        $query->where('is_manual', true);
+        // Optional filter by order type (manual vs storefront orders)
+        // If 'order_type' filter is provided, filter accordingly; otherwise show all pending orders
+        if ($request->has('order_type') && $request->order_type != '') {
+            if ($request->order_type === 'manual') {
+                $query->where('is_manual', true);
+            } elseif ($request->order_type === 'storefront') {
+                $query->where(function($q) {
+                    $q->where('is_manual', false)->orWhereNull('is_manual');
+                });
+            }
+        }
 
         $orders = $query->latest()->paginate(10);
         

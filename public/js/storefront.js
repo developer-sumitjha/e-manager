@@ -33,8 +33,19 @@ function initCart() {
         }
     });
     
-    // Update cart count
-    updateCartCount();
+    // Update cart count with initial value from server
+    const initialCartCount = (window.STOREFRONT_CONFIG && window.STOREFRONT_CONFIG.initialCartCount) 
+        ? window.STOREFRONT_CONFIG.initialCartCount 
+        : (() => {
+            // Fallback: try to read from DOM
+            const cartCountElement = document.getElementById('cart-count');
+            if (cartCountElement) {
+                const count = parseInt(cartCountElement.textContent.trim()) || 0;
+                return count;
+            }
+            return 0;
+        })();
+    updateCartCount(initialCartCount);
 }
 
 function addToCart(productId, quantity = 1, button) {
@@ -45,21 +56,60 @@ function addToCart(productId, quantity = 1, button) {
     button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adding...';
     button.disabled = true;
     
+    // Get CSRF token
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || 
+                     (window.STOREFRONT_CONFIG && window.STOREFRONT_CONFIG.csrfToken) || '';
+    
+    if (!csrfToken) {
+        console.error('CSRF token not found');
+        showNotification('Error: Security token missing. Please refresh the page.', 'error');
+        button.innerHTML = originalText;
+        button.disabled = false;
+        return;
+    }
+    
     // Prepare form data
     const formData = new FormData();
     formData.append('product_id', productId);
     formData.append('qty', quantity);
-    formData.append('_token', document.querySelector('meta[name="csrf-token"]')?.getAttribute('content'));
+    formData.append('_token', csrfToken);
     
-    // Get the current subdomain from the URL
-    const subdomain = getSubdomainFromUrl();
+    // Get subdomain from window.STOREFRONT_CONFIG (set by Blade template) or fallback to URL parsing
+    let subdomain = '';
+    let cartUrl = '';
     
-    fetch(`/storefront/${subdomain}/cart/add`, {
+    if (window.STOREFRONT_CONFIG && window.STOREFRONT_CONFIG.subdomain) {
+        subdomain = window.STOREFRONT_CONFIG.subdomain;
+        // Use the cart URL from config if available, otherwise construct it
+        if (window.STOREFRONT_CONFIG.cartUrl) {
+            cartUrl = window.STOREFRONT_CONFIG.cartUrl;
+        } else {
+            cartUrl = `/storefront/${subdomain}/cart/add`;
+        }
+    } else {
+        // Fallback: try to get from URL
+        subdomain = getSubdomainFromUrl();
+        cartUrl = `/storefront/${subdomain}/cart/add`;
+    }
+    
+    // Validate we have a subdomain
+    if (!subdomain) {
+        console.error('Could not determine subdomain for cart operation');
+        showNotification('Error: Could not determine store. Please refresh the page.', 'error');
+        button.innerHTML = originalText;
+        button.disabled = false;
+        return;
+    }
+    
+    fetch(cartUrl, {
         method: 'POST',
         body: formData,
         headers: {
-            'X-Requested-With': 'XMLHttpRequest'
-        }
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRF-TOKEN': csrfToken,
+            'Accept': 'application/json'
+        },
+        credentials: 'same-origin'
     })
     .then(response => response.json())
     .then(data => {
@@ -211,29 +261,75 @@ function updateMiniCart(cart) {
 
 // Search Functionality
 function initSearch() {
-    const searchInput = document.querySelector('.search-input');
-    if (!searchInput) return;
+    const searchToggleBtn = document.getElementById('searchToggleBtn');
+    const searchForm = document.getElementById('searchForm');
+    const searchInput = document.getElementById('searchInput');
     
-    let searchTimeout;
+    if (!searchToggleBtn || !searchForm) {
+        return;
+    }
     
-    searchInput.addEventListener('input', function() {
-        clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(() => {
-            // Auto-submit search after 500ms of no typing
-            if (this.value.length > 2) {
-                this.closest('form').submit();
+    // Show search form if there's already a search query
+    if (searchInput && searchInput.value.trim() !== '') {
+        searchForm.classList.add('active');
+    }
+    
+    // Toggle search form on icon click
+    searchToggleBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        if (searchForm.classList.contains('active')) {
+            // Close search
+            searchForm.classList.remove('active');
+            if (searchInput) searchInput.blur();
+        } else {
+            // Open search
+            searchForm.classList.add('active');
+            // Focus input after animation starts
+            setTimeout(() => {
+                if (searchInput) {
+                    searchInput.focus();
+                }
+            }, 150);
+        }
+    });
+    
+    // Close search when clicking outside
+    document.addEventListener('click', function(e) {
+        if (searchForm.classList.contains('active') && 
+            !searchForm.contains(e.target) && 
+            !searchToggleBtn.contains(e.target)) {
+            searchForm.classList.remove('active');
+            searchInput.blur();
+        }
+    });
+    
+    // Close search on Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && searchForm.classList.contains('active')) {
+            searchForm.classList.remove('active');
+            searchInput.blur();
+        }
+    });
+    
+    // Auto-submit search (optional - can be removed if not needed)
+    if (searchInput) {
+        let searchTimeout;
+        
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            // Remove auto-submit for better UX - user can press Enter or click search button
+        });
+        
+        // Submit on Enter key
+        searchInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                searchForm.submit();
             }
-        }, 500);
-    });
-    
-    // Search suggestions (if needed)
-    searchInput.addEventListener('focus', function() {
-        this.style.borderColor = 'var(--primary-color)';
-    });
-    
-    searchInput.addEventListener('blur', function() {
-        this.style.borderColor = '';
-    });
+        });
+    }
 }
 
 // Mobile Menu
@@ -522,9 +618,46 @@ function getNotificationColor(type) {
 
 // Utility Functions
 function getSubdomainFromUrl() {
+    // First, try to get subdomain from path (e.g., /storefront/primax/...)
     const path = window.location.pathname;
-    const match = path.match(/\/storefront\/([^\/]+)/);
-    return match ? match[1] : '';
+    const pathMatch = path.match(/\/storefront\/([^\/]+)/);
+    if (pathMatch && pathMatch[1]) {
+        return pathMatch[1];
+    }
+    
+    // If not in path, try to get from hostname (e.g., primax.localhost)
+    const hostname = window.location.hostname;
+    const hostnameParts = hostname.split('.');
+    
+    // For localhost or IP addresses, subdomain might be in path or query
+    if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname.startsWith('192.168.') || hostname.startsWith('10.')) {
+        // Check if there's a subdomain in the URL path
+        const urlParams = new URLSearchParams(window.location.search);
+        const subdomainParam = urlParams.get('store');
+        if (subdomainParam) {
+            return subdomainParam;
+        }
+        // Try to extract from path
+        if (pathMatch && pathMatch[1]) {
+            return pathMatch[1];
+        }
+        // Default fallback - try to get from first path segment after /storefront/
+        const segments = path.split('/').filter(s => s);
+        const storefrontIndex = segments.indexOf('storefront');
+        if (storefrontIndex !== -1 && segments[storefrontIndex + 1]) {
+            return segments[storefrontIndex + 1];
+        }
+    } else {
+        // For domain-based subdomains (e.g., primax.example.com)
+        // The subdomain is the first part
+        if (hostnameParts.length > 2) {
+            return hostnameParts[0];
+        }
+    }
+    
+    // Last resort: return empty string (will cause 404, but better than undefined)
+    console.warn('Could not determine subdomain from URL:', window.location.href);
+    return '';
 }
 
 function debounce(func, wait) {

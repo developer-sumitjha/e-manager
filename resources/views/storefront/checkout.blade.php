@@ -9,16 +9,35 @@
     <!-- Breadcrumb -->
     <nav aria-label="breadcrumb" class="mb-4">
         <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="{{ route('storefront.preview', $tenant->subdomain) }}">Home</a></li>
-            <li class="breadcrumb-item"><a href="{{ route('storefront.cart', $tenant->subdomain) }}">Cart</a></li>
+            <li class="breadcrumb-item"><a href="{{ \App\Helpers\StorefrontHelper::route('storefront.preview', [$tenant->subdomain]) }}">Home</a></li>
+            <li class="breadcrumb-item"><a href="{{ \App\Helpers\StorefrontHelper::route('storefront.cart', [$tenant->subdomain]) }}">Cart</a></li>
             <li class="breadcrumb-item active" aria-current="page">Checkout</li>
         </ol>
     </nav>
 
     <h1 class="h3 mb-4">Checkout</h1>
 
+    @if(session('error'))
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-circle"></i> {{ session('error') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+
+    @if($errors->any())
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <h5><i class="fas fa-exclamation-triangle"></i> Please fix the following errors:</h5>
+            <ul class="mb-0">
+                @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+
     @if(count($cart) > 0)
-    <form id="checkoutForm" action="{{ route('storefront.checkout.process', $tenant->subdomain) }}" method="POST">
+    <form id="checkoutForm" action="{{ \App\Helpers\StorefrontHelper::route('storefront.checkout.process', [$tenant->subdomain]) }}" method="POST">
         @csrf
         <div class="row">
             <!-- Checkout Form -->
@@ -131,7 +150,7 @@
                     </div>
                     <div class="section-content">
                         <div class="form-check mb-3">
-                            <input class="form-check-input" type="checkbox" id="same_as_billing" checked>
+                            <input class="form-check-input" type="checkbox" id="same_as_billing" name="same_as_billing" value="1" checked>
                             <label class="form-check-label" for="same_as_billing">
                                 Same as billing address
                             </label>
@@ -411,7 +430,7 @@
             <i class="fas fa-shopping-cart"></i>
             <h3>Your cart is empty</h3>
             <p>Add some items to your cart before proceeding to checkout.</p>
-            <a href="{{ route('storefront.preview', $tenant->subdomain) }}" class="btn btn-primary">
+            <a href="{{ \App\Helpers\StorefrontHelper::route('storefront.preview', [$tenant->subdomain]) }}" class="btn btn-primary">
                 <i class="fas fa-arrow-left"></i> Continue Shopping
             </a>
         </div>

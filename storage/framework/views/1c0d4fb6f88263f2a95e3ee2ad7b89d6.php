@@ -1,23 +1,21 @@
-@extends('layouts.storefront')
+<?php $__env->startSection('title', $product->name . ' — ' . $tenant->business_name); ?>
+<?php $__env->startSection('meta_description', \Illuminate\Support\Str::limit(strip_tags($product->description), 155)); ?>
+<?php $__env->startSection('meta_keywords', $product->name . ', ' . ($product->category->name ?? '') . ', products, ' . $tenant->business_name); ?>
+<?php $__env->startSection('og_title', $product->name); ?>
+<?php $__env->startSection('og_description', \Illuminate\Support\Str::limit(strip_tags($product->description), 155)); ?>
+<?php $__env->startSection('og_image', $product->primary_image_url); ?>
+<?php $__env->startSection('og_url', \App\Helpers\StorefrontHelper::route('storefront.product', [$tenant->subdomain, $product->slug])); ?>
 
-@section('title', $product->name . ' — ' . $tenant->business_name)
-@section('meta_description', \Illuminate\Support\Str::limit(strip_tags($product->description), 155))
-@section('meta_keywords', $product->name . ', ' . ($product->category->name ?? '') . ', products, ' . $tenant->business_name)
-@section('og_title', $product->name)
-@section('og_description', \Illuminate\Support\Str::limit(strip_tags($product->description), 155))
-@section('og_image', $product->primary_image_url)
-@section('og_url', \App\Helpers\StorefrontHelper::route('storefront.product', [$tenant->subdomain, $product->slug]))
-
-@section('content')
+<?php $__env->startSection('content'); ?>
 <div class="container py-4">
     <!-- Breadcrumb -->
     <nav aria-label="breadcrumb" class="mb-4">
         <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="{{ \App\Helpers\StorefrontHelper::route('storefront.preview', [$tenant->subdomain]) }}">Home</a></li>
-            @if($product->category)
-                <li class="breadcrumb-item"><a href="{{ \App\Helpers\StorefrontHelper::route('storefront.category', [$tenant->subdomain, $product->category->slug]) }}">{{ $product->category->name }}</a></li>
-            @endif
-            <li class="breadcrumb-item active" aria-current="page">{{ $product->name }}</li>
+            <li class="breadcrumb-item"><a href="<?php echo e(\App\Helpers\StorefrontHelper::route('storefront.preview', [$tenant->subdomain])); ?>">Home</a></li>
+            <?php if($product->category): ?>
+                <li class="breadcrumb-item"><a href="<?php echo e(\App\Helpers\StorefrontHelper::route('storefront.category', [$tenant->subdomain, $product->category->slug])); ?>"><?php echo e($product->category->name); ?></a></li>
+            <?php endif; ?>
+            <li class="breadcrumb-item active" aria-current="page"><?php echo e($product->name); ?></li>
         </ol>
     </nav>
 
@@ -26,90 +24,91 @@
         <div class="col-md-6">
             <div class="product-image-gallery">
                 <div class="main-image-container">
-                    <img src="{{ $product->primary_image_url }}" class="main-image" alt="{{ $product->name }}" id="mainImage">
-                    @if($product->track_inventory && !$product->isInStock())
+                    <img src="<?php echo e($product->primary_image_url); ?>" class="main-image" alt="<?php echo e($product->name); ?>" id="mainImage">
+                    <?php if($product->track_inventory && !$product->isInStock()): ?>
                         <div class="out-of-stock-overlay">
                             <span class="badge bg-danger">Out of Stock</span>
                         </div>
-                    @endif
+                    <?php endif; ?>
                 </div>
                 
-                @if(is_array($product->all_images_urls) && count($product->all_images_urls) > 1)
+                <?php if(is_array($product->all_images_urls) && count($product->all_images_urls) > 1): ?>
                 <div class="thumbnail-gallery">
-                    @foreach($product->all_images_urls as $index => $imageUrl)
-                        <div class="thumbnail-item {{ $index === ($product->primary_image_index ?? 0) ? 'active' : '' }}" 
-                             onclick="changeMainImage('{{ $imageUrl }}', this)">
-                            <img src="{{ $imageUrl }}" alt="Thumbnail {{ $index + 1 }}" loading="lazy">
+                    <?php $__currentLoopData = $product->all_images_urls; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $imageUrl): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                        <div class="thumbnail-item <?php echo e($index === ($product->primary_image_index ?? 0) ? 'active' : ''); ?>" 
+                             onclick="changeMainImage('<?php echo e($imageUrl); ?>', this)">
+                            <img src="<?php echo e($imageUrl); ?>" alt="Thumbnail <?php echo e($index + 1); ?>" loading="lazy">
                         </div>
-                    @endforeach
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                 </div>
-                @endif
+                <?php endif; ?>
             </div>
         </div>
 
         <!-- Product Details -->
         <div class="col-md-6">
             <div class="product-details">
-                <h1 class="product-title">{{ $product->name }}</h1>
+                <h1 class="product-title"><?php echo e($product->name); ?></h1>
                 
                 <!-- Rating -->
-                @if($avgRating)
+                <?php if($avgRating): ?>
                 <div class="product-rating mb-3">
                     <div class="stars">
-                        @for ($i = 1; $i <= 5; $i++)
-                            @if ($i <= floor($avgRating))
+                        <?php for($i = 1; $i <= 5; $i++): ?>
+                            <?php if($i <= floor($avgRating)): ?>
                                 <i class="fas fa-star text-warning"></i>
-                            @elseif ($i - 0.5 <= $avgRating)
+                            <?php elseif($i - 0.5 <= $avgRating): ?>
                                 <i class="fas fa-star-half-alt text-warning"></i>
-                            @else
+                            <?php else: ?>
                                 <i class="far fa-star text-warning"></i>
-                            @endif
-                        @endfor
+                            <?php endif; ?>
+                        <?php endfor; ?>
                     </div>
                     <span class="rating-text">
-                        {{ $avgRating }} out of 5 stars
-                        <a href="#reviews" class="text-decoration-none">({{ $reviews->total() }} reviews)</a>
+                        <?php echo e($avgRating); ?> out of 5 stars
+                        <a href="#reviews" class="text-decoration-none">(<?php echo e($reviews->total()); ?> reviews)</a>
                     </span>
                 </div>
-                @endif
+                <?php endif; ?>
 
                 <!-- Price -->
                 <div class="product-price mb-3">
-                    @if($product->sale_price && $product->sale_price < $product->price)
-                        <span class="current-price">Rs. {{ number_format($product->sale_price, 2) }}</span>
-                        <span class="original-price">Rs. {{ number_format($product->price, 2) }}</span>
-                        <span class="discount-badge">Save Rs. {{ number_format($product->price - $product->sale_price, 2) }}</span>
-                    @else
-                        <span class="current-price">Rs. {{ number_format($product->price, 2) }}</span>
-                    @endif
+                    <?php if($product->sale_price && $product->sale_price < $product->price): ?>
+                        <span class="current-price">Rs. <?php echo e(number_format($product->sale_price, 2)); ?></span>
+                        <span class="original-price">Rs. <?php echo e(number_format($product->price, 2)); ?></span>
+                        <span class="discount-badge">Save Rs. <?php echo e(number_format($product->price - $product->sale_price, 2)); ?></span>
+                    <?php else: ?>
+                        <span class="current-price">Rs. <?php echo e(number_format($product->price, 2)); ?></span>
+                    <?php endif; ?>
                 </div>
 
                 <!-- Stock Status -->
-                @if($product->track_inventory)
+                <?php if($product->track_inventory): ?>
                 <div class="stock-status mb-3">
-                    @if($product->isInStock())
-                        @if($product->isLowStock())
+                    <?php if($product->isInStock()): ?>
+                        <?php if($product->isLowStock()): ?>
                             <span class="badge bg-warning">
-                                <i class="fas fa-exclamation-triangle"></i> Low Stock ({{ $product->stock_quantity }} left)
+                                <i class="fas fa-exclamation-triangle"></i> Low Stock (<?php echo e($product->stock_quantity); ?> left)
                             </span>
-                        @else
+                        <?php else: ?>
                             <span class="badge bg-success">
                                 <i class="fas fa-check-circle"></i> In Stock
                             </span>
-                        @endif
-                    @else
+                        <?php endif; ?>
+                    <?php else: ?>
                         <span class="badge bg-danger">
                             <i class="fas fa-times-circle"></i> Out of Stock
                         </span>
-                    @endif
+                    <?php endif; ?>
                 </div>
-                @endif
+                <?php endif; ?>
 
                 <!-- Description -->
                 <div class="product-description mb-4">
                     <h6>Description</h6>
                     <div class="description-content">
-                        {!! nl2br(e($product->description)) !!}
+                        <?php echo nl2br(e($product->description)); ?>
+
                     </div>
                 </div>
 
@@ -119,20 +118,21 @@
                         <div class="col-6">
                             <div class="info-item">
                                 <span class="info-label">SKU:</span>
-                                <span class="info-value">{{ $product->sku ?? 'N/A' }}</span>
+                                <span class="info-value"><?php echo e($product->sku ?? 'N/A'); ?></span>
                             </div>
                         </div>
                         <div class="col-6">
                             <div class="info-item">
                                 <span class="info-label">Category:</span>
                                 <span class="info-value">
-                                    @if($product->category)
-                                        <a href="{{ \App\Helpers\StorefrontHelper::route('storefront.category', [$tenant->subdomain, $product->category->slug]) }}" class="text-decoration-none">
-                                            {{ $product->category->name }}
+                                    <?php if($product->category): ?>
+                                        <a href="<?php echo e(\App\Helpers\StorefrontHelper::route('storefront.category', [$tenant->subdomain, $product->category->slug])); ?>" class="text-decoration-none">
+                                            <?php echo e($product->category->name); ?>
+
                                         </a>
-                                    @else
+                                    <?php else: ?>
                                         Uncategorized
-                                    @endif
+                                    <?php endif; ?>
                                 </span>
                             </div>
                         </div>
@@ -140,23 +140,24 @@
                 </div>
 
                 <!-- Add to Cart Form -->
-                <form action="{{ route('storefront.cart.add', $tenant->subdomain) }}" method="post" class="add-to-cart-form">
-                    @csrf
-                    <input type="hidden" name="product_id" value="{{ $product->id }}">
+                <form action="<?php echo e(route('storefront.cart.add', $tenant->subdomain)); ?>" method="post" class="add-to-cart-form">
+                    <?php echo csrf_field(); ?>
+                    <input type="hidden" name="product_id" value="<?php echo e($product->id); ?>">
                     
                     <div class="quantity-section mb-3">
                         <label for="quantity" class="form-label">Quantity:</label>
                         <div class="quantity-controls">
                             <button type="button" class="btn btn-outline-secondary quantity-btn" data-action="decrease">-</button>
-                            <input type="number" id="quantity" name="qty" value="1" min="1" max="{{ $product->track_inventory ? $product->stock_quantity : 999 }}" class="form-control quantity-input">
+                            <input type="number" id="quantity" name="qty" value="1" min="1" max="<?php echo e($product->track_inventory ? $product->stock_quantity : 999); ?>" class="form-control quantity-input">
                             <button type="button" class="btn btn-outline-secondary quantity-btn" data-action="increase">+</button>
                         </div>
                     </div>
 
                     <div class="action-buttons">
-                        <button type="submit" class="btn btn-primary btn-lg add-to-cart-btn js-add-to-cart" data-product-id="{{ $product->id }}" {{ !$product->isInStock() ? 'disabled' : '' }}>
+                        <button type="submit" class="btn btn-primary btn-lg add-to-cart-btn js-add-to-cart" data-product-id="<?php echo e($product->id); ?>" <?php echo e(!$product->isInStock() ? 'disabled' : ''); ?>>
                             <i class="fas fa-shopping-cart"></i> 
-                            {{ $product->isInStock() ? 'Add to Cart' : 'Out of Stock' }}
+                            <?php echo e($product->isInStock() ? 'Add to Cart' : 'Out of Stock'); ?>
+
                         </button>
                         
                         <button type="button" class="btn btn-outline-primary btn-lg wishlist-btn" title="Add to Wishlist">
@@ -190,7 +191,7 @@
             <div class="reviews-section" id="reviews">
                 <h3 class="section-title">Customer Reviews</h3>
                 
-                @auth
+                <?php if(auth()->guard()->check()): ?>
                 <!-- Review Form -->
                 <div class="review-form-section mb-4">
                     <div class="card">
@@ -198,83 +199,114 @@
                             <h5 class="mb-0">Write a Review</h5>
                         </div>
                         <div class="card-body">
-                            <form action="{{ route('storefront.product.reviews.store', [$tenant->subdomain, $product->id]) }}" method="POST">
-                                @csrf
+                            <form action="<?php echo e(route('storefront.product.reviews.store', [$tenant->subdomain, $product->id])); ?>" method="POST">
+                                <?php echo csrf_field(); ?>
                                 <div class="row">
                                     <div class="col-md-6 mb-3">
                                         <label for="rating" class="form-label">Rating *</label>
-                                        <select name="rating" id="rating" class="form-select @error('rating') is-invalid @enderror" required>
+                                        <select name="rating" id="rating" class="form-select <?php $__errorArgs = ['rating'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>" required>
                                             <option value="">Select a rating</option>
-                                            <option value="5" {{ old('rating') == 5 ? 'selected' : '' }}>⭐⭐⭐⭐⭐ (5 Stars)</option>
-                                            <option value="4" {{ old('rating') == 4 ? 'selected' : '' }}>⭐⭐⭐⭐☆ (4 Stars)</option>
-                                            <option value="3" {{ old('rating') == 3 ? 'selected' : '' }}>⭐⭐⭐☆☆ (3 Stars)</option>
-                                            <option value="2" {{ old('rating') == 2 ? 'selected' : '' }}>⭐⭐☆☆☆ (2 Stars)</option>
-                                            <option value="1" {{ old('rating') == 1 ? 'selected' : '' }}>⭐☆☆☆☆ (1 Star)</option>
+                                            <option value="5" <?php echo e(old('rating') == 5 ? 'selected' : ''); ?>>⭐⭐⭐⭐⭐ (5 Stars)</option>
+                                            <option value="4" <?php echo e(old('rating') == 4 ? 'selected' : ''); ?>>⭐⭐⭐⭐☆ (4 Stars)</option>
+                                            <option value="3" <?php echo e(old('rating') == 3 ? 'selected' : ''); ?>>⭐⭐⭐☆☆ (3 Stars)</option>
+                                            <option value="2" <?php echo e(old('rating') == 2 ? 'selected' : ''); ?>>⭐⭐☆☆☆ (2 Stars)</option>
+                                            <option value="1" <?php echo e(old('rating') == 1 ? 'selected' : ''); ?>>⭐☆☆☆☆ (1 Star)</option>
                                         </select>
-                                        @error('rating')
-                                            <div class="invalid-feedback">{{ $message }}</div>
-                                        @enderror
+                                        <?php $__errorArgs = ['rating'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                                            <div class="invalid-feedback"><?php echo e($message); ?></div>
+                                        <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
                                     </div>
                                 </div>
                                 <div class="mb-3">
                                     <label for="comment" class="form-label">Your Review *</label>
-                                    <textarea name="comment" id="comment" rows="4" class="form-control @error('comment') is-invalid @enderror" 
-                                              placeholder="Share your experience with this product..." required>{{ old('comment') }}</textarea>
-                                    @error('comment')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
+                                    <textarea name="comment" id="comment" rows="4" class="form-control <?php $__errorArgs = ['comment'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>" 
+                                              placeholder="Share your experience with this product..." required><?php echo e(old('comment')); ?></textarea>
+                                    <?php $__errorArgs = ['comment'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                                        <div class="invalid-feedback"><?php echo e($message); ?></div>
+                                    <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
                                 </div>
                                 <button type="submit" class="btn btn-primary">Submit Review</button>
                             </form>
                         </div>
                     </div>
                 </div>
-                @else
+                <?php else: ?>
                 <div class="alert alert-info text-center">
                     <i class="fas fa-info-circle"></i>
-                    Please <a href="{{ route('customer.login', $tenant->subdomain) }}">login</a> to leave a review.
+                    Please <a href="<?php echo e(route('customer.login', $tenant->subdomain)); ?>">login</a> to leave a review.
                 </div>
-                @endauth
+                <?php endif; ?>
 
                 <!-- Reviews List -->
-                @if($reviews->count() > 0)
+                <?php if($reviews->count() > 0): ?>
                     <div class="reviews-list">
-                        @foreach($reviews as $review)
+                        <?php $__currentLoopData = $reviews; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $review): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                             <div class="review-item">
                                 <div class="review-header">
                                     <div class="reviewer-info">
                                         <div class="reviewer-avatar">
-                                            {{ strtoupper(substr($review->user->first_name ?? 'A', 0, 1)) }}
+                                            <?php echo e(strtoupper(substr($review->user->first_name ?? 'A', 0, 1))); ?>
+
                                         </div>
                                         <div class="reviewer-details">
-                                            <h6 class="reviewer-name">{{ $review->user->first_name ?? 'Anonymous' }} {{ $review->user->last_name ?? '' }}</h6>
+                                            <h6 class="reviewer-name"><?php echo e($review->user->first_name ?? 'Anonymous'); ?> <?php echo e($review->user->last_name ?? ''); ?></h6>
                                             <div class="review-rating">
-                                                @for ($i = 1; $i <= 5; $i++)
-                                                    @if ($i <= $review->rating)
+                                                <?php for($i = 1; $i <= 5; $i++): ?>
+                                                    <?php if($i <= $review->rating): ?>
                                                         <i class="fas fa-star text-warning"></i>
-                                                    @else
+                                                    <?php else: ?>
                                                         <i class="far fa-star text-warning"></i>
-                                                    @endif
-                                                @endfor
+                                                    <?php endif; ?>
+                                                <?php endfor; ?>
                                             </div>
                                         </div>
                                     </div>
                                     <div class="review-date">
-                                        {{ $review->created_at->diffForHumans() }}
+                                        <?php echo e($review->created_at->diffForHumans()); ?>
+
                                     </div>
                                 </div>
                                 <div class="review-content">
-                                    <p>{{ $review->comment }}</p>
+                                    <p><?php echo e($review->comment); ?></p>
                                 </div>
                             </div>
-                        @endforeach
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </div>
                     
                     <!-- Reviews Pagination -->
                     <div class="d-flex justify-content-center mt-4">
-                        {{ $reviews->links('pagination::bootstrap-5') }}
+                        <?php echo e($reviews->links('pagination::bootstrap-5')); ?>
+
                     </div>
-                @else
+                <?php else: ?>
                     <div class="no-reviews">
                         <div class="text-center py-4">
                             <i class="fas fa-comments fa-3x text-muted mb-3"></i>
@@ -282,14 +314,14 @@
                             <p class="text-muted">Be the first to review this product!</p>
                         </div>
                     </div>
-                @endif
+                <?php endif; ?>
             </div>
         </div>
     </div>
 </div>
-@endsection
+<?php $__env->stopSection(); ?>
 
-@push('styles')
+<?php $__env->startPush('styles'); ?>
 <style>
 .product-image-gallery {
     position: sticky;
@@ -623,9 +655,9 @@
     }
 }
 </style>
-@endpush
+<?php $__env->stopPush(); ?>
 
-@push('scripts')
+<?php $__env->startPush('scripts'); ?>
 <script>
 // Image gallery functionality
 function changeMainImage(imageUrl, thumbnail) {
@@ -782,4 +814,5 @@ document.addEventListener('click', function(e) {
     }
 });
 </script>
-@endpush
+<?php $__env->stopPush(); ?>
+<?php echo $__env->make('layouts.storefront', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH /Applications/XAMPP/xamppfiles/htdocs/e-manager/resources/views/storefront/product.blade.php ENDPATH**/ ?>

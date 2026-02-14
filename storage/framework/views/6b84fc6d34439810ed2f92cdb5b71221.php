@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="<?php echo e(csrf_token()); ?>">
     <?php
         // Ensure $tenant and $settings exist to avoid undefined variable errors
         $tenant = $tenant ?? \App\Models\Tenant::first();
@@ -80,13 +81,44 @@
                 <!-- Navigation -->
                 <nav class="main-nav">
                     <ul class="nav-list">
-                        <li><a href="<?php echo e(route('storefront.preview', $tenant->subdomain)); ?>">Home</a></li>
+                        <?php
+                            $navigationLinks = $settings->navigation_links ?? [];
+                            // Default menu items if none exist
+                            if (empty($navigationLinks)) {
+                                $navigationLinks = [
+                                    ['label' => 'Home', 'url' => '/', 'type' => 'link', 'order' => 1],
+                                    ['label' => 'Products', 'url' => '#products', 'type' => 'link', 'order' => 2],
+                                    ['label' => 'About', 'url' => '#about', 'type' => 'link', 'order' => 3],
+                                    ['label' => 'Contact', 'url' => '#contact', 'type' => 'link', 'order' => 4],
+                                ];
+                            }
+                            // Sort by order
+                            usort($navigationLinks, function($a, $b) {
+                                return ($a['order'] ?? 999) <=> ($b['order'] ?? 999);
+                            });
+                        ?>
+                        <?php $__currentLoopData = $navigationLinks; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $item): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <?php
+                                $url = $item['url'] ?? '#';
+                                // Handle different URL types
+                                if ($url === '/' || $url === '') {
+                                    $url = \App\Helpers\StorefrontHelper::route('storefront.preview', [$tenant->subdomain]);
+                                } elseif (strpos($url, '#') === 0) {
+                                    // Anchor link - keep as is
+                                    $url = $url;
+                                } elseif (strpos($url, 'http') === 0) {
+                                    // External URL - keep as is
+                                    $url = $url;
+                                } else {
+                                    // Internal path - prepend base URL if needed
+                                    $url = \App\Helpers\StorefrontHelper::route('storefront.preview', [$tenant->subdomain]) . (strpos($url, '/') === 0 ? '' : '/') . ltrim($url, '/');
+                                }
+                            ?>
+                            <li><a href="<?php echo e($url); ?>"><?php echo e($item['label'] ?? 'Menu Item'); ?></a></li>
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                         <?php if($settings->show_categories_menu ?? true): ?>
                             <li><a href="#categories">Categories</a></li>
                         <?php endif; ?>
-                        <li><a href="#products">Products</a></li>
-                        <li><a href="#about">About</a></li>
-                        <li><a href="#contact">Contact</a></li>
                     </ul>
                 </nav>
                 
@@ -94,14 +126,19 @@
                 <div class="header-actions">
                     <!-- Search Bar -->
                     <?php if($settings->show_search_bar ?? true): ?>
-                        <form class="search-form" method="GET" action="<?php echo e(route('storefront.preview', $tenant->subdomain)); ?>">
-                            <div class="search-input-group">
-                                <input type="text" name="q" value="<?php echo e(request('q')); ?>" placeholder="Search products..." class="search-input">
-                                <button type="submit" class="search-btn">
-                                    <i class="fas fa-search"></i>
-                                </button>
-                            </div>
-                        </form>
+                        <div class="search-section">
+                            <button class="search-icon-btn" id="searchToggleBtn" aria-label="Search">
+                                <i class="fas fa-search"></i>
+                            </button>
+                            <form class="search-form" id="searchForm" method="GET" action="<?php echo e(route('storefront.preview', $tenant->subdomain)); ?>">
+                                <div class="search-input-group">
+                                    <input type="text" name="q" value="<?php echo e(request('q')); ?>" placeholder="Search products..." class="search-input" id="searchInput">
+                                    <button type="submit" class="search-btn">
+                                        <i class="fas fa-search"></i>
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
                     <?php endif; ?>
                     
                     <!-- Cart Icon -->
@@ -109,7 +146,16 @@
                         <div class="cart-section">
                             <button class="cart-btn" data-bs-toggle="dropdown" aria-expanded="false">
                                 <i class="fas fa-shopping-cart"></i>
-                                <span class="cart-count" id="cart-count"><?php echo e(count($cart ?? [])); ?></span>
+                                <?php
+                                    // Calculate cart count as sum of quantities (not count of items)
+                                    $displayCartCount = 0;
+                                    if (isset($cart) && is_array($cart) && !empty($cart)) {
+                                        $displayCartCount = array_sum(array_map(function($item) {
+                                            return isset($item['quantity']) ? (int)$item['quantity'] : 0;
+                                        }, $cart));
+                                    }
+                                ?>
+                                <span class="cart-count" id="cart-count"><?php echo e($displayCartCount); ?></span>
                             </button>
                             <div class="dropdown-menu dropdown-menu-end cart-dropdown">
                                 <div class="cart-dropdown-header">
@@ -133,7 +179,7 @@
                                             <div class="cart-total">
                                                 <strong>Total: Rs. <?php echo e(number_format(array_sum(array_map(function($item) { return $item['quantity'] * $item['price']; }, $cart)), 2)); ?></strong>
                                             </div>
-                                            <a href="<?php echo e(route('storefront.cart', $tenant->subdomain)); ?>" class="btn btn-primary btn-sm w-100">View Cart</a>
+                                            <a href="<?php echo e(\App\Helpers\StorefrontHelper::route('storefront.cart', [$tenant->subdomain])); ?>" class="btn btn-primary btn-sm w-100">View Cart</a>
                                         </div>
                                     <?php else: ?>
                                         <div class="cart-empty">
@@ -191,13 +237,44 @@
             <div class="collapse mobile-menu" id="mobileMenu">
                 <nav class="mobile-nav">
                     <ul class="mobile-nav-list">
-                        <li><a href="<?php echo e(route('storefront.preview', $tenant->subdomain)); ?>">Home</a></li>
+                        <?php
+                            $navigationLinks = $settings->navigation_links ?? [];
+                            // Default menu items if none exist
+                            if (empty($navigationLinks)) {
+                                $navigationLinks = [
+                                    ['label' => 'Home', 'url' => '/', 'type' => 'link', 'order' => 1],
+                                    ['label' => 'Products', 'url' => '#products', 'type' => 'link', 'order' => 2],
+                                    ['label' => 'About', 'url' => '#about', 'type' => 'link', 'order' => 3],
+                                    ['label' => 'Contact', 'url' => '#contact', 'type' => 'link', 'order' => 4],
+                                ];
+                            }
+                            // Sort by order
+                            usort($navigationLinks, function($a, $b) {
+                                return ($a['order'] ?? 999) <=> ($b['order'] ?? 999);
+                            });
+                        ?>
+                        <?php $__currentLoopData = $navigationLinks; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $item): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <?php
+                                $url = $item['url'] ?? '#';
+                                // Handle different URL types
+                                if ($url === '/' || $url === '') {
+                                    $url = \App\Helpers\StorefrontHelper::route('storefront.preview', [$tenant->subdomain]);
+                                } elseif (strpos($url, '#') === 0) {
+                                    // Anchor link - keep as is
+                                    $url = $url;
+                                } elseif (strpos($url, 'http') === 0) {
+                                    // External URL - keep as is
+                                    $url = $url;
+                                } else {
+                                    // Internal path - prepend base URL if needed
+                                    $url = \App\Helpers\StorefrontHelper::route('storefront.preview', [$tenant->subdomain]) . (strpos($url, '/') === 0 ? '' : '/') . ltrim($url, '/');
+                                }
+                            ?>
+                            <li><a href="<?php echo e($url); ?>"><?php echo e($item['label'] ?? 'Menu Item'); ?></a></li>
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                         <?php if($settings->show_categories_menu ?? true): ?>
                             <li><a href="#categories">Categories</a></li>
                         <?php endif; ?>
-                        <li><a href="#products">Products</a></li>
-                        <li><a href="#about">About</a></li>
-                        <li><a href="#contact">Contact</a></li>
                     </ul>
                 </nav>
             </div>
@@ -283,6 +360,46 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
     <!-- Custom Storefront JS -->
+    <script>
+        // Make subdomain and CSRF token available to JavaScript
+        <?php
+            $isSubdomain = \App\Helpers\StorefrontHelper::isSubdomainAccess();
+            $subdomain = $tenant->subdomain ?? '';
+            
+            // Use StorefrontHelper to generate cart URL with base path included
+            $cartUrl = \App\Helpers\StorefrontHelper::route('storefront.cart.add', [$subdomain]);
+            
+            $baseUrl = $isSubdomain 
+                ? url('/')
+                : url('/storefront/' . $subdomain);
+        ?>
+        <?php
+            // Calculate initial cart count (sum of all quantities)
+            $cartCount = 0;
+            if (isset($cart) && is_array($cart) && !empty($cart)) {
+                // Check if cart is indexed array (array_values was called) or associative array
+                $firstKey = array_key_first($cart);
+                if (is_numeric($firstKey) && isset($cart[$firstKey]['quantity'])) {
+                    // Indexed array - sum quantities directly
+                    $cartCount = array_sum(array_column($cart, 'quantity'));
+                } else {
+                    // Associative array (product_id => item) - sum quantities
+                    $cartCount = array_sum(array_map(function($item) {
+                        return isset($item['quantity']) ? (int)$item['quantity'] : 0;
+                    }, $cart));
+                }
+            }
+        ?>
+        window.STOREFRONT_CONFIG = {
+            subdomain: '<?php echo e($tenant->subdomain ?? ''); ?>',
+            cartUrl: '<?php echo e($cartUrl); ?>',
+            baseUrl: '<?php echo e($baseUrl); ?>',
+            csrfToken: '<?php echo e(csrf_token()); ?>',
+            isSubdomain: <?php echo e($isSubdomain ? 'true' : 'false'); ?>,
+            initialCartCount: <?php echo e($cartCount); ?>
+
+        };
+    </script>
     <script src="<?php echo e(asset('js/storefront.js')); ?>"></script>
     
     <?php echo $__env->yieldPushContent('scripts'); ?>

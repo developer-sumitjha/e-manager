@@ -159,18 +159,10 @@
                     </div>
                     
                     <div class="form-check mb-3">
-                        <input type="checkbox" name="is_active" class="form-check-input" id="isActive" {{ $sitePage->is_active ? 'checked' : '' }}>
+                        <input type="checkbox" name="is_active" value="1" class="form-check-input" id="isActive" {{ $sitePage->is_active ? 'checked' : '' }}>
                         <label class="form-check-label" for="isActive">
                             <strong>Active</strong>
                             <br><small class="text-muted">Page is visible on website</small>
-                        </label>
-                    </div>
-                    
-                    <div class="form-check mb-3">
-                        <input type="checkbox" name="show_in_menu" class="form-check-input" id="showInMenu" {{ $sitePage->show_in_menu ? 'checked' : '' }}>
-                        <label class="form-check-label" for="showInMenu">
-                            <strong>Show in Navigation</strong>
-                            <br><small class="text-muted">Display in main menu</small>
                         </label>
                     </div>
                     
@@ -255,6 +247,42 @@ function previewBanner(event) {
     padding: 1rem;
     background: #f8f9fa;
     border-radius: 8px;
+}
+
+.form-check-input {
+    width: 1.25em !important;
+    height: 1.25em !important;
+    margin-top: 0.25em;
+    vertical-align: top;
+    background-color: #fff;
+    border: 2px solid #000000 !important;
+    border-radius: 0.25em;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    cursor: pointer;
+    position: relative;
+    flex-shrink: 0;
+}
+
+.form-check-input:checked {
+    background-color: #000000 !important;
+    border-color: #000000 !important;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='M6 10l3 3l6-6'/%3e%3c/svg%3e") !important;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 100% 100%;
+}
+
+.form-check-input:focus {
+    border-color: #000000 !important;
+    outline: 0;
+    box-shadow: 0 0 0 0.25rem rgba(0, 0, 0, 0.25) !important;
+}
+
+.form-check-label {
+    cursor: pointer;
+    margin-left: 0.5rem;
 }
 </style>
 @endsection

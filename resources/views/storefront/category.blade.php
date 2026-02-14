@@ -9,7 +9,7 @@
     <!-- Breadcrumb -->
     <nav aria-label="breadcrumb" class="mb-4">
         <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="{{ route('storefront.preview', $tenant->subdomain) }}">Home</a></li>
+            <li class="breadcrumb-item"><a href="{{ \App\Helpers\StorefrontHelper::route('storefront.preview', [$tenant->subdomain]) }}">Home</a></li>
             <li class="breadcrumb-item active" aria-current="page">{{ $category->name }}</li>
         </ol>
     </nav>
@@ -37,7 +37,7 @@
             <div class="card-body">
                 <div class="row align-items-center">
                     <div class="col-md-6">
-                        <form action="{{ route('storefront.category', [$tenant->subdomain, $category->slug]) }}" method="GET" class="search-form">
+                        <form action="{{ \App\Helpers\StorefrontHelper::route('storefront.category', [$tenant->subdomain, $category->slug]) }}" method="GET" class="search-form">
                             <div class="input-group">
                                 <input type="text" name="q" class="form-control" placeholder="Search in {{ $category->name }}..." value="{{ $search }}">
                                 <button type="submit" class="btn btn-outline-primary">
@@ -48,7 +48,7 @@
                     </div>
                     <div class="col-md-6">
                         <div class="d-flex justify-content-end gap-2">
-                            <form action="{{ route('storefront.category', [$tenant->subdomain, $category->slug]) }}" method="GET" class="d-inline-block">
+                            <form action="{{ \App\Helpers\StorefrontHelper::route('storefront.category', [$tenant->subdomain, $category->slug]) }}" method="GET" class="d-inline-block">
                                 @if($search)
                                     <input type="hidden" name="q" value="{{ $search }}">
                                 @endif
@@ -84,7 +84,7 @@
             <div class="alert alert-info">
                 <i class="fas fa-search"></i>
                 Showing {{ $products->count() }} of {{ $products->total() }} results for "<strong>{{ $search }}</strong>" in {{ $category->name }}
-                <a href="{{ route('storefront.category', [$tenant->subdomain, $category->slug]) }}" class="btn btn-sm btn-outline-primary ms-2">
+                <a href="{{ \App\Helpers\StorefrontHelper::route('storefront.category', [$tenant->subdomain, $category->slug]) }}" class="btn btn-sm btn-outline-primary ms-2">
                     Clear Search
                 </a>
             </div>
@@ -169,17 +169,17 @@
                 @if($search)
                     <p>No products match your search criteria "<strong>{{ $search }}</strong>" in {{ $category->name }}.</p>
                     <div class="empty-state-actions">
-                        <a href="{{ route('storefront.category', [$tenant->subdomain, $category->slug]) }}" class="btn btn-outline-primary">
+                        <a href="{{ \App\Helpers\StorefrontHelper::route('storefront.category', [$tenant->subdomain, $category->slug]) }}" class="btn btn-outline-primary">
                             <i class="fas fa-times"></i> Clear Search
                         </a>
-                        <a href="{{ route('storefront.preview', $tenant->subdomain) }}" class="btn btn-primary">
+                        <a href="{{ \App\Helpers\StorefrontHelper::route('storefront.preview', [$tenant->subdomain]) }}" class="btn btn-primary">
                             <i class="fas fa-home"></i> Browse All Products
                         </a>
                     </div>
                 @else
                     <p>There are no products available in {{ $category->name }} at the moment.</p>
                     <div class="empty-state-actions">
-                        <a href="{{ route('storefront.preview', $tenant->subdomain) }}" class="btn btn-primary">
+                        <a href="{{ \App\Helpers\StorefrontHelper::route('storefront.preview', [$tenant->subdomain]) }}" class="btn btn-primary">
                             <i class="fas fa-home"></i> Browse All Products
                         </a>
                     </div>

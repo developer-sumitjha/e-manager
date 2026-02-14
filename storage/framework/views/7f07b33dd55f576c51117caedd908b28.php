@@ -1,0 +1,2 @@
+
+<?php echo $__env->make('welcome', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH /Applications/XAMPP/xamppfiles/htdocs/e-manager/resources/views/public/contact.blade.php ENDPATH**/ ?>

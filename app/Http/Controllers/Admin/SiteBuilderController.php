@@ -55,6 +55,25 @@ class SiteBuilderController extends Controller
     }
     
     /**
+     * Show the site builder dashboard for vendors
+     */
+    public function vendorIndex()
+    {
+        $user = Auth::user();
+        $tenant = $user->tenant;
+        
+        if (!$tenant) {
+            return redirect()->route('vendor.dashboard')
+                ->with('error', 'No tenant associated with this account.');
+        }
+        
+        $tenantId = $this->getTenantId();
+        $settings = $this->getSiteSettings($tenantId);
+        
+        return view('vendor.site-builder.index', compact('settings', 'tenant'));
+    }
+    
+    /**
      * Update basic information
      */
     public function updateBasicInfo(Request $request)
@@ -332,7 +351,7 @@ class SiteBuilderController extends Controller
         $tenantId = $user->tenant_id;
         
         $validator = Validator::make($request->all(), [
-            'navigation_links' => 'nullable|json',
+            'navigation_links' => 'nullable',
             'show_categories_menu' => 'required|boolean',
             'show_search_bar' => 'required|boolean',
             'show_cart_icon' => 'required|boolean',
@@ -353,8 +372,23 @@ class SiteBuilderController extends Controller
             'show_cart_icon'
         ]);
         
+        // Handle navigation_links - can be JSON string or array
         if ($request->has('navigation_links')) {
-            $data['navigation_links'] = json_decode($request->navigation_links, true);
+            $navigationLinks = $request->navigation_links;
+            if (is_string($navigationLinks)) {
+                $decoded = json_decode($navigationLinks, true);
+                if (json_last_error() === JSON_ERROR_NONE) {
+                    $data['navigation_links'] = $decoded;
+                } else {
+                    // If JSON decode fails, try to parse as array from form data
+                    $data['navigation_links'] = [];
+                }
+            } else {
+                $data['navigation_links'] = $navigationLinks;
+            }
+        } else {
+            // If no navigation_links provided, set empty array
+            $data['navigation_links'] = [];
         }
         
         $settings->update($data);
@@ -381,6 +415,8 @@ class SiteBuilderController extends Controller
             'show_testimonials' => 'required|boolean',
             'show_about_section' => 'required|boolean',
             'homepage_sections_order' => 'nullable|json',
+            'show_hero_slides' => 'nullable|boolean',
+            'hero_slides' => 'nullable|json',
         ]);
         
         if ($validator->fails()) {
@@ -404,12 +440,53 @@ class SiteBuilderController extends Controller
             $data['homepage_sections_order'] = json_decode($request->homepage_sections_order, true);
         }
         
+        // Handle hero slides in additional_settings
+        $additionalSettings = $settings->additional_settings ?? [];
+        if ($request->has('show_hero_slides')) {
+            $additionalSettings['show_hero_slides'] = $request->show_hero_slides == '1' || $request->show_hero_slides === true;
+        }
+        if ($request->has('hero_slides')) {
+            $additionalSettings['hero_slides'] = json_decode($request->hero_slides, true);
+        }
+        $data['additional_settings'] = $additionalSettings;
+        
         $settings->update($data);
         
         return response()->json([
             'success' => true,
             'message' => 'Homepage sections updated successfully',
             'settings' => $settings
+        ]);
+    }
+    
+    /**
+     * Upload slide image
+     */
+    public function uploadSlideImage(Request $request)
+    {
+        $user = Auth::user();
+        $tenantId = $user->tenant_id;
+        
+        $validator = Validator::make($request->all(), [
+            'slide_image' => 'required|image|mimes:jpeg,jpg,png,webp|max:5120',
+            'slide_index' => 'nullable|integer',
+        ]);
+        
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors()
+            ], 422);
+        }
+        
+        // Store slide image
+        $path = $request->file('slide_image')->store('site-assets/slides', 'public');
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Slide image uploaded successfully',
+            'image_path' => $path,
+            'image_url' => Storage::url($path)
         ]);
     }
     
