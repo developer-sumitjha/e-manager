@@ -90,6 +90,22 @@
                 </div>
             </div>
             
+            <!-- About Page Fields - Team Members -->
+            <div class="card mb-4" id="aboutFields" style="display: none;">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-users"></i> Our Team</h5>
+                    <button type="button" class="btn btn-sm btn-primary" onclick="addTeamMember()">
+                        <i class="fas fa-plus"></i> Add Team Member
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div id="teamMembersContainer">
+                        <!-- Team members will be added here dynamically -->
+                    </div>
+                    <p class="text-muted small mb-0">Add team members to display in the "Our Team" section on the about page.</p>
+                </div>
+            </div>
+            
             <!-- SEO Settings -->
             <div class="card mb-4">
                 <div class="card-header">
@@ -212,10 +228,16 @@
 </form>
 
 <script>
-// Show/hide contact fields based on page type
+let teamMemberIndex = 0;
+
+// Show/hide fields based on page type
 document.getElementById('pageType').addEventListener('change', function() {
     const contactFields = document.getElementById('contactFields');
-    contactFields.style.display = this.value === 'contact' ? 'block' : 'none';
+    const aboutFields = document.getElementById('aboutFields');
+    const pageType = this.value;
+    
+    contactFields.style.display = pageType === 'contact' ? 'block' : 'none';
+    aboutFields.style.display = pageType === 'about' ? 'block' : 'none';
 });
 
 // Trigger on page load
@@ -224,7 +246,101 @@ document.addEventListener('DOMContentLoaded', function() {
     if (pageType === 'contact') {
         document.getElementById('contactFields').style.display = 'block';
     }
+    if (pageType === 'about') {
+        document.getElementById('aboutFields').style.display = 'block';
+    }
 });
+
+// Add team member
+function addTeamMember() {
+    const container = document.getElementById('teamMembersContainer');
+    const index = teamMemberIndex++;
+    
+    const teamMemberHtml = `
+        <div class="team-member-item card mb-3" data-index="${index}">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="mb-0">Team Member #${index + 1}</h6>
+                    <button type="button" class="btn btn-sm btn-danger" onclick="removeTeamMember(${index})">
+                        <i class="fas fa-trash"></i> Remove
+                    </button>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Name <span class="text-danger">*</span></label>
+                        <input type="text" name="team_members[${index}][name]" class="form-control" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Position/Title</label>
+                        <input type="text" name="team_members[${index}][position]" class="form-control" placeholder="e.g., CEO, Manager">
+                    </div>
+                    <div class="col-md-12 mb-3">
+                        <label class="form-label">Photo</label>
+                        <input type="file" name="team_members[${index}][photo]" class="form-control" accept="image/*" onchange="previewTeamPhoto(event, ${index})">
+                        <small class="text-muted">Recommended: 400x400px, square image</small>
+                    </div>
+                    <div class="col-md-12 mb-3">
+                        <div class="team-photo-preview" id="teamPhotoPreview${index}" style="display: none;">
+                            <img src="" alt="Preview" class="img-thumbnail" style="max-width: 150px; max-height: 150px;">
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Email</label>
+                        <input type="email" name="team_members[${index}][email]" class="form-control">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Phone</label>
+                        <input type="text" name="team_members[${index}][phone]" class="form-control">
+                    </div>
+                    <div class="col-md-12 mb-3">
+                        <label class="form-label">Bio/Description</label>
+                        <textarea name="team_members[${index}][bio]" class="form-control" rows="3" placeholder="Brief description about the team member"></textarea>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Facebook URL</label>
+                        <input type="url" name="team_members[${index}][facebook]" class="form-control" placeholder="https://facebook.com/...">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Twitter URL</label>
+                        <input type="url" name="team_members[${index}][twitter]" class="form-control" placeholder="https://twitter.com/...">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">LinkedIn URL</label>
+                        <input type="url" name="team_members[${index}][linkedin]" class="form-control" placeholder="https://linkedin.com/in/...">
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    container.insertAdjacentHTML('beforeend', teamMemberHtml);
+}
+
+// Remove team member
+function removeTeamMember(index) {
+    const item = document.querySelector(`.team-member-item[data-index="${index}"]`);
+    if (item) {
+        item.remove();
+    }
+}
+
+// Preview team member photo
+function previewTeamPhoto(event, index) {
+    const preview = document.getElementById(`teamPhotoPreview${index}`);
+    const img = preview.querySelector('img');
+    const file = event.target.files[0];
+    
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            img.src = e.target.result;
+            preview.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+    } else {
+        preview.style.display = 'none';
+    }
+}
 
 // Preview banner image
 function previewBanner(event) {

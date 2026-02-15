@@ -70,6 +70,15 @@ $defineSubdomainRoutes = function() {
             return app(\App\Http\Controllers\StorefrontController::class)->product($subdomain, $slug);
         }
         
+        // If not product, check if it's a SitePage (custom page)
+        $page = \App\Models\SitePage::where('tenant_id', $tenant->id)
+            ->where('slug', $slug)
+            ->where('is_active', true)
+            ->first();
+        if ($page) {
+            return app(\App\Http\Controllers\StorefrontController::class)->page($subdomain, $slug);
+        }
+        
         // Not found
         abort(404);
     })->name('storefront.subdomain.dynamic');
@@ -408,6 +417,15 @@ Route::prefix('storefront/{subdomain}')->group(function () {
         $product = \App\Models\Product::where('tenant_id', $tenant->id)->where('slug', $slug)->first();
         if ($product) {
             return app(\App\Http\Controllers\StorefrontController::class)->product($subdomain, $slug);
+        }
+        
+        // If not product, check if it's a SitePage (custom page)
+        $page = \App\Models\SitePage::where('tenant_id', $tenant->id)
+            ->where('slug', $slug)
+            ->where('is_active', true)
+            ->first();
+        if ($page) {
+            return app(\App\Http\Controllers\StorefrontController::class)->page($subdomain, $slug);
         }
         
         // Not found

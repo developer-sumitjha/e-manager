@@ -29,6 +29,7 @@ class SitePage extends Model
         'contact_phone',
         'contact_address',
         'map_iframe',
+        'team_members',
         'custom_css',
         'custom_js',
     ];
@@ -37,6 +38,7 @@ class SitePage extends Model
         'is_active' => 'boolean',
         'show_in_menu' => 'boolean',
         'menu_order' => 'integer',
+        'team_members' => 'array',
     ];
 
     protected $appends = ['banner_image_url'];

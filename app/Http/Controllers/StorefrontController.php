@@ -9,6 +9,7 @@ use App\Models\Category;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Review;
+use App\Models\SitePage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
 use App\Models\ShippingMethod;
@@ -264,6 +265,54 @@ class StorefrontController extends Controller
             ->get();
 
         return view('storefront.products-archive', compact('tenant', 'settings', 'products', 'categories', 'sort', 'search', 'archiveSlug'));
+    }
+
+    /**
+     * Display a custom page (SitePage)
+     */
+    public function page($subdomain, $slug = null)
+    {
+        // Handle both subdomain-based and path-based routes
+        if ($slug === null) {
+            $slug = request()->route('slug');
+        }
+        
+        if (empty($subdomain)) {
+            $subdomain = request()->route('subdomain');
+            if (empty($subdomain)) {
+                // Fallback: extract from hostname
+                $hostname = request()->getHost();
+                $parts = explode('.', $hostname);
+                if (count($parts) === 2 && strtolower(end($parts)) === 'localhost') {
+                    $subdomain = $parts[0];
+                } elseif (count($parts) >= 3) {
+                    $subdomain = $parts[0];
+                }
+            }
+        }
+        
+        if (!$subdomain || !$slug) {
+            abort(404, 'Page not found');
+        }
+        
+        $tenant = Tenant::where('subdomain', $subdomain)->firstOrFail();
+        $settings = SiteSettings::where('tenant_id', $tenant->id)->first();
+        
+        if (!$settings) {
+            abort(404, 'Store settings not found');
+        }
+        
+        // Find the page by slug and tenant, and ensure it's active
+        $page = SitePage::where('tenant_id', $tenant->id)
+            ->where('slug', $slug)
+            ->where('is_active', true)
+            ->first();
+        
+        if (!$page) {
+            abort(404, 'Page not found');
+        }
+        
+        return view('storefront.page', compact('tenant', 'settings', 'page'));
     }
 
     /**

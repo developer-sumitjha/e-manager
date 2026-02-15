@@ -94,6 +94,41 @@ class SitePageController extends Controller
             $validated['banner_image'] = $path;
         }
         
+        // Handle team members data
+        if ($request->has('team_members') && is_array($request->team_members)) {
+            $teamMembers = [];
+            foreach ($request->team_members as $index => $member) {
+                $teamMemberData = [
+                    'name' => $member['name'] ?? '',
+                    'position' => $member['position'] ?? '',
+                    'email' => $member['email'] ?? '',
+                    'phone' => $member['phone'] ?? '',
+                    'bio' => $member['bio'] ?? '',
+                    'facebook' => $member['facebook'] ?? '',
+                    'twitter' => $member['twitter'] ?? '',
+                    'linkedin' => $member['linkedin'] ?? '',
+                ];
+                
+                // Handle photo upload
+                if (isset($request->file('team_members')[$index]['photo'])) {
+                    $photo = $request->file('team_members')[$index]['photo'];
+                    if ($photo && $photo->isValid()) {
+                        $photoPath = $photo->store('site-assets/team-photos', 'public');
+                        $teamMemberData['photo'] = $photoPath;
+                    }
+                } elseif (isset($member['existing_photo'])) {
+                    // Keep existing photo if no new one uploaded
+                    $teamMemberData['photo'] = $member['existing_photo'];
+                }
+                
+                // Only add if name is provided
+                if (!empty($teamMemberData['name'])) {
+                    $teamMembers[] = $teamMemberData;
+                }
+            }
+            $validated['team_members'] = $teamMembers;
+        }
+        
         $page = SitePage::create($validated);
         
         return redirect()->route('admin.site-pages.index')
@@ -177,6 +212,72 @@ class SitePageController extends Controller
             
             $path = $request->file('banner_image')->store('site-assets/page-banners', 'public');
             $validated['banner_image'] = $path;
+        }
+        
+        // Handle team members data
+        if ($request->has('team_members') && is_array($request->team_members)) {
+            $teamMembers = [];
+            $existingPhotos = [];
+            
+            // Get existing photos from current team members
+            if ($sitePage->team_members && is_array($sitePage->team_members)) {
+                foreach ($sitePage->team_members as $existingMember) {
+                    if (isset($existingMember['photo'])) {
+                        $existingPhotos[] = $existingMember['photo'];
+                    }
+                }
+            }
+            
+            foreach ($request->team_members as $index => $member) {
+                $teamMemberData = [
+                    'name' => $member['name'] ?? '',
+                    'position' => $member['position'] ?? '',
+                    'email' => $member['email'] ?? '',
+                    'phone' => $member['phone'] ?? '',
+                    'bio' => $member['bio'] ?? '',
+                    'facebook' => $member['facebook'] ?? '',
+                    'twitter' => $member['twitter'] ?? '',
+                    'linkedin' => $member['linkedin'] ?? '',
+                ];
+                
+                // Handle photo upload
+                if (isset($request->file('team_members')[$index]['photo'])) {
+                    $photo = $request->file('team_members')[$index]['photo'];
+                    if ($photo && $photo->isValid()) {
+                        // Delete old photo if exists
+                        if (isset($member['existing_photo']) && Storage::disk('public')->exists($member['existing_photo'])) {
+                            Storage::disk('public')->delete($member['existing_photo']);
+                        }
+                        
+                        $photoPath = $photo->store('site-assets/team-photos', 'public');
+                        $teamMemberData['photo'] = $photoPath;
+                    } elseif (isset($member['existing_photo'])) {
+                        // Keep existing photo if no new one uploaded
+                        $teamMemberData['photo'] = $member['existing_photo'];
+                    }
+                } elseif (isset($member['existing_photo'])) {
+                    // Keep existing photo
+                    $teamMemberData['photo'] = $member['existing_photo'];
+                }
+                
+                // Only add if name is provided
+                if (!empty($teamMemberData['name'])) {
+                    $teamMembers[] = $teamMemberData;
+                }
+            }
+            
+            // Delete photos that are no longer in use
+            $newPhotos = array_filter(array_column($teamMembers, 'photo'));
+            foreach ($existingPhotos as $oldPhoto) {
+                if (!in_array($oldPhoto, $newPhotos) && Storage::disk('public')->exists($oldPhoto)) {
+                    Storage::disk('public')->delete($oldPhoto);
+                }
+            }
+            
+            $validated['team_members'] = $teamMembers;
+        } else {
+            // If no team members provided, clear them
+            $validated['team_members'] = null;
         }
         
         $sitePage->update($validated);

@@ -1,21 +1,19 @@
-@extends('admin.layouts.app')
-
-@section('content')
+<?php $__env->startSection('content'); ?>
 <div class="page-header">
     <div class="page-title">
-        <h1><i class="fas fa-edit"></i> Edit Page: {{ $sitePage->title }}</h1>
+        <h1><i class="fas fa-edit"></i> Edit Page: <?php echo e($sitePage->title); ?></h1>
         <p class="text-muted">Update page content and settings</p>
     </div>
     <div class="page-actions">
-        <a href="{{ route('admin.site-pages.index') }}" class="btn btn-secondary">
+        <a href="<?php echo e(route('admin.site-pages.index')); ?>" class="btn btn-secondary">
             <i class="fas fa-arrow-left"></i> Back to Pages
         </a>
     </div>
 </div>
 
-<form action="{{ route('admin.site-pages.update', $sitePage) }}" method="POST" enctype="multipart/form-data">
-    @csrf
-    @method('PUT')
+<form action="<?php echo e(route('admin.site-pages.update', $sitePage)); ?>" method="POST" enctype="multipart/form-data">
+    <?php echo csrf_field(); ?>
+    <?php echo method_field('PUT'); ?>
     
     <div class="row">
         <!-- Main Content -->
@@ -28,68 +26,124 @@
                 <div class="card-body">
                     <div class="mb-3">
                         <label class="form-label">Page Title <span class="text-danger">*</span></label>
-                        <input type="text" name="title" class="form-control @error('title') is-invalid @enderror" value="{{ old('title', $sitePage->title) }}" required>
-                        @error('title')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
+                        <input type="text" name="title" class="form-control <?php $__errorArgs = ['title'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>" value="<?php echo e(old('title', $sitePage->title)); ?>" required>
+                        <?php $__errorArgs = ['title'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                        <div class="invalid-feedback"><?php echo e($message); ?></div>
+                        <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
                     </div>
                     
                     <div class="mb-3">
                         <label class="form-label">Slug (URL)</label>
-                        <input type="text" name="slug" class="form-control @error('slug') is-invalid @enderror" value="{{ old('slug', $sitePage->slug) }}">
-                        @error('slug')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
+                        <input type="text" name="slug" class="form-control <?php $__errorArgs = ['slug'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>" value="<?php echo e(old('slug', $sitePage->slug)); ?>">
+                        <?php $__errorArgs = ['slug'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                        <div class="invalid-feedback"><?php echo e($message); ?></div>
+                        <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
                     </div>
                     
                     <div class="mb-3">
                         <label class="form-label">Short Description</label>
-                        <textarea name="description" class="form-control @error('description') is-invalid @enderror" rows="2">{{ old('description', $sitePage->description) }}</textarea>
-                        @error('description')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
+                        <textarea name="description" class="form-control <?php $__errorArgs = ['description'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>" rows="2"><?php echo e(old('description', $sitePage->description)); ?></textarea>
+                        <?php $__errorArgs = ['description'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                        <div class="invalid-feedback"><?php echo e($message); ?></div>
+                        <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
                     </div>
                     
                     <div class="mb-3">
                         <label class="form-label">Page Content</label>
-                        <textarea name="content" class="form-control @error('content') is-invalid @enderror" rows="15">{{ old('content', $sitePage->content) }}</textarea>
-                        @error('content')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
+                        <textarea name="content" class="form-control <?php $__errorArgs = ['content'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>" rows="15"><?php echo e(old('content', $sitePage->content)); ?></textarea>
+                        <?php $__errorArgs = ['content'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                        <div class="invalid-feedback"><?php echo e($message); ?></div>
+                        <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
                     </div>
                 </div>
             </div>
             
             <!-- Contact Page Fields -->
-            <div class="card mb-4" id="contactFields" style="display: {{ $sitePage->page_type == 'contact' ? 'block' : 'none' }};">
+            <div class="card mb-4" id="contactFields" style="display: <?php echo e($sitePage->page_type == 'contact' ? 'block' : 'none'); ?>;">
                 <div class="card-header">
                     <h5 class="mb-0"><i class="fas fa-envelope"></i> Contact Information</h5>
                 </div>
                 <div class="card-body">
                     <div class="mb-3">
                         <label class="form-label">Contact Email</label>
-                        <input type="email" name="contact_email" class="form-control" value="{{ old('contact_email', $sitePage->contact_email) }}">
+                        <input type="email" name="contact_email" class="form-control" value="<?php echo e(old('contact_email', $sitePage->contact_email)); ?>">
                     </div>
                     
                     <div class="mb-3">
                         <label class="form-label">Contact Phone</label>
-                        <input type="text" name="contact_phone" class="form-control" value="{{ old('contact_phone', $sitePage->contact_phone) }}">
+                        <input type="text" name="contact_phone" class="form-control" value="<?php echo e(old('contact_phone', $sitePage->contact_phone)); ?>">
                     </div>
                     
                     <div class="mb-3">
                         <label class="form-label">Contact Address</label>
-                        <textarea name="contact_address" class="form-control" rows="3">{{ old('contact_address', $sitePage->contact_address) }}</textarea>
+                        <textarea name="contact_address" class="form-control" rows="3"><?php echo e(old('contact_address', $sitePage->contact_address)); ?></textarea>
                     </div>
                     
                     <div class="mb-3">
                         <label class="form-label">Google Maps Iframe</label>
-                        <textarea name="map_iframe" class="form-control" rows="3">{{ old('map_iframe', $sitePage->map_iframe) }}</textarea>
+                        <textarea name="map_iframe" class="form-control" rows="3"><?php echo e(old('map_iframe', $sitePage->map_iframe)); ?></textarea>
                     </div>
                 </div>
             </div>
             
             <!-- About Page Fields - Team Members -->
-            <div class="card mb-4" id="aboutFields" style="display: {{ $sitePage->page_type == 'about' ? 'block' : 'none' }};">
+            <div class="card mb-4" id="aboutFields" style="display: <?php echo e($sitePage->page_type == 'about' ? 'block' : 'none'); ?>;">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0"><i class="fas fa-users"></i> Our Team</h5>
                     <button type="button" class="btn btn-sm btn-primary" onclick="addTeamMember()">
@@ -98,73 +152,73 @@
                 </div>
                 <div class="card-body">
                     <div id="teamMembersContainer">
-                        @php
+                        <?php
                             $teamMembers = old('team_members', $sitePage->team_members ?? []);
-                        @endphp
-                        @if(is_array($teamMembers) && count($teamMembers) > 0)
-                            @foreach($teamMembers as $index => $member)
-                                <div class="team-member-item card mb-3" data-index="{{ $index }}">
+                        ?>
+                        <?php if(is_array($teamMembers) && count($teamMembers) > 0): ?>
+                            <?php $__currentLoopData = $teamMembers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $member): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                <div class="team-member-item card mb-3" data-index="<?php echo e($index); ?>">
                                     <div class="card-body">
                                         <div class="d-flex justify-content-between align-items-center mb-3">
-                                            <h6 class="mb-0">Team Member #{{ $index + 1 }}</h6>
-                                            <button type="button" class="btn btn-sm btn-danger" onclick="removeTeamMember({{ $index }})">
+                                            <h6 class="mb-0">Team Member #<?php echo e($index + 1); ?></h6>
+                                            <button type="button" class="btn btn-sm btn-danger" onclick="removeTeamMember(<?php echo e($index); ?>)">
                                                 <i class="fas fa-trash"></i> Remove
                                             </button>
                                         </div>
                                         <div class="row">
                                             <div class="col-md-6 mb-3">
                                                 <label class="form-label">Name <span class="text-danger">*</span></label>
-                                                <input type="text" name="team_members[{{ $index }}][name]" class="form-control" value="{{ $member['name'] ?? '' }}" required>
+                                                <input type="text" name="team_members[<?php echo e($index); ?>][name]" class="form-control" value="<?php echo e($member['name'] ?? ''); ?>" required>
                                             </div>
                                             <div class="col-md-6 mb-3">
                                                 <label class="form-label">Position/Title</label>
-                                                <input type="text" name="team_members[{{ $index }}][position]" class="form-control" value="{{ $member['position'] ?? '' }}" placeholder="e.g., CEO, Manager">
+                                                <input type="text" name="team_members[<?php echo e($index); ?>][position]" class="form-control" value="<?php echo e($member['position'] ?? ''); ?>" placeholder="e.g., CEO, Manager">
                                             </div>
                                             <div class="col-md-12 mb-3">
                                                 <label class="form-label">Photo</label>
-                                                @if(isset($member['photo']) && $member['photo'])
+                                                <?php if(isset($member['photo']) && $member['photo']): ?>
                                                 <div class="mb-2">
-                                                    <img src="{{ asset('storage/' . $member['photo']) }}" alt="Current photo" class="img-thumbnail" style="max-width: 150px; max-height: 150px;">
-                                                    <input type="hidden" name="team_members[{{ $index }}][existing_photo]" value="{{ $member['photo'] }}">
+                                                    <img src="<?php echo e(asset('storage/' . $member['photo'])); ?>" alt="Current photo" class="img-thumbnail" style="max-width: 150px; max-height: 150px;">
+                                                    <input type="hidden" name="team_members[<?php echo e($index); ?>][existing_photo]" value="<?php echo e($member['photo']); ?>">
                                                 </div>
-                                                @endif
-                                                <input type="file" name="team_members[{{ $index }}][photo]" class="form-control" accept="image/*" onchange="previewTeamPhoto(event, {{ $index }})">
+                                                <?php endif; ?>
+                                                <input type="file" name="team_members[<?php echo e($index); ?>][photo]" class="form-control" accept="image/*" onchange="previewTeamPhoto(event, <?php echo e($index); ?>)">
                                                 <small class="text-muted">Leave blank to keep current photo. Recommended: 400x400px, square image</small>
                                             </div>
                                             <div class="col-md-12 mb-3">
-                                                <div class="team-photo-preview" id="teamPhotoPreview{{ $index }}" style="display: none;">
+                                                <div class="team-photo-preview" id="teamPhotoPreview<?php echo e($index); ?>" style="display: none;">
                                                     <img src="" alt="Preview" class="img-thumbnail" style="max-width: 150px; max-height: 150px;">
                                                 </div>
                                             </div>
                                             <div class="col-md-6 mb-3">
                                                 <label class="form-label">Email</label>
-                                                <input type="email" name="team_members[{{ $index }}][email]" class="form-control" value="{{ $member['email'] ?? '' }}">
+                                                <input type="email" name="team_members[<?php echo e($index); ?>][email]" class="form-control" value="<?php echo e($member['email'] ?? ''); ?>">
                                             </div>
                                             <div class="col-md-6 mb-3">
                                                 <label class="form-label">Phone</label>
-                                                <input type="text" name="team_members[{{ $index }}][phone]" class="form-control" value="{{ $member['phone'] ?? '' }}">
+                                                <input type="text" name="team_members[<?php echo e($index); ?>][phone]" class="form-control" value="<?php echo e($member['phone'] ?? ''); ?>">
                                             </div>
                                             <div class="col-md-12 mb-3">
                                                 <label class="form-label">Bio/Description</label>
-                                                <textarea name="team_members[{{ $index }}][bio]" class="form-control" rows="3" placeholder="Brief description about the team member">{{ $member['bio'] ?? '' }}</textarea>
+                                                <textarea name="team_members[<?php echo e($index); ?>][bio]" class="form-control" rows="3" placeholder="Brief description about the team member"><?php echo e($member['bio'] ?? ''); ?></textarea>
                                             </div>
                                             <div class="col-md-4 mb-3">
                                                 <label class="form-label">Facebook URL</label>
-                                                <input type="url" name="team_members[{{ $index }}][facebook]" class="form-control" value="{{ $member['facebook'] ?? '' }}" placeholder="https://facebook.com/...">
+                                                <input type="url" name="team_members[<?php echo e($index); ?>][facebook]" class="form-control" value="<?php echo e($member['facebook'] ?? ''); ?>" placeholder="https://facebook.com/...">
                                             </div>
                                             <div class="col-md-4 mb-3">
                                                 <label class="form-label">Twitter URL</label>
-                                                <input type="url" name="team_members[{{ $index }}][twitter]" class="form-control" value="{{ $member['twitter'] ?? '' }}" placeholder="https://twitter.com/...">
+                                                <input type="url" name="team_members[<?php echo e($index); ?>][twitter]" class="form-control" value="<?php echo e($member['twitter'] ?? ''); ?>" placeholder="https://twitter.com/...">
                                             </div>
                                             <div class="col-md-4 mb-3">
                                                 <label class="form-label">LinkedIn URL</label>
-                                                <input type="url" name="team_members[{{ $index }}][linkedin]" class="form-control" value="{{ $member['linkedin'] ?? '' }}" placeholder="https://linkedin.com/in/...">
+                                                <input type="url" name="team_members[<?php echo e($index); ?>][linkedin]" class="form-control" value="<?php echo e($member['linkedin'] ?? ''); ?>" placeholder="https://linkedin.com/in/...">
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-                            @endforeach
-                        @endif
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                        <?php endif; ?>
                     </div>
                     <p class="text-muted small mb-0">Add team members to display in the "Our Team" section on the about page.</p>
                 </div>
@@ -178,17 +232,17 @@
                 <div class="card-body">
                     <div class="mb-3">
                         <label class="form-label">Meta Title</label>
-                        <input type="text" name="meta_title" class="form-control" value="{{ old('meta_title', $sitePage->meta_title) }}" maxlength="60">
+                        <input type="text" name="meta_title" class="form-control" value="<?php echo e(old('meta_title', $sitePage->meta_title)); ?>" maxlength="60">
                     </div>
                     
                     <div class="mb-3">
                         <label class="form-label">Meta Description</label>
-                        <textarea name="meta_description" class="form-control" rows="2" maxlength="160">{{ old('meta_description', $sitePage->meta_description) }}</textarea>
+                        <textarea name="meta_description" class="form-control" rows="2" maxlength="160"><?php echo e(old('meta_description', $sitePage->meta_description)); ?></textarea>
                     </div>
                     
                     <div class="mb-3">
                         <label class="form-label">Meta Keywords</label>
-                        <input type="text" name="meta_keywords" class="form-control" value="{{ old('meta_keywords', $sitePage->meta_keywords) }}">
+                        <input type="text" name="meta_keywords" class="form-control" value="<?php echo e(old('meta_keywords', $sitePage->meta_keywords)); ?>">
                     </div>
                 </div>
             </div>
@@ -201,12 +255,12 @@
                 <div class="card-body">
                     <div class="mb-3">
                         <label class="form-label">Custom CSS</label>
-                        <textarea name="custom_css" class="form-control" rows="4">{{ old('custom_css', $sitePage->custom_css) }}</textarea>
+                        <textarea name="custom_css" class="form-control" rows="4"><?php echo e(old('custom_css', $sitePage->custom_css)); ?></textarea>
                     </div>
                     
                     <div class="mb-3">
                         <label class="form-label">Custom JavaScript</label>
-                        <textarea name="custom_js" class="form-control" rows="4">{{ old('custom_js', $sitePage->custom_js) }}</textarea>
+                        <textarea name="custom_js" class="form-control" rows="4"><?php echo e(old('custom_js', $sitePage->custom_js)); ?></textarea>
                     </div>
                 </div>
             </div>
@@ -223,25 +277,25 @@
                     <div class="mb-3">
                         <label class="form-label">Page Type <span class="text-danger">*</span></label>
                         <select name="page_type" id="pageType" class="form-select" required>
-                            <option value="custom" {{ $sitePage->page_type == 'custom' ? 'selected' : '' }}>Custom Page</option>
-                            <option value="about" {{ $sitePage->page_type == 'about' ? 'selected' : '' }}>About Us</option>
-                            <option value="contact" {{ $sitePage->page_type == 'contact' ? 'selected' : '' }}>Contact Us</option>
-                            <option value="products" {{ $sitePage->page_type == 'products' ? 'selected' : '' }}>Products</option>
-                            <option value="categories" {{ $sitePage->page_type == 'categories' ? 'selected' : '' }}>Categories</option>
+                            <option value="custom" <?php echo e($sitePage->page_type == 'custom' ? 'selected' : ''); ?>>Custom Page</option>
+                            <option value="about" <?php echo e($sitePage->page_type == 'about' ? 'selected' : ''); ?>>About Us</option>
+                            <option value="contact" <?php echo e($sitePage->page_type == 'contact' ? 'selected' : ''); ?>>Contact Us</option>
+                            <option value="products" <?php echo e($sitePage->page_type == 'products' ? 'selected' : ''); ?>>Products</option>
+                            <option value="categories" <?php echo e($sitePage->page_type == 'categories' ? 'selected' : ''); ?>>Categories</option>
                         </select>
                     </div>
                     
                     <div class="mb-3">
                         <label class="form-label">Template</label>
                         <select name="template" class="form-select">
-                            <option value="default" {{ $sitePage->template == 'default' ? 'selected' : '' }}>Default</option>
-                            <option value="full-width" {{ $sitePage->template == 'full-width' ? 'selected' : '' }}>Full Width</option>
-                            <option value="sidebar" {{ $sitePage->template == 'sidebar' ? 'selected' : '' }}>With Sidebar</option>
+                            <option value="default" <?php echo e($sitePage->template == 'default' ? 'selected' : ''); ?>>Default</option>
+                            <option value="full-width" <?php echo e($sitePage->template == 'full-width' ? 'selected' : ''); ?>>Full Width</option>
+                            <option value="sidebar" <?php echo e($sitePage->template == 'sidebar' ? 'selected' : ''); ?>>With Sidebar</option>
                         </select>
                     </div>
                     
                     <div class="form-check mb-3">
-                        <input type="checkbox" name="is_active" value="1" class="form-check-input" id="isActive" {{ $sitePage->is_active ? 'checked' : '' }}>
+                        <input type="checkbox" name="is_active" value="1" class="form-check-input" id="isActive" <?php echo e($sitePage->is_active ? 'checked' : ''); ?>>
                         <label class="form-check-label" for="isActive">
                             <strong>Active</strong>
                             <br><small class="text-muted">Page is visible on website</small>
@@ -250,7 +304,7 @@
                     
                     <div class="mb-3">
                         <label class="form-label">Menu Order</label>
-                        <input type="number" name="menu_order" class="form-control" value="{{ $sitePage->menu_order }}" min="0">
+                        <input type="number" name="menu_order" class="form-control" value="<?php echo e($sitePage->menu_order); ?>" min="0">
                     </div>
                 </div>
             </div>
@@ -261,15 +315,15 @@
                     <h5 class="mb-0"><i class="fas fa-image"></i> Banner Image</h5>
                 </div>
                 <div class="card-body">
-                    @if($sitePage->banner_image)
+                    <?php if($sitePage->banner_image): ?>
                     <div class="mb-3">
                         <label class="form-label">Current Banner</label>
-                        <img src="{{ $sitePage->banner_image_url }}" alt="Current Banner" class="img-fluid rounded">
+                        <img src="<?php echo e($sitePage->banner_image_url); ?>" alt="Current Banner" class="img-fluid rounded">
                     </div>
-                    @endif
+                    <?php endif; ?>
                     
                     <div class="mb-3">
-                        <label class="form-label">{{ $sitePage->banner_image ? 'Replace Banner' : 'Upload Banner' }}</label>
+                        <label class="form-label"><?php echo e($sitePage->banner_image ? 'Replace Banner' : 'Upload Banner'); ?></label>
                         <input type="file" name="banner_image" class="form-control" accept="image/*" onchange="previewBanner(event)">
                         <small class="text-muted">Recommended: 1920x400px, max 5MB</small>
                     </div>
@@ -287,7 +341,7 @@
                     <button type="submit" class="btn btn-primary w-100 mb-2">
                         <i class="fas fa-save"></i> Update Page
                     </button>
-                    <a href="{{ route('admin.site-pages.show', $sitePage) }}" class="btn btn-outline-secondary w-100">
+                    <a href="<?php echo e(route('admin.site-pages.show', $sitePage)); ?>" class="btn btn-outline-secondary w-100">
                         <i class="fas fa-eye"></i> View Page
                     </a>
                 </div>
@@ -297,7 +351,7 @@
 </form>
 
 <script>
-let teamMemberIndex = {{ is_array($sitePage->team_members ?? []) ? count($sitePage->team_members ?? []) : 0 }};
+let teamMemberIndex = <?php echo e(is_array($sitePage->team_members ?? []) ? count($sitePage->team_members ?? []) : 0); ?>;
 
 // Show/hide fields based on page type
 document.getElementById('pageType').addEventListener('change', function() {
@@ -465,4 +519,6 @@ function previewBanner(event) {
     margin-left: 0.5rem;
 }
 </style>
-@endsection
+<?php $__env->stopSection(); ?>
+
+<?php echo $__env->make('admin.layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH /Applications/XAMPP/xamppfiles/htdocs/e-manager/resources/views/admin/site-pages/edit.blade.php ENDPATH**/ ?>
