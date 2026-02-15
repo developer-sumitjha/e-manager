@@ -22,6 +22,34 @@ Route::domain('{subdomain}.localhost')->group(function () {
     });
     Route::get('/product/{slug}', [App\Http\Controllers\StorefrontController::class, 'product'])->name('storefront.subdomain.product');
     Route::get('/category/{slug}', [App\Http\Controllers\StorefrontController::class, 'category'])->name('storefront.subdomain.category');
+    
+    // Products archive page - dynamic route (must come after specific routes)
+    Route::get('/{slug}', function($subdomain, $slug) {
+        $tenant = \App\Models\Tenant::where('subdomain', $subdomain)->firstOrFail();
+        $settings = \App\Models\SiteSettings::where('tenant_id', $tenant->id)->first();
+        $archiveSlug = $settings->additional_settings['products_archive_slug'] ?? 'products';
+        
+        // Check if this slug matches the archive slug
+        if ($slug === $archiveSlug) {
+            return app(\App\Http\Controllers\StorefrontController::class)->productsArchive(request(), $subdomain);
+        }
+        
+        // If not archive, check if it's a category
+        $category = \App\Models\Category::where('tenant_id', $tenant->id)->where('slug', $slug)->first();
+        if ($category) {
+            return app(\App\Http\Controllers\StorefrontController::class)->category(request(), $subdomain, $slug);
+        }
+        
+        // If not category, check if it's a product
+        $product = \App\Models\Product::where('tenant_id', $tenant->id)->where('slug', $slug)->first();
+        if ($product) {
+            return app(\App\Http\Controllers\StorefrontController::class)->product($subdomain, $slug);
+        }
+        
+        // Not found
+        abort(404);
+    })->name('storefront.subdomain.dynamic');
+    
     Route::get('/cart', [App\Http\Controllers\StorefrontController::class, 'cart'])->name('storefront.subdomain.cart');
     Route::post('/cart/add', [App\Http\Controllers\StorefrontController::class, 'addToCart'])->name('storefront.subdomain.cart.add')->middleware('throttle:30,1');
     Route::post('/cart/update', [App\Http\Controllers\StorefrontController::class, 'updateCart'])->name('storefront.subdomain.cart.update')->middleware('throttle:20,1');
@@ -309,6 +337,34 @@ Route::view('/contact', 'public.contact')->name('public.contact');
 // Storefront Routes - Path-based (for when accessed without subdomain, e.g., localhost/storefront/primax/...)
 Route::prefix('storefront/{subdomain}')->group(function () {
     Route::get('/', [App\Http\Controllers\StorefrontController::class, 'show'])->name('storefront.preview');
+    
+    // Products archive page - dynamic route based on slug
+    Route::get('/{slug}', function($subdomain, $slug) {
+        $tenant = \App\Models\Tenant::where('subdomain', $subdomain)->firstOrFail();
+        $settings = \App\Models\SiteSettings::where('tenant_id', $tenant->id)->first();
+        $archiveSlug = $settings->additional_settings['products_archive_slug'] ?? 'products';
+        
+        // Check if this slug matches the archive slug
+        if ($slug === $archiveSlug) {
+            return app(\App\Http\Controllers\StorefrontController::class)->productsArchive(request(), $subdomain);
+        }
+        
+        // If not archive, check if it's a category
+        $category = \App\Models\Category::where('tenant_id', $tenant->id)->where('slug', $slug)->first();
+        if ($category) {
+            return app(\App\Http\Controllers\StorefrontController::class)->category(request(), $subdomain, $slug);
+        }
+        
+        // If not category, check if it's a product
+        $product = \App\Models\Product::where('tenant_id', $tenant->id)->where('slug', $slug)->first();
+        if ($product) {
+            return app(\App\Http\Controllers\StorefrontController::class)->product($subdomain, $slug);
+        }
+        
+        // Not found
+        abort(404);
+    })->name('storefront.dynamic');
+    
     Route::get('/product/{slug}', [App\Http\Controllers\StorefrontController::class, 'product'])->name('storefront.product');
     Route::post('/product/{product}/reviews', [App\Http\Controllers\ReviewController::class, 'store'])->middleware(['auth:web'])->name('storefront.product.reviews.store');
     Route::get('/cart', [App\Http\Controllers\StorefrontController::class, 'cart'])->name('storefront.cart');

@@ -230,8 +230,6 @@ class SiteSettings extends Model
             'font_family' => 'Inter',
             'font_size' => 16,
             'heading_font' => 'Inter',
-            'banner_button_text' => 'Shop Now',
-            'banner_button_link' => '/products',
             'show_banner' => true,
             'show_categories_menu' => true,
             'show_search_bar' => true,

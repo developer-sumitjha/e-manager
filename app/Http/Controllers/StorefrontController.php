@@ -88,6 +88,17 @@ class StorefrontController extends Controller
                 ->take(6)
                 ->get();
         });
+        
+        // Get new arrivals products if enabled
+        $newArrivals = collect();
+        if ($settings->show_new_arrivals ?? false) {
+            $newArrivals = Product::where('tenant_id', $tenant->id)
+                ->where('is_active', true)
+                ->latest('created_at')
+                ->take(12)
+                ->get();
+        }
+        
         // Cart from session
         $cart = Session::get('cart', []);
         
@@ -101,7 +112,7 @@ class StorefrontController extends Controller
         }, $cart);
         $cart = array_filter($cart); // Remove any null items
         
-        return view('storefront.preview', compact('tenant', 'settings', 'products', 'categories', 'cart', 'q', 'sort'));
+        return view('storefront.preview', compact('tenant', 'settings', 'products', 'categories', 'cart', 'q', 'sort', 'newArrivals'));
     }
 
     /**
@@ -185,6 +196,62 @@ class StorefrontController extends Controller
         $avgRating = $avgRating ? round($avgRating, 1) : null;
 
         return view('storefront.product', compact('tenant', 'settings', 'product', 'reviews', 'avgRating'));
+    }
+
+    /**
+     * Products archive page - shows all products
+     */
+    public function productsArchive(Request $request, $subdomain = null)
+    {
+        $tenant = Tenant::where('subdomain', $subdomain)->firstOrFail();
+        $settings = SiteSettings::where('tenant_id', $tenant->id)->first();
+        
+        // Get archive slug from settings
+        $archiveSlug = $settings->additional_settings['products_archive_slug'] ?? 'products';
+        
+        $query = Product::where('tenant_id', $tenant->id)
+            ->where('is_active', true)
+            ->with('category');
+
+        // Search functionality
+        if ($search = trim($request->query('q', ''))) {
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', "%$search%")
+                  ->orWhere('description', 'like', "%$search%")
+                  ->orWhere('sku', 'like', "%$search%");
+            });
+        }
+
+        // Category filter
+        if ($categoryId = $request->query('category')) {
+            $query->where('category_id', $categoryId);
+        }
+
+        // Sorting
+        $sort = $request->query('sort', 'new');
+        if ($sort === 'price_asc') {
+            $query->orderBy('price', 'asc');
+        } elseif ($sort === 'price_desc') {
+            $query->orderBy('price', 'desc');
+        } elseif ($sort === 'name_asc') {
+            $query->orderBy('name', 'asc');
+        } elseif ($sort === 'name_desc') {
+            $query->orderBy('name', 'desc');
+        } else {
+            $query->latest('id');
+        }
+
+        // Get products per page from settings
+        $perPage = $settings->products_per_page ?? 12;
+        $products = $query->paginate($perPage)->withQueryString();
+        
+        // Get all categories for filter
+        $categories = Category::where('tenant_id', $tenant->id)
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get();
+
+        return view('storefront.products-archive', compact('tenant', 'settings', 'products', 'categories', 'sort', 'search', 'archiveSlug'));
     }
 
     /**

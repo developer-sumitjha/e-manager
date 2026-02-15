@@ -29,9 +29,18 @@
                 </div>
                 <div id="bannerImagePreview" class="image-preview-box mt-3" style="max-width: 100%; {{ $settings->banner_image ? 'display: block;' : 'display: none;' }}">
                     @if($settings->banner_image)
-                    <img src="{{ Storage::url($settings->banner_image) }}" alt="Current Banner">
+                    @php
+                        $bannerUrl = '';
+                        if (\Illuminate\Support\Facades\Storage::disk('public')->exists($settings->banner_image)) {
+                            $bannerUrl = \Illuminate\Support\Facades\Storage::disk('public')->url($settings->banner_image);
+                        } else {
+                            // Fallback for local development or if Storage::url fails
+                            $bannerUrl = asset('storage/' . $settings->banner_image);
+                        }
+                    @endphp
+                    <img src="{{ $bannerUrl }}" alt="Current Banner" style="max-width: 100%; height: auto; border: 1px solid #ddd; border-radius: 8px; padding: 8px;">
                     @else
-                    <img src="" alt="Banner Preview">
+                    <img src="" alt="Banner Preview" style="max-width: 100%; height: auto; border: 1px solid #ddd; border-radius: 8px; padding: 8px;">
                     @endif
                 </div>
             </div>
@@ -79,18 +88,47 @@
 </div>
 
 <script>
-// Banner image preview
-document.getElementById('bannerImageInput').addEventListener('change', function(e) {
-    const file = e.target.files[0];
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            const preview = document.getElementById('bannerImagePreview');
-            const img = preview.querySelector('img');
-            img.src = e.target.result;
-            preview.style.display = 'block';
-        };
-        reader.readAsDataURL(file);
+// Banner image upload area click handler
+document.addEventListener('DOMContentLoaded', function() {
+    const bannerUploadArea = document.querySelector('#banner-tab .file-upload-area');
+    const bannerImageInput = document.getElementById('bannerImageInput');
+    
+    if (bannerUploadArea && bannerImageInput) {
+        bannerUploadArea.addEventListener('click', function() {
+            bannerImageInput.click();
+        });
+        
+        // Banner image preview
+        bannerImageInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                // Validate file size (5MB max)
+                const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+                if (file.size > maxSize) {
+                    const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
+                    alert(`File size (${fileSizeMB}MB) exceeds 5MB limit. Please compress the image or choose a smaller file.`);
+                    this.value = ''; // Clear the input
+                    return;
+                }
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const preview = document.getElementById('bannerImagePreview');
+                    if (preview) {
+                        let img = preview.querySelector('img');
+                        if (!img) {
+                            img = document.createElement('img');
+                            img.style.cssText = 'max-width: 100%; height: auto; border: 1px solid #ddd; border-radius: 8px; padding: 8px;';
+                            img.alt = 'Banner Preview';
+                            preview.appendChild(img);
+                        }
+                        img.src = e.target.result;
+                        preview.style.display = 'block';
+                    }
+                };
+                reader.readAsDataURL(file);
+            }
+        });
     }
 });
 
@@ -100,6 +138,17 @@ function saveBanner() {
     
     // Convert checkbox to 1/0
     formData.set('show_banner', form.querySelector('input[name="show_banner"]').checked ? '1' : '0');
+    
+    // Explicitly handle empty values - set to empty string so they can be cleared
+    const buttonText = form.querySelector('input[name="banner_button_text"]').value.trim();
+    const buttonLink = form.querySelector('input[name="banner_button_link"]').value.trim();
+    const bannerTitle = form.querySelector('input[name="banner_title"]').value.trim();
+    const bannerSubtitle = form.querySelector('input[name="banner_subtitle"]').value.trim();
+    
+    formData.set('banner_button_text', buttonText || '');
+    formData.set('banner_button_link', buttonLink || '');
+    formData.set('banner_title', bannerTitle || '');
+    formData.set('banner_subtitle', bannerSubtitle || '');
     
     showSaveIndicator('saving');
     

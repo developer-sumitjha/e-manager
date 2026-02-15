@@ -4,46 +4,6 @@
         
         <div class="form-section">
             <h3 class="form-section-title">
-                <i class="fas fa-swatchbook"></i>
-                Theme Selection
-            </h3>
-            
-            <div class="row">
-                <div class="col-md-4">
-                    <label class="theme-option">
-                        <input type="radio" name="theme" value="modern" <?php echo e($settings->theme == 'modern' ? 'checked' : ''); ?>>
-                        <div class="theme-card">
-                            <div class="theme-preview modern-preview"></div>
-                            <h4>Modern</h4>
-                            <p>Clean and contemporary design</p>
-                        </div>
-                    </label>
-                </div>
-                <div class="col-md-4">
-                    <label class="theme-option">
-                        <input type="radio" name="theme" value="classic" <?php echo e($settings->theme == 'classic' ? 'checked' : ''); ?>>
-                        <div class="theme-card">
-                            <div class="theme-preview classic-preview"></div>
-                            <h4>Classic</h4>
-                            <p>Traditional and elegant</p>
-                        </div>
-                    </label>
-                </div>
-                <div class="col-md-4">
-                    <label class="theme-option">
-                        <input type="radio" name="theme" value="minimal" <?php echo e($settings->theme == 'minimal' ? 'checked' : ''); ?>>
-                        <div class="theme-card">
-                            <div class="theme-preview minimal-preview"></div>
-                            <h4>Minimal</h4>
-                            <p>Simple and focused</p>
-                        </div>
-                    </label>
-                </div>
-            </div>
-        </div>
-        
-        <div class="form-section">
-            <h3 class="form-section-title">
                 <i class="fas fa-paint-brush"></i>
                 Color Scheme
             </h3>
@@ -221,18 +181,17 @@
 </div>
 
 <style>
-.theme-option, .layout-option {
+.layout-option {
     cursor: pointer;
     display: block;
     margin-bottom: 1rem;
 }
 
-.theme-option input[type="radio"],
 .layout-option input[type="radio"] {
     display: none;
 }
 
-.theme-card, .layout-card {
+.layout-card {
     border: 3px solid #e5e7eb;
     border-radius: 12px;
     padding: 1.5rem;
@@ -240,34 +199,21 @@
     transition: all 0.3s ease;
 }
 
-.theme-option input[type="radio"]:checked + .theme-card,
 .layout-option input[type="radio"]:checked + .layout-card {
     border-color: var(--builder-primary);
     background: rgba(102, 126, 234, 0.05);
 }
 
-.theme-card:hover, .layout-card:hover {
+.layout-card:hover {
     border-color: var(--builder-primary);
     transform: translateY(-4px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-.theme-preview, .layout-preview {
+.layout-preview {
     height: 100px;
     border-radius: 8px;
     margin-bottom: 1rem;
-}
-
-.modern-preview {
-    background: linear-gradient(135deg, #667eea, #764ba2);
-}
-
-.classic-preview {
-    background: linear-gradient(135deg, #8B4513, #D2691E);
-}
-
-.minimal-preview {
-    background: linear-gradient(135deg, #374151, #6B7280);
 }
 
 .default-layout {
@@ -282,14 +228,14 @@
     background: #e5e7eb;
 }
 
-.theme-card h4, .layout-card h4 {
+.layout-card h4 {
     font-size: 16px;
     font-weight: 700;
     color: #1e293b;
     margin-bottom: 0.25rem;
 }
 
-.theme-card p, .layout-card p {
+.layout-card p {
     font-size: 13px;
     color: #64748b;
     margin-bottom: 0;

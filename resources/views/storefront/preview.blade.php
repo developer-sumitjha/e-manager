@@ -23,50 +23,63 @@
         --font-size: {{ $settings->font_size ?? 16 }}px;
     }
     
-    /* Hero Banner */
-    .hero-banner { 
-        display: {{ ($settings->show_banner ?? true) && !($settings->additional_settings['show_hero_slides'] ?? false) ? 'block' : 'none' }}; 
+    /* Banner Section */
+    .banner-section { 
+        display: {{ ($settings->show_banner ?? true) ? 'block' : 'none' }}; 
         background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); 
         color: white; 
-        padding: 4rem 2rem; 
         text-align: center; 
         position: relative; 
         overflow: hidden; 
-        margin-bottom: 3rem;
+        margin-bottom: 4rem;
+        border-radius: var(--border-radius-lg);
     }
     
-    @if($settings->banner_image)
-    .hero-banner { 
-        background-image: url('{{ $settings->banner_image_url ?? asset('storage/' . $settings->banner_image) }}'); 
-        background-size: cover; 
-        background-position: center; 
+    .banner-section .banner-image-wrapper {
+        position: relative;
+        width: 100%;
+        display: block;
     }
-    .hero-banner::before { 
-        content: ''; 
+    
+    .banner-section .banner-image-wrapper img {
+        width: 100%;
+        height: auto;
+        display: block;
+        object-fit: cover;
+    }
+    
+    .banner-section .content { 
         position: absolute; 
-        top: 0; 
-        left: 0; 
-        right: 0; 
-        bottom: 0; 
-        background: linear-gradient(135deg, rgba(102, 126, 234, 0.8), rgba(118, 75, 162, 0.8)); 
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 2; 
+        max-width: 800px; 
+        width: 100%;
+        padding: 2rem;
+    }
+    
+    @if(!$settings->banner_image)
+    .banner-section {
+        padding: 4rem 2rem;
+    }
+    .banner-section .content {
+        position: relative;
+        top: auto;
+        left: auto;
+        transform: none;
+        margin: 0 auto;
     }
     @endif
     
-    .hero-banner .content { 
-        position: relative; 
-        z-index: 2; 
-        max-width: 800px; 
-        margin: 0 auto; 
-    }
-    
-    .hero-banner h1 { 
-        font-size: 3rem; 
+    .banner-section h2 { 
+        font-size: 2.5rem; 
         font-weight: 800; 
         margin-bottom: 1rem; 
         line-height: 1.1;
     }
     
-    .hero-banner p { 
+    .banner-section p { 
         font-size: 1.25rem; 
         margin-bottom: 2rem; 
         opacity: 0.95; 
@@ -236,6 +249,235 @@
         margin-bottom: 4rem; 
     }
     
+    /* New Arrivals Section */
+    .new-arrivals-section {
+        margin-bottom: 4rem;
+        padding: 2rem 0;
+    }
+    
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+    }
+    
+    .view-all-link {
+        color: var(--primary-color);
+        text-decoration: none;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+    }
+    
+    .view-all-link:hover {
+        color: var(--secondary-color);
+        transform: translateX(4px);
+    }
+    
+    .new-arrivals-carousel-wrapper {
+        position: relative;
+    }
+    
+    .new-arrivals-carousel {
+        overflow: hidden;
+        position: relative;
+    }
+    
+    .new-arrivals-carousel .carousel-container {
+        display: flex;
+        gap: 1.5rem;
+        overflow: hidden;
+        scroll-behavior: smooth;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+        padding: 0.5rem 0;
+        position: relative;
+        width: 100%;
+    }
+    
+    .new-arrivals-carousel .carousel-container::-webkit-scrollbar {
+        display: none;
+    }
+    
+    .new-arrivals-carousel .product-card-carousel {
+        flex: 0 0 calc(33.333% - 1rem);
+        min-width: calc(33.333% - 1rem);
+        background: white;
+        border-radius: var(--border-radius-lg);
+        overflow: hidden;
+        box-shadow: var(--shadow-sm);
+        transition: var(--transition);
+        border: 1px solid var(--border-color);
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .new-arrivals-carousel .product-card-carousel:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-lg);
+    }
+    
+    .new-arrivals-carousel .product-link {
+        text-decoration: none;
+        color: inherit;
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+    }
+    
+    .new-arrivals-carousel .product-image {
+        width: 100%;
+        aspect-ratio: 1 / 1;
+        background: var(--surface-color);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .new-arrivals-carousel .product-image img {
+        width: 100%;
+        height: 100%;
+        max-height: 100%;
+        object-fit: contain;
+        object-position: center;
+        transition: var(--transition);
+        display: block;
+    }
+    
+    .new-arrivals-carousel .product-card-carousel:hover .product-image img {
+        transform: scale(1.05);
+    }
+    
+    .new-arrivals-carousel .product-info {
+        padding: 1.5rem;
+        flex: 1;
+    }
+    
+    .new-arrivals-carousel .product-name {
+        font-weight: 600;
+        font-size: 1rem;
+        margin-bottom: 0.5rem;
+        color: var(--text-color);
+        line-height: 1.4;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    
+    .new-arrivals-carousel .product-price {
+        margin-bottom: 0;
+    }
+    
+    .new-arrivals-carousel .current-price {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--primary-color);
+    }
+    
+    .new-arrivals-carousel .original-price {
+        font-size: 0.9rem;
+        color: var(--text-muted);
+        text-decoration: line-through;
+        margin-left: 0.5rem;
+    }
+    
+    .new-arrivals-carousel .product-actions {
+        padding: 0 1.5rem 1.5rem;
+    }
+    
+    .new-arrivals-carousel .add-to-cart-btn {
+        width: 100%;
+        padding: 0.75rem;
+        background: var(--primary-color);
+        color: white;
+        border: none;
+        border-radius: var(--border-radius-sm);
+        font-weight: 600;
+        cursor: pointer;
+        transition: var(--transition);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+    
+    .new-arrivals-carousel .add-to-cart-btn:hover:not(:disabled) {
+        background: var(--secondary-color);
+        transform: translateY(-2px);
+    }
+    
+    .new-arrivals-carousel .add-to-cart-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+    
+    .carousel-nav {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        background: white;
+        border: 2px solid var(--border-color);
+        border-radius: 50%;
+        width: 45px;
+        height: 45px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        z-index: 10;
+        transition: var(--transition);
+        box-shadow: var(--shadow-md);
+    }
+    
+    .carousel-nav:hover {
+        background: var(--primary-color);
+        color: white;
+        border-color: var(--primary-color);
+        transform: translateY(-50%) scale(1.1);
+    }
+    
+    .carousel-prev {
+        left: -20px;
+    }
+    
+    .carousel-next {
+        right: -20px;
+    }
+    
+    @media (max-width: 992px) {
+        .new-arrivals-carousel .product-card-carousel {
+            flex: 0 0 calc(50% - 0.75rem);
+            min-width: calc(50% - 0.75rem);
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .carousel-prev {
+            left: 10px;
+        }
+        
+        .carousel-next {
+            right: 10px;
+        }
+        
+        .new-arrivals-carousel .product-card-carousel {
+            flex: 0 0 calc(100% - 0.5rem);
+            min-width: calc(100% - 0.5rem);
+        }
+        
+        .section-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+    }
+    
     /* Products Grid */
     .products-grid { 
         display: {{ ($settings->show_featured_products ?? true) ? 'grid' : 'none' }}; 
@@ -265,8 +507,8 @@
     
     /* Responsive adjustments */
     @media (max-width: 768px) {
-        .hero-banner h1 { font-size: 2rem; }
-        .hero-banner p { font-size: 1rem; }
+        .banner-section h2 { font-size: 2rem; }
+        .banner-section p { font-size: 1rem; }
         .hero-slide-content {
             flex-direction: column;
             padding: 2rem 1rem;
@@ -303,8 +545,8 @@
     }
     
     @media (max-width: 480px) {
-        .hero-banner { padding: 2rem 1rem; }
-        .hero-banner h1 { font-size: 1.75rem; }
+        .banner-section { padding: 2rem 1rem; }
+        .banner-section h2 { font-size: 1.75rem; }
         .hero-slide-content {
             @php
                 $slideHeight = $settings->additional_settings['slide_height'] ?? 500;
@@ -419,18 +661,6 @@
 </div>
 @endif
 
-<!-- Hero Banner (Fallback if slides not enabled) -->
-@if(($settings->show_banner ?? true) && !$showHeroSlides)
-<div class="hero-banner">
-    <div class="content">
-        <h1>{{ $settings->banner_title ?? 'Welcome to ' . ($settings->site_name ?? $tenant->business_name) }}</h1>
-        <p>{{ $settings->banner_subtitle ?? 'Discover amazing products at great prices' }}</p>
-        @if($settings->banner_button_text)
-            <a href="#products" class="btn btn-primary btn-lg">{{ $settings->banner_button_text }}</a>
-        @endif
-    </div>
-</div>
-@endif
 
 <div class="container">
     <!-- Categories Section -->
@@ -458,6 +688,92 @@
             <p>No categories yet. Add categories from your admin panel.</p>
         </div>
         @endif
+    </section>
+    @endif
+
+    <!-- New Arrivals Section -->
+    @if(($settings->show_new_arrivals ?? false) && isset($newArrivals) && $newArrivals->count() > 0)
+    <section id="new-arrivals" class="new-arrivals-section">
+        <div class="section-header">
+            <h2 class="section-title">New Arrivals</h2>
+            <a href="{{ \App\Helpers\StorefrontHelper::route('storefront.dynamic', [$tenant->subdomain, ($settings->additional_settings['products_archive_slug'] ?? 'products')]) }}?sort=new" class="view-all-link">View All <i class="fas fa-arrow-right"></i></a>
+        </div>
+        
+        <div class="new-arrivals-carousel-wrapper">
+            <div class="new-arrivals-carousel" id="newArrivalsCarousel">
+                <div class="carousel-container">
+                    @foreach($newArrivals as $product)
+                    <div class="product-card-carousel">
+                        <a href="{{ \App\Helpers\StorefrontHelper::route('storefront.product', [$tenant->subdomain, $product->slug]) }}" class="product-link">
+                            <div class="product-image">
+                                @if($product->primary_image_url)
+                                    <img src="{{ $product->primary_image_url }}" alt="{{ $product->name }}" loading="lazy">
+                                @else
+                                    <i class="fas fa-image"></i>
+                                @endif
+                            </div>
+                            <div class="product-info">
+                                <div class="product-name">{{ $product->name }}</div>
+                                <div class="product-price">
+                                    @if($product->sale_price && $product->sale_price < $product->price)
+                                        <span class="current-price">${{ number_format($product->sale_price, 2) }}</span>
+                                        <span class="original-price">${{ number_format($product->price, 2) }}</span>
+                                    @else
+                                        <span class="current-price">${{ number_format($product->price, 2) }}</span>
+                                    @endif
+                                </div>
+                            </div>
+                        </a>
+                        @if($settings->show_add_to_cart_button ?? true)
+                        <div class="product-actions">
+                            <button class="add-to-cart-btn js-add-to-cart" data-product-id="{{ $product->id }}" 
+                                    {{ !$product->isInStock() ? 'disabled' : '' }}>
+                                <i class="fas fa-shopping-cart"></i>
+                                {{ $product->isInStock() ? 'Add to Cart' : 'Out of Stock' }}
+                            </button>
+                        </div>
+                        @endif
+                    </div>
+                    @endforeach
+                </div>
+            </div>
+            <button class="carousel-nav carousel-prev" onclick="scrollCarousel('newArrivalsCarousel', -1)">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+            <button class="carousel-nav carousel-next" onclick="scrollCarousel('newArrivalsCarousel', 1)">
+                <i class="fas fa-chevron-right"></i>
+            </button>
+        </div>
+    </section>
+    @endif
+
+    <!-- Banner Section -->
+    @if(($settings->show_banner ?? true) && (trim($settings->banner_title ?? '') !== '' || trim($settings->banner_subtitle ?? '') !== '' || trim($settings->banner_button_text ?? '') !== '' || !empty($settings->banner_image)))
+    <section id="banner" class="banner-section">
+        @if(!empty($settings->banner_image))
+        <div class="banner-image-wrapper">
+            @php
+                $bannerUrl = '';
+                if (\Illuminate\Support\Facades\Storage::disk('public')->exists($settings->banner_image)) {
+                    $bannerUrl = \Illuminate\Support\Facades\Storage::disk('public')->url($settings->banner_image);
+                } else {
+                    $bannerUrl = asset('storage/' . $settings->banner_image);
+                }
+            @endphp
+            <img src="{{ $bannerUrl }}" alt="{{ $settings->banner_title ?? 'Banner' }}">
+        </div>
+        @endif
+        <div class="content">
+            @if(trim($settings->banner_title ?? '') !== '')
+                <h2>{{ $settings->banner_title }}</h2>
+            @endif
+            @if(trim($settings->banner_subtitle ?? '') !== '')
+                <p>{{ $settings->banner_subtitle }}</p>
+            @endif
+            @if(trim($settings->banner_button_text ?? '') !== '')
+                <a href="{{ trim($settings->banner_button_link ?? '') !== '' ? $settings->banner_button_link : '#products' }}" class="btn btn-primary btn-lg">{{ $settings->banner_button_text }}</a>
+            @endif
+        </div>
     </section>
     @endif
 
@@ -844,6 +1160,174 @@ document.addEventListener('click', function(e) {
             return;
         }
     }
+});
+
+// New Arrivals Carousel Navigation with Loop
+let carouselPosition = 0;
+let carouselItems = [];
+let itemsPerView = 3;
+let isScrolling = false;
+
+function getItemsPerView() {
+    if (window.innerWidth <= 768) {
+        return 1;
+    } else if (window.innerWidth <= 992) {
+        return 2;
+    } else {
+        return 3;
+    }
+}
+
+function initNewArrivalsCarousel() {
+    const carousel = document.getElementById('newArrivalsCarousel');
+    if (!carousel) return;
+    
+    const container = carousel.querySelector('.carousel-container');
+    if (!container) return;
+    
+    itemsPerView = getItemsPerView();
+    carouselItems = Array.from(container.querySelectorAll('.product-card-carousel:not(.carousel-clone)'));
+    
+    if (carouselItems.length === 0) return;
+    
+    // Remove existing clones
+    container.querySelectorAll('.carousel-clone').forEach(clone => clone.remove());
+    
+    // Clone items for seamless loop
+    const totalItems = carouselItems.length;
+    if (totalItems > itemsPerView) {
+        // Clone first items to end
+        for (let i = 0; i < itemsPerView; i++) {
+            const clone = carouselItems[i].cloneNode(true);
+            clone.classList.add('carousel-clone');
+            container.appendChild(clone);
+        }
+        
+        // Clone last items to beginning
+        for (let i = totalItems - itemsPerView; i < totalItems; i++) {
+            const clone = carouselItems[i].cloneNode(true);
+            clone.classList.add('carousel-clone');
+            container.insertBefore(clone, carouselItems[0]);
+        }
+        
+        // Update carousel items list (including clones)
+        const allItems = Array.from(container.querySelectorAll('.product-card-carousel'));
+        
+        // Set initial position to first real item (after beginning clones)
+        setTimeout(() => {
+            const firstRealIndex = itemsPerView;
+            if (allItems[firstRealIndex]) {
+                container.scrollLeft = allItems[firstRealIndex].offsetLeft - container.offsetLeft;
+                carouselPosition = 0;
+            }
+        }, 100);
+    }
+    
+    // Handle scroll end for seamless loop (only add once)
+    if (!container.dataset.scrollListenerAdded) {
+        container.dataset.scrollListenerAdded = 'true';
+        const totalItems = carouselItems.length;
+        
+        container.addEventListener('scroll', function() {
+            if (isScrolling) return;
+            
+            const scrollLeft = container.scrollLeft;
+            const scrollWidth = container.scrollWidth;
+            const clientWidth = container.clientWidth;
+            const allItems = Array.from(container.querySelectorAll('.product-card-carousel'));
+            
+            if (allItems.length === 0) return;
+            
+            const firstItem = allItems[0];
+            if (!firstItem) return;
+            
+            const itemWidth = firstItem.offsetWidth + 24; // width + gap
+            const threshold = itemWidth * itemsPerView;
+            
+            // If scrolled to beginning clones, jump to end
+            if (scrollLeft < threshold) {
+                isScrolling = true;
+                const realLastIndex = allItems.length - (itemsPerView * 2);
+                if (allItems[realLastIndex]) {
+                    container.scrollLeft = allItems[realLastIndex].offsetLeft - container.offsetLeft;
+                    carouselPosition = Math.max(0, totalItems - itemsPerView);
+                }
+                setTimeout(() => { isScrolling = false; }, 50);
+            }
+            
+            // If scrolled to end clones, jump to beginning
+            if (scrollLeft > scrollWidth - clientWidth - threshold) {
+                isScrolling = true;
+                const realFirstIndex = itemsPerView;
+                if (allItems[realFirstIndex]) {
+                    container.scrollLeft = allItems[realFirstIndex].offsetLeft - container.offsetLeft;
+                    carouselPosition = 0;
+                }
+                setTimeout(() => { isScrolling = false; }, 50);
+            }
+        });
+    }
+}
+
+function scrollCarousel(carouselId, direction) {
+    if (isScrolling) return;
+    
+    const carousel = document.getElementById(carouselId);
+    if (!carousel) return;
+    
+    const container = carousel.querySelector('.carousel-container');
+    if (!container) return;
+    
+    const allItems = Array.from(container.querySelectorAll('.product-card-carousel'));
+    if (allItems.length === 0) {
+        initNewArrivalsCarousel();
+        return;
+    }
+    
+    itemsPerView = getItemsPerView();
+    const totalItems = carouselItems.length;
+    
+    if (totalItems === 0) {
+        initNewArrivalsCarousel();
+        return;
+    }
+    
+    carouselPosition += (direction * itemsPerView);
+    
+    // Handle looping
+    if (carouselPosition >= totalItems) {
+        carouselPosition = 0;
+    } else if (carouselPosition < 0) {
+        carouselPosition = totalItems - itemsPerView;
+        if (carouselPosition < 0) carouselPosition = 0;
+    }
+    
+    // Find target item (accounting for beginning clones)
+    const targetIndex = carouselPosition + itemsPerView;
+    const targetItem = allItems[targetIndex];
+    
+    if (targetItem) {
+        isScrolling = true;
+        container.scrollTo({
+            left: targetItem.offsetLeft - container.offsetLeft,
+            behavior: 'smooth'
+        });
+        setTimeout(() => { isScrolling = false; }, 500);
+    }
+}
+
+// Initialize carousel on page load
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(initNewArrivalsCarousel, 100);
+    
+    // Reinitialize on window resize
+    let resizeTimeout;
+    window.addEventListener('resize', function() {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(function() {
+            initNewArrivalsCarousel();
+        }, 250);
+    });
 });
 </script>
 @endpush

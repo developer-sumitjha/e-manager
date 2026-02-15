@@ -273,12 +273,14 @@ class SiteBuilderController extends Controller
             $settings = $this->getSiteSettings($tenantId);
             
             // Convert checkbox value to boolean
-            $data = $request->only([
-                'banner_title',
-                'banner_subtitle',
-                'banner_button_text',
-                'banner_button_link'
-            ]);
+            // Handle empty strings - save as empty string (not null) to work with current DB schema
+            // After running migration, these can be changed to null
+            $data = [
+                'banner_title' => !empty(trim($request->input('banner_title', ''))) ? trim($request->input('banner_title')) : '',
+                'banner_subtitle' => !empty(trim($request->input('banner_subtitle', ''))) ? trim($request->input('banner_subtitle')) : '',
+                'banner_button_text' => !empty(trim($request->input('banner_button_text', ''))) ? trim($request->input('banner_button_text')) : '',
+                'banner_button_link' => !empty(trim($request->input('banner_button_link', ''))) ? trim($request->input('banner_button_link')) : '',
+            ];
             
             $data['show_banner'] = $request->has('show_banner') && ($request->show_banner == '1' || $request->show_banner === true);
             
@@ -546,6 +548,7 @@ class SiteBuilderController extends Controller
             'show_product_ratings' => 'required|boolean',
             'show_quick_view' => 'required|boolean',
             'show_add_to_cart_button' => 'required|boolean',
+            'products_archive_slug' => 'nullable|string|regex:/^[a-z0-9-]+$/|max:255',
         ]);
         
         if ($validator->fails()) {
@@ -563,6 +566,15 @@ class SiteBuilderController extends Controller
             'show_quick_view',
             'show_add_to_cart_button'
         ]));
+        
+        // Save archive slug in additional_settings
+        $additionalSettings = $settings->additional_settings ?? [];
+        if ($request->has('products_archive_slug')) {
+            $archiveSlug = $request->products_archive_slug ?: 'products';
+            $additionalSettings['products_archive_slug'] = \Illuminate\Support\Str::slug($archiveSlug);
+        }
+        $settings->additional_settings = $additionalSettings;
+        $settings->save();
         
         return response()->json([
             'success' => true,

@@ -47,6 +47,26 @@
             </div>
         </div>
         
+        <div class="form-section">
+            <h3 class="form-section-title">
+                <i class="fas fa-archive"></i>
+                Products Archive Page
+            </h3>
+            
+            <div class="form-group">
+                <label class="form-label">Archive Page Slug</label>
+                <input type="text" class="form-control" name="products_archive_slug" 
+                       value="<?php echo e($settings->additional_settings['products_archive_slug'] ?? 'products'); ?>" 
+                       placeholder="products" 
+                       pattern="[a-z0-9-]+"
+                       title="Only lowercase letters, numbers, and hyphens allowed">
+                <small class="form-text text-muted">
+                    The URL slug for the products archive page. Default: "products". 
+                    Example: If set to "shop", the archive page will be accessible at /shop
+                </small>
+            </div>
+        </div>
+        
         <div class="text-end">
             <button type="button" class="btn-builder btn-builder-primary" onclick="saveProducts()">
                 <i class="fas fa-save"></i>

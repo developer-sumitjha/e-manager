@@ -50,7 +50,16 @@
                         </div>
                         @if($settings->logo)
                         <div class="image-preview-box mt-3">
-                            <img src="{{ Storage::url($settings->logo) }}" alt="Current Logo">
+                            @php
+                                $logoUrl = '';
+                                if (\Illuminate\Support\Facades\Storage::disk('public')->exists($settings->logo)) {
+                                    $logoUrl = \Illuminate\Support\Facades\Storage::disk('public')->url($settings->logo);
+                                } else {
+                                    // Fallback for local development or if Storage::url fails
+                                    $logoUrl = asset('storage/' . $settings->logo);
+                                }
+                            @endphp
+                            <img src="{{ $logoUrl }}" alt="Current Logo" style="max-width: 100%; height: auto; border: 1px solid #ddd; border-radius: 8px; padding: 8px;">
                         </div>
                         @endif
                     </div>
@@ -69,7 +78,16 @@
                         </div>
                         @if($settings->favicon)
                         <div class="image-preview-box mt-3">
-                            <img src="{{ Storage::url($settings->favicon) }}" alt="Current Favicon">
+                            @php
+                                $faviconUrl = '';
+                                if (\Illuminate\Support\Facades\Storage::disk('public')->exists($settings->favicon)) {
+                                    $faviconUrl = \Illuminate\Support\Facades\Storage::disk('public')->url($settings->favicon);
+                                } else {
+                                    // Fallback for local development or if Storage::url fails
+                                    $faviconUrl = asset('storage/' . $settings->favicon);
+                                }
+                            @endphp
+                            <img src="{{ $faviconUrl }}" alt="Current Favicon" style="max-width: 100%; height: auto; border: 1px solid #ddd; border-radius: 8px; padding: 8px;">
                         </div>
                         @endif
                     </div>
@@ -185,6 +203,75 @@ function saveGeneral() {
         showAlert('Error saving settings: ' + error.message, 'danger');
     });
 }
+
+// Handle logo and favicon preview
+document.addEventListener('DOMContentLoaded', function() {
+    // Logo preview
+    const logoInput = document.querySelector('input[name="logo"]');
+    const logoUploadArea = logoInput?.closest('.file-upload-area');
+    
+    if (logoInput && logoUploadArea) {
+        logoInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    let previewBox = logoUploadArea.closest('.form-group').querySelector('.image-preview-box');
+                    if (!previewBox) {
+                        previewBox = document.createElement('div');
+                        previewBox.className = 'image-preview-box mt-3';
+                        logoUploadArea.closest('.form-group').appendChild(previewBox);
+                    }
+                    
+                    let img = previewBox.querySelector('img');
+                    if (!img) {
+                        img = document.createElement('img');
+                        img.style.cssText = 'max-width: 100%; height: auto; border: 1px solid #ddd; border-radius: 8px; padding: 8px;';
+                        img.alt = 'Logo Preview';
+                        previewBox.appendChild(img);
+                    }
+                    
+                    img.src = e.target.result;
+                    previewBox.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+    
+    // Favicon preview
+    const faviconInput = document.querySelector('input[name="favicon"]');
+    const faviconUploadArea = faviconInput?.closest('.file-upload-area');
+    
+    if (faviconInput && faviconUploadArea) {
+        faviconInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    let previewBox = faviconUploadArea.closest('.form-group').querySelector('.image-preview-box');
+                    if (!previewBox) {
+                        previewBox = document.createElement('div');
+                        previewBox.className = 'image-preview-box mt-3';
+                        faviconUploadArea.closest('.form-group').appendChild(previewBox);
+                    }
+                    
+                    let img = previewBox.querySelector('img');
+                    if (!img) {
+                        img = document.createElement('img');
+                        img.style.cssText = 'max-width: 100%; height: auto; border: 1px solid #ddd; border-radius: 8px; padding: 8px;';
+                        img.alt = 'Favicon Preview';
+                        previewBox.appendChild(img);
+                    }
+                    
+                    img.src = e.target.result;
+                    previewBox.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+});
 </script>
 
 

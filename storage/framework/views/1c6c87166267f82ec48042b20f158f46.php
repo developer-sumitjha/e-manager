@@ -131,7 +131,7 @@
                                                     <i class="fas fa-cloud-upload-alt"></i>
                                                 </div>
                                                 <p class="mb-0"><strong>Click to upload</strong> or drag and drop</p>
-                                                <p class="text-muted small mb-0">Recommended: 1920x1080px, JPG or PNG up to 5MB</p>
+                                                <p class="text-muted small mb-0">Recommended: 1920x1080px, JPG or PNG up to 2MB</p>
                                             </div>
                                             <div class="slide-bg-image-preview mt-3" data-slide-index="<?php echo e($index); ?>" style="display: <?php echo e(!empty($slide['background_image']) ? 'block' : 'none'); ?>; max-width: 100%; border: 1px solid #000000; border-radius: 12px; overflow: hidden;">
                                                 <?php if(!empty($slide['background_image'])): ?>
@@ -217,7 +217,7 @@
                                                 <i class="fas fa-cloud-upload-alt"></i>
                                             </div>
                                             <p class="mb-0"><strong>Click to upload</strong> or drag and drop</p>
-                                            <p class="text-muted small mb-0">Recommended: 1200x600px, JPG or PNG up to 5MB</p>
+                                            <p class="text-muted small mb-0">Recommended: 1200x600px, JPG or PNG up to 2MB</p>
                                         </div>
                                         <div class="slide-image-preview mt-3" data-slide-index="<?php echo e($index); ?>" style="display: <?php echo e(!empty($slide['image']) ? 'block' : 'none'); ?>; max-width: 100%; border: 1px solid #000000; border-radius: 12px; overflow: hidden;">
                                             <?php if(!empty($slide['image'])): ?>
@@ -378,7 +378,7 @@ function addSlide() {
                                             <i class="fas fa-cloud-upload-alt"></i>
                                         </div>
                                         <p class="mb-0"><strong>Click to upload</strong> or drag and drop</p>
-                                        <p class="text-muted small mb-0">Recommended: 1920x1080px, JPG or PNG up to 5MB</p>
+                                        <p class="text-muted small mb-0">Recommended: 1920x1080px, JPG or PNG up to 2MB</p>
                                     </div>
                                     <div class="slide-bg-image-preview mt-3" data-slide-index="${slideIndex}" style="display: none; max-width: 100%; border: 1px solid #000000; border-radius: 12px; overflow: hidden;">
                                         <img src="" alt="Background Preview" style="width: 100%; height: auto; display: block;">
@@ -455,7 +455,7 @@ function addSlide() {
                                         <i class="fas fa-cloud-upload-alt"></i>
                                     </div>
                                     <p class="mb-0"><strong>Click to upload</strong> or drag and drop</p>
-                                    <p class="text-muted small mb-0">Recommended: 1200x600px, JPG or PNG up to 5MB</p>
+                                    <p class="text-muted small mb-0">Recommended: 1200x600px, JPG or PNG up to 2MB</p>
                                 </div>
                                 <div class="slide-image-preview mt-3" data-slide-index="${slideIndex}" style="display: none; max-width: 100%; border: 1px solid #000000; border-radius: 12px; overflow: hidden;">
                                     <img src="" alt="Slide Preview" style="width: 100%; height: auto; display: block;">
@@ -634,7 +634,27 @@ function setupBackgroundImageUpload() {
         const input = uploadArea.querySelector('.slide-bg-image-input');
         const slideIndex = uploadArea.getAttribute('data-slide-index');
         const preview = document.querySelector(`.slide-bg-image-preview[data-slide-index="${slideIndex}"]`);
-        const pathInput = uploadArea.closest('.form-group').querySelector('.slide-bg-image-path');
+        
+        // Find the path input - try multiple selectors to ensure we find it
+        let pathInput = uploadArea.closest('.form-group')?.querySelector('.slide-bg-image-path');
+        if (!pathInput) {
+            // Try finding it in the parent container
+            const slideItem = uploadArea.closest('.slide-item');
+            if (slideItem) {
+                pathInput = slideItem.querySelector(`input.slide-bg-image-path[name*="[${slideIndex}]"]`) || 
+                           slideItem.querySelector('.slide-bg-image-path');
+            }
+        }
+        
+        if (!input) {
+            console.error('Background image input not found for slide:', slideIndex);
+            return;
+        }
+        
+        if (!pathInput) {
+            console.error('Background image path input not found for slide:', slideIndex);
+            return;
+        }
         
         if (!input.hasAttribute('data-bg-listener-added')) {
             input.setAttribute('data-bg-listener-added', 'true');
@@ -644,6 +664,15 @@ function setupBackgroundImageUpload() {
             input.addEventListener('change', function(e) {
                 const file = e.target.files[0];
                 if (file) {
+                    // Validate file size (2MB max)
+                    const maxSize = 2 * 1024 * 1024; // 2MB in bytes
+                    if (file.size > maxSize) {
+                        const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
+                        alert(`File size (${fileSizeMB}MB) exceeds 2MB limit. Please compress the image or choose a smaller file.`);
+                        input.value = ''; // Clear the input
+                        return;
+                    }
+                    
                     const reader = new FileReader();
                     reader.onload = function(e) {
                         if (preview) {
@@ -663,6 +692,11 @@ function setupBackgroundImageUpload() {
 
 // Upload background image
 function uploadBackgroundImage(slideIndex, file, pathInput) {
+    if (!file || !pathInput) {
+        console.error('Missing file or pathInput for background image upload');
+        return;
+    }
+    
     const formData = new FormData();
     formData.append('slide_image', file);
     formData.append('slide_index', slideIndex);
@@ -676,14 +710,42 @@ function uploadBackgroundImage(slideIndex, file, pathInput) {
         },
         body: formData
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            // Handle specific HTTP errors
+            if (response.status === 413) {
+                throw new Error('File is too large. Maximum size is 2MB. Please compress your image and try again.');
+            } else if (response.status === 422) {
+                return response.json().then(data => {
+                    throw new Error(data.message || 'Validation failed. Please check the file format and size.');
+                });
+            } else {
+                throw new Error(`Server error (${response.status}). Please try again or contact support.`);
+            }
+        }
+        return response.json();
+    })
     .then(data => {
-        if (data.success && pathInput) {
-            pathInput.value = data.image_path;
+        if (data.success && data.image_path) {
+            if (pathInput) {
+                pathInput.value = data.image_path;
+                console.log('Background image uploaded successfully:', data.image_path);
+            } else {
+                console.error('pathInput not found for slide index:', slideIndex);
+                alert('Upload successful but failed to save path. Please refresh and try again.');
+            }
+        } else {
+            const errorMsg = data.message || 'Unknown error occurred';
+            console.error('Upload failed:', errorMsg);
+            if (data.errors) {
+                console.error('Validation errors:', data.errors);
+            }
+            alert('Upload failed: ' + errorMsg);
         }
     })
     .catch(error => {
         console.error('Error uploading background image:', error);
+        alert(error.message || 'Failed to upload background image. Please try again.');
     });
 }
 
@@ -747,6 +809,9 @@ function saveHomepage() {
         slides.push(slideData);
     });
     
+    // Debug: Log slides data before saving
+    console.log('Slides data to save:', slides);
+    
     formData.append('hero_slides', JSON.stringify(slides));
     
     showSaveIndicator('saving');
@@ -763,16 +828,24 @@ function saveHomepage() {
         },
         body: formData
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
     .then(data => {
         if (data.success) {
             showSaveIndicator('saved');
             showAlert('Homepage settings saved successfully!');
+            console.log('Homepage saved successfully. Slides data:', slides);
         } else {
+            console.error('Save failed:', data);
             throw new Error(data.message || 'Failed to save');
         }
     })
     .catch(error => {
+        console.error('Error saving homepage:', error);
         showSaveIndicator('saved');
         showAlert('Error: ' + error.message, 'danger');
     });
