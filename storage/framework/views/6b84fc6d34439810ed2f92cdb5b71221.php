@@ -102,21 +102,45 @@
                                 $url = $item['url'] ?? '#';
                                 // Handle different URL types
                                 if ($url === '/' || $url === '') {
-                                    $url = \App\Helpers\StorefrontHelper::route('storefront.preview', [$tenant->subdomain]);
+                                    try {
+                                        $url = \App\Helpers\StorefrontHelper::route('storefront.preview', [$tenant->subdomain]);
+                                        if (empty($url) || $url === '#') {
+                                            $url = url('/');
+                                        }
+                                    } catch (\Exception $e) {
+                                        $url = url('/');
+                                    }
                                 } elseif (strpos($url, '#') === 0) {
                                     // Anchor link - keep as is
                                     $url = $url;
-                                } elseif (strpos($url, 'http') === 0) {
+                                } elseif (strpos($url, 'http') === 0 || strpos($url, '//') === 0) {
                                     // External URL - keep as is
                                     $url = $url;
                                 } else {
                                     // Internal path - construct proper URL
-                                    $baseUrl = \App\Helpers\StorefrontHelper::route('storefront.preview', [$tenant->subdomain]);
-                                    // Remove trailing slash from base URL
-                                    $baseUrl = rtrim($baseUrl, '/');
-                                    // Ensure path starts with /
-                                    $path = '/' . ltrim($url, '/');
-                                    $url = $baseUrl . $path;
+                                    try {
+                                        $baseUrl = \App\Helpers\StorefrontHelper::route('storefront.preview', [$tenant->subdomain]);
+                                        if (empty($baseUrl) || $baseUrl === '#') {
+                                            // Fallback: construct URL manually
+                                            $host = request()->getHost();
+                                            $scheme = request()->getScheme();
+                                            $basePath = request()->getBasePath();
+                                            $baseUrl = $scheme . '://' . $host . ($basePath ? rtrim($basePath, '/') : '');
+                                        }
+                                        // Remove trailing slash from base URL
+                                        $baseUrl = rtrim($baseUrl, '/');
+                                        // Ensure path starts with /
+                                        $path = '/' . ltrim($url, '/');
+                                        $url = $baseUrl . $path;
+                                    } catch (\Exception $e) {
+                                        // Fallback: construct URL manually
+                                        $host = request()->getHost();
+                                        $scheme = request()->getScheme();
+                                        $basePath = request()->getBasePath();
+                                        $baseUrl = $scheme . '://' . $host . ($basePath ? rtrim($basePath, '/') : '');
+                                        $path = '/' . ltrim($url, '/');
+                                        $url = $baseUrl . $path;
+                                    }
                                 }
                             ?>
                             <li><a href="<?php echo e($url); ?>"><?php echo e($item['label'] ?? 'Menu Item'); ?></a></li>
@@ -263,21 +287,45 @@
                                 $url = $item['url'] ?? '#';
                                 // Handle different URL types
                                 if ($url === '/' || $url === '') {
-                                    $url = \App\Helpers\StorefrontHelper::route('storefront.preview', [$tenant->subdomain]);
+                                    try {
+                                        $url = \App\Helpers\StorefrontHelper::route('storefront.preview', [$tenant->subdomain]);
+                                        if (empty($url) || $url === '#') {
+                                            $url = url('/');
+                                        }
+                                    } catch (\Exception $e) {
+                                        $url = url('/');
+                                    }
                                 } elseif (strpos($url, '#') === 0) {
                                     // Anchor link - keep as is
                                     $url = $url;
-                                } elseif (strpos($url, 'http') === 0) {
+                                } elseif (strpos($url, 'http') === 0 || strpos($url, '//') === 0) {
                                     // External URL - keep as is
                                     $url = $url;
                                 } else {
                                     // Internal path - construct proper URL
-                                    $baseUrl = \App\Helpers\StorefrontHelper::route('storefront.preview', [$tenant->subdomain]);
-                                    // Remove trailing slash from base URL
-                                    $baseUrl = rtrim($baseUrl, '/');
-                                    // Ensure path starts with /
-                                    $path = '/' . ltrim($url, '/');
-                                    $url = $baseUrl . $path;
+                                    try {
+                                        $baseUrl = \App\Helpers\StorefrontHelper::route('storefront.preview', [$tenant->subdomain]);
+                                        if (empty($baseUrl) || $baseUrl === '#') {
+                                            // Fallback: construct URL manually
+                                            $host = request()->getHost();
+                                            $scheme = request()->getScheme();
+                                            $basePath = request()->getBasePath();
+                                            $baseUrl = $scheme . '://' . $host . ($basePath ? rtrim($basePath, '/') : '');
+                                        }
+                                        // Remove trailing slash from base URL
+                                        $baseUrl = rtrim($baseUrl, '/');
+                                        // Ensure path starts with /
+                                        $path = '/' . ltrim($url, '/');
+                                        $url = $baseUrl . $path;
+                                    } catch (\Exception $e) {
+                                        // Fallback: construct URL manually
+                                        $host = request()->getHost();
+                                        $scheme = request()->getScheme();
+                                        $basePath = request()->getBasePath();
+                                        $baseUrl = $scheme . '://' . $host . ($basePath ? rtrim($basePath, '/') : '');
+                                        $path = '/' . ltrim($url, '/');
+                                        $url = $baseUrl . $path;
+                                    }
                                 }
                             ?>
                             <li><a href="<?php echo e($url); ?>"><?php echo e($item['label'] ?? 'Menu Item'); ?></a></li>
