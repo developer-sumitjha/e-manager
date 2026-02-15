@@ -109,8 +109,13 @@
                                     // External URL - keep as is
                                     $url = $url;
                                 } else {
-                                    // Internal path - prepend base URL if needed
-                                    $url = \App\Helpers\StorefrontHelper::route('storefront.preview', [$tenant->subdomain]) . (strpos($url, '/') === 0 ? '' : '/') . ltrim($url, '/');
+                                    // Internal path - construct proper URL
+                                    $baseUrl = \App\Helpers\StorefrontHelper::route('storefront.preview', [$tenant->subdomain]);
+                                    // Remove trailing slash from base URL
+                                    $baseUrl = rtrim($baseUrl, '/');
+                                    // Ensure path starts with /
+                                    $path = '/' . ltrim($url, '/');
+                                    $url = $baseUrl . $path;
                                 }
                             @endphp
                             <li><a href="{{ $url }}">{{ $item['label'] ?? 'Menu Item' }}</a></li>
@@ -265,8 +270,13 @@
                                     // External URL - keep as is
                                     $url = $url;
                                 } else {
-                                    // Internal path - prepend base URL if needed
-                                    $url = \App\Helpers\StorefrontHelper::route('storefront.preview', [$tenant->subdomain]) . (strpos($url, '/') === 0 ? '' : '/') . ltrim($url, '/');
+                                    // Internal path - construct proper URL
+                                    $baseUrl = \App\Helpers\StorefrontHelper::route('storefront.preview', [$tenant->subdomain]);
+                                    // Remove trailing slash from base URL
+                                    $baseUrl = rtrim($baseUrl, '/');
+                                    // Ensure path starts with /
+                                    $path = '/' . ltrim($url, '/');
+                                    $url = $baseUrl . $path;
                                 }
                             @endphp
                             <li><a href="{{ $url }}">{{ $item['label'] ?? 'Menu Item' }}</a></li>
