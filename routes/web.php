@@ -20,6 +20,7 @@ Route::domain('{subdomain}.localhost')->group(function () {
             'message' => 'Domain route is working'
         ]);
     });
+    
     Route::get('/product/{slug}', [App\Http\Controllers\StorefrontController::class, 'product'])->name('storefront.subdomain.product');
     Route::get('/category/{slug}', [App\Http\Controllers\StorefrontController::class, 'category'])->name('storefront.subdomain.category');
     
@@ -27,10 +28,23 @@ Route::domain('{subdomain}.localhost')->group(function () {
     Route::get('/{slug}', function($subdomain, $slug) {
         $tenant = \App\Models\Tenant::where('subdomain', $subdomain)->firstOrFail();
         $settings = \App\Models\SiteSettings::where('tenant_id', $tenant->id)->first();
+        
+        if (!$settings) {
+            abort(404, 'Store settings not found');
+        }
+        
         $archiveSlug = $settings->additional_settings['products_archive_slug'] ?? 'products';
         
-        // Check if this slug matches the archive slug
-        if ($slug === $archiveSlug) {
+        // Debug logging
+        \Log::info('Dynamic route check', [
+            'subdomain' => $subdomain,
+            'slug' => $slug,
+            'archiveSlug' => $archiveSlug,
+            'match' => strtolower($slug) === strtolower($archiveSlug)
+        ]);
+        
+        // Check if this slug matches the archive slug (case-insensitive comparison)
+        if (strtolower($slug) === strtolower($archiveSlug)) {
             return app(\App\Http\Controllers\StorefrontController::class)->productsArchive(request(), $subdomain);
         }
         
@@ -342,10 +356,15 @@ Route::prefix('storefront/{subdomain}')->group(function () {
     Route::get('/{slug}', function($subdomain, $slug) {
         $tenant = \App\Models\Tenant::where('subdomain', $subdomain)->firstOrFail();
         $settings = \App\Models\SiteSettings::where('tenant_id', $tenant->id)->first();
+        
+        if (!$settings) {
+            abort(404, 'Store settings not found');
+        }
+        
         $archiveSlug = $settings->additional_settings['products_archive_slug'] ?? 'products';
         
-        // Check if this slug matches the archive slug
-        if ($slug === $archiveSlug) {
+        // Check if this slug matches the archive slug (case-insensitive comparison)
+        if (strtolower($slug) === strtolower($archiveSlug)) {
             return app(\App\Http\Controllers\StorefrontController::class)->productsArchive(request(), $subdomain);
         }
         
