@@ -265,7 +265,7 @@
 
 .products-grid.list-view .product-image {
     width: 150px;
-    height: 150px;
+    aspect-ratio: 1 / 1;
     flex-shrink: 0;
     margin-right: 1rem;
 }
@@ -291,7 +291,8 @@
 }
 
 .product-image {
-    height: 250px;
+    width: 100%;
+    aspect-ratio: 1 / 1;
     background: var(--surface-color);
     display: flex;
     align-items: center;
@@ -305,8 +306,11 @@
 .product-image img {
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    max-height: 100%;
+    object-fit: contain;
+    object-position: center;
     transition: var(--transition);
+    display: block;
 }
 
 .product-card:hover .product-image img {
@@ -456,7 +460,7 @@
     
     .products-grid.list-view .product-image {
         width: 100%;
-        height: 200px;
+        aspect-ratio: 1 / 1;
         margin-right: 0;
         margin-bottom: 1rem;
     }
