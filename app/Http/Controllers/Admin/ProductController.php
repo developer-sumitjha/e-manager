@@ -111,7 +111,7 @@ class ProductController extends Controller
             'meta_description' => 'nullable|string',
         ]);
 
-        $validated['slug'] = Str::slug($validated['name']);
+        $validated['slug'] = $this->generateUniqueSlug(Str::slug($validated['name']));
         $validated['is_active'] = $request->has('is_active');
         $validated['is_featured'] = $request->has('is_featured');
         $validated['track_inventory'] = $request->has('track_inventory');
@@ -220,7 +220,13 @@ class ProductController extends Controller
             'is_featured' => 'sometimes',
         ]);
 
-        $validated['slug'] = Str::slug($validated['name']);
+        // Generate unique slug if name changed
+        if ($validated['name'] !== $product->name) {
+            $validated['slug'] = $this->generateUniqueSlug(Str::slug($validated['name']), $product->id);
+        } else {
+            // Keep existing slug if name hasn't changed
+            $validated['slug'] = $product->slug;
+        }
         
         // Handle image upload - delete old image if new one is uploaded
         if ($request->hasFile('image')) {
@@ -647,6 +653,52 @@ class ProductController extends Controller
                 }
             }
         }
+        return $candidate;
+    }
+    
+    /**
+     * Generate a unique slug for a product
+     * 
+     * @param string $base The base slug to make unique
+     * @param int|null $excludeId Product ID to exclude from uniqueness check (for updates)
+     * @return string
+     */
+    private function generateUniqueSlug(string $base, ?int $excludeId = null): string
+    {
+        $candidate = $base;
+        $suffix = 1;
+        
+        while (true) {
+            $query = Product::where('slug', $candidate);
+            
+            // Exclude current product when updating
+            if ($excludeId) {
+                $query->where('id', '!=', $excludeId);
+            }
+            
+            if (!$query->exists()) {
+                break;
+            }
+            
+            // Append suffix to make it unique
+            $candidate = $base . '-' . $suffix;
+            $suffix++;
+            
+            // Fallback to random suffix if too many collisions
+            if ($suffix > 9999) {
+                $candidate = $base . '-' . strtolower(Str::random(6));
+                $query = Product::where('slug', $candidate);
+                if ($excludeId) {
+                    $query->where('id', '!=', $excludeId);
+                }
+                if (!$query->exists()) {
+                    break;
+                }
+                // If random also exists, generate new random
+                $candidate = $base . '-' . strtolower(Str::random(8));
+            }
+        }
+        
         return $candidate;
     }
 }
