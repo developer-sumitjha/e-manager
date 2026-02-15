@@ -8,8 +8,9 @@ use App\Http\Controllers\Admin\OrderController;
 
 // IMPORTANT: Domain routes must be defined FIRST to avoid conflicts with root route
 // Storefront Routes - Subdomain-based (clean URLs when accessed via subdomain)
-// These routes work when accessed via subdomain (e.g., primax.localhost/product/...)
-Route::domain('{subdomain}.localhost')->group(function () {
+
+// Helper function to define subdomain routes
+$defineSubdomainRoutes = function() {
     Route::get('/', [App\Http\Controllers\StorefrontController::class, 'show'])->name('storefront.subdomain.preview');
     // Test route to verify domain routing works
     Route::get('/test-domain', function ($subdomain) {
@@ -80,7 +81,28 @@ Route::domain('{subdomain}.localhost')->group(function () {
     Route::post('/checkout/process', [App\Http\Controllers\StorefrontController::class, 'processCheckout'])->name('storefront.subdomain.checkout.process');
     Route::post('/cart/coupon/apply', [App\Http\Controllers\CouponController::class, 'apply'])->name('storefront.subdomain.coupon.apply')->middleware('throttle:10,1');
     Route::post('/cart/coupon/remove', [App\Http\Controllers\CouponController::class, 'remove'])->name('storefront.subdomain.coupon.remove')->middleware('throttle:10,1');
-});
+};
+
+// Localhost routes (for development)
+Route::domain('{subdomain}.localhost')->group($defineSubdomainRoutes);
+
+// Production domain routes (for live website)
+// Get the main domain from APP_URL or use a wildcard pattern
+$appUrl = config('app.url', 'http://localhost');
+$parsedUrl = parse_url($appUrl);
+$mainDomain = $parsedUrl['host'] ?? null;
+
+// If we have a main domain and it's not localhost, register production routes
+if ($mainDomain && $mainDomain !== 'localhost' && !str_contains($mainDomain, 'localhost')) {
+    // Extract the domain without subdomain (e.g., example.com from subdomain.example.com)
+    $domainParts = explode('.', $mainDomain);
+    if (count($domainParts) >= 2) {
+        // Get the main domain (last 2 parts: example.com)
+        $baseDomain = $domainParts[count($domainParts) - 2] . '.' . $domainParts[count($domainParts) - 1];
+        // Register routes for production domain with wildcard subdomain
+        Route::domain('{subdomain}.' . $baseDomain)->group($defineSubdomainRoutes);
+    }
+}
 
 // Public Routes - Super Admin Public Frontend (Landing Page)
 // This route should only handle non-subdomain requests (main domain)

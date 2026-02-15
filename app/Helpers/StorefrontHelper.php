@@ -225,6 +225,36 @@ class StorefrontHelper
         try {
             $generatedUrl = route($routeName, $params);
             
+            // For subdomain routes, ensure we use the current request's domain instead of hardcoded .localhost
+            if ($isSubdomain && in_array($routeName, ['storefront.subdomain.product', 'storefront.subdomain.category', 'storefront.subdomain.preview', 'storefront.subdomain.dynamic', 'storefront.subdomain.cart', 'storefront.subdomain.checkout'])) {
+                $currentHost = request()->getHost();
+                $parsedUrl = parse_url($generatedUrl);
+                
+                // If the generated URL has .localhost but we're on a production domain, replace it
+                if (strpos($parsedUrl['host'] ?? '', '.localhost') !== false && strpos($currentHost, '.localhost') === false) {
+                    // Extract subdomain from current host
+                    $hostParts = explode('.', $currentHost);
+                    if (count($hostParts) >= 2) {
+                        $subdomain = $hostParts[0];
+                        // Get the base domain (everything after the subdomain)
+                        $baseDomain = implode('.', array_slice($hostParts, 1));
+                        // Reconstruct URL with current domain
+                        $scheme = $parsedUrl['scheme'] ?? request()->getScheme();
+                        $path = $parsedUrl['path'] ?? '/';
+                        $query = isset($parsedUrl['query']) ? '?' . $parsedUrl['query'] : '';
+                        $fragment = isset($parsedUrl['fragment']) ? '#' . $parsedUrl['fragment'] : '';
+                        $generatedUrl = $scheme . '://' . $subdomain . '.' . $baseDomain . $path . $query . $fragment;
+                    }
+                } elseif (strpos($parsedUrl['host'] ?? '', '.localhost') === false && strpos($currentHost, '.localhost') !== false) {
+                    // If we're on localhost but URL was generated for production, use current host
+                    $scheme = $parsedUrl['scheme'] ?? request()->getScheme();
+                    $path = $parsedUrl['path'] ?? '/';
+                    $query = isset($parsedUrl['query']) ? '?' . $parsedUrl['query'] : '';
+                    $fragment = isset($parsedUrl['fragment']) ? '#' . $parsedUrl['fragment'] : '';
+                    $generatedUrl = $scheme . '://' . $currentHost . $path . $query . $fragment;
+                }
+            }
+            
             // Get the base path from the current request (e.g., /e-manager/public)
             $basePath = request()->getBasePath();
             
