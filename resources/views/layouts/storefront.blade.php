@@ -116,29 +116,32 @@
                                     // External URL - keep as is
                                     $url = $url;
                                 } else {
-                                    // Internal path - construct proper URL
-                                    try {
-                                        $baseUrl = \App\Helpers\StorefrontHelper::route('storefront.preview', [$tenant->subdomain]);
-                                        if (empty($baseUrl) || $baseUrl === '#') {
-                                            // Fallback: construct URL manually
-                                            $host = request()->getHost();
-                                            $scheme = request()->getScheme();
-                                            $basePath = request()->getBasePath();
-                                            $baseUrl = $scheme . '://' . $host . ($basePath ? rtrim($basePath, '/') : '');
-                                        }
-                                        // Remove trailing slash from base URL
-                                        $baseUrl = rtrim($baseUrl, '/');
-                                        // Ensure path starts with /
-                                        $path = '/' . ltrim($url, '/');
+                                    // Internal path - construct proper URL dynamically from current request
+                                    // Always use current request to ensure domain is correct (not hardcoded localhost)
+                                    $host = request()->getHost();
+                                    $scheme = request()->getScheme();
+                                    $basePath = request()->getBasePath();
+                                    
+                                    // Construct base URL from current request
+                                    $baseUrl = $scheme . '://' . $host;
+                                    if ($basePath && $basePath !== '/') {
+                                        $baseUrl .= rtrim($basePath, '/');
+                                    }
+                                    
+                                    // Remove trailing slash from base URL
+                                    $baseUrl = rtrim($baseUrl, '/');
+                                    
+                                    // Ensure path starts with /
+                                    $path = '/' . ltrim($url, '/');
+                                    
+                                    // For subdomain routes, we might need to add the subdomain path
+                                    // Check if we're on a subdomain route and need to adjust
+                                    if (\App\Helpers\StorefrontHelper::isSubdomainAccess()) {
+                                        // On subdomain, path is relative to root
                                         $url = $baseUrl . $path;
-                                    } catch (\Exception $e) {
-                                        // Fallback: construct URL manually
-                                        $host = request()->getHost();
-                                        $scheme = request()->getScheme();
-                                        $basePath = request()->getBasePath();
-                                        $baseUrl = $scheme . '://' . $host . ($basePath ? rtrim($basePath, '/') : '');
-                                        $path = '/' . ltrim($url, '/');
-                                        $url = $baseUrl . $path;
+                                    } else {
+                                        // On path-based route, need to include subdomain in path
+                                        $url = $baseUrl . '/storefront/' . $tenant->subdomain . $path;
                                     }
                                 }
                             @endphp
@@ -301,29 +304,32 @@
                                     // External URL - keep as is
                                     $url = $url;
                                 } else {
-                                    // Internal path - construct proper URL
-                                    try {
-                                        $baseUrl = \App\Helpers\StorefrontHelper::route('storefront.preview', [$tenant->subdomain]);
-                                        if (empty($baseUrl) || $baseUrl === '#') {
-                                            // Fallback: construct URL manually
-                                            $host = request()->getHost();
-                                            $scheme = request()->getScheme();
-                                            $basePath = request()->getBasePath();
-                                            $baseUrl = $scheme . '://' . $host . ($basePath ? rtrim($basePath, '/') : '');
-                                        }
-                                        // Remove trailing slash from base URL
-                                        $baseUrl = rtrim($baseUrl, '/');
-                                        // Ensure path starts with /
-                                        $path = '/' . ltrim($url, '/');
+                                    // Internal path - construct proper URL dynamically from current request
+                                    // Always use current request to ensure domain is correct (not hardcoded localhost)
+                                    $host = request()->getHost();
+                                    $scheme = request()->getScheme();
+                                    $basePath = request()->getBasePath();
+                                    
+                                    // Construct base URL from current request
+                                    $baseUrl = $scheme . '://' . $host;
+                                    if ($basePath && $basePath !== '/') {
+                                        $baseUrl .= rtrim($basePath, '/');
+                                    }
+                                    
+                                    // Remove trailing slash from base URL
+                                    $baseUrl = rtrim($baseUrl, '/');
+                                    
+                                    // Ensure path starts with /
+                                    $path = '/' . ltrim($url, '/');
+                                    
+                                    // For subdomain routes, we might need to add the subdomain path
+                                    // Check if we're on a subdomain route and need to adjust
+                                    if (\App\Helpers\StorefrontHelper::isSubdomainAccess()) {
+                                        // On subdomain, path is relative to root
                                         $url = $baseUrl . $path;
-                                    } catch (\Exception $e) {
-                                        // Fallback: construct URL manually
-                                        $host = request()->getHost();
-                                        $scheme = request()->getScheme();
-                                        $basePath = request()->getBasePath();
-                                        $baseUrl = $scheme . '://' . $host . ($basePath ? rtrim($basePath, '/') : '');
-                                        $path = '/' . ltrim($url, '/');
-                                        $url = $baseUrl . $path;
+                                    } else {
+                                        // On path-based route, need to include subdomain in path
+                                        $url = $baseUrl . '/storefront/' . $tenant->subdomain . $path;
                                     }
                                 }
                             @endphp
