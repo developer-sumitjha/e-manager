@@ -105,15 +105,184 @@
         <!-- Contact Page Specific Content -->
         <?php if($page->page_type === 'contact'): ?>
         <div class="row mt-4">
-            <div class="col-lg-10 mx-auto">
-                <?php if($page->map_iframe): ?>
-                <div class="contact-map mb-4">
-                    <div class="ratio ratio-16x9">
-                        <?php echo $page->map_iframe; ?>
-
+            <!-- Contact Details - Left Side -->
+            <div class="col-lg-5 mb-4">
+                <div class="contact-details-card">
+                    <h3 class="contact-section-title">Get in Touch</h3>
+                    <p class="contact-section-description">We'd love to hear from you. Send us a message and we'll respond as soon as possible.</p>
+                    
+                    <div class="contact-info-list">
+                        <?php if($page->contact_email): ?>
+                        <div class="contact-info-item">
+                            <div class="contact-info-icon">
+                                <i class="fas fa-envelope"></i>
+                            </div>
+                            <div class="contact-info-content">
+                                <h5>Email</h5>
+                                <a href="mailto:<?php echo e($page->contact_email); ?>"><?php echo e($page->contact_email); ?></a>
+                            </div>
+                        </div>
+                        <?php endif; ?>
+                        
+                        <?php if($page->contact_phone): ?>
+                        <div class="contact-info-item">
+                            <div class="contact-info-icon">
+                                <i class="fas fa-phone"></i>
+                            </div>
+                            <div class="contact-info-content">
+                                <h5>Phone</h5>
+                                <a href="tel:<?php echo e($page->contact_phone); ?>"><?php echo e($page->contact_phone); ?></a>
+                            </div>
+                        </div>
+                        <?php endif; ?>
+                        
+                        <?php if($page->contact_address): ?>
+                        <div class="contact-info-item">
+                            <div class="contact-info-icon">
+                                <i class="fas fa-map-marker-alt"></i>
+                            </div>
+                            <div class="contact-info-content">
+                                <h5>Address</h5>
+                                <p><?php echo e($page->contact_address); ?></p>
+                            </div>
+                        </div>
+                        <?php endif; ?>
                     </div>
+                    
+                    <?php if($page->map_iframe): ?>
+                    <div class="contact-map mt-4">
+                        <div class="ratio ratio-16x9">
+                            <?php echo $page->map_iframe; ?>
+
+                        </div>
+                    </div>
+                    <?php endif; ?>
                 </div>
-                <?php endif; ?>
+            </div>
+            
+            <!-- Contact Form - Right Side -->
+            <div class="col-lg-7 mb-4">
+                <div class="contact-form-card">
+                    <h3 class="contact-section-title">Send us a Message</h3>
+                    <form id="contactForm" action="<?php echo e(\App\Helpers\StorefrontHelper::route('storefront.contact.submit', [$tenant->subdomain, $page->id])); ?>" method="POST">
+                        <?php echo csrf_field(); ?>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="contact_name" class="form-label">Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control <?php $__errorArgs = ['name'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>" id="contact_name" name="name" value="<?php echo e(old('name')); ?>" required>
+                                <?php $__errorArgs = ['name'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                                <div class="invalid-feedback"><?php echo e($message); ?></div>
+                                <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="contact_email" class="form-label">Email <span class="text-danger">*</span></label>
+                                <input type="email" class="form-control <?php $__errorArgs = ['email'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>" id="contact_email" name="email" value="<?php echo e(old('email')); ?>" required>
+                                <?php $__errorArgs = ['email'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                                <div class="invalid-feedback"><?php echo e($message); ?></div>
+                                <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="contact_phone" class="form-label">Phone</label>
+                                <input type="text" class="form-control <?php $__errorArgs = ['phone'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>" id="contact_phone" name="phone" value="<?php echo e(old('phone')); ?>">
+                                <?php $__errorArgs = ['phone'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                                <div class="invalid-feedback"><?php echo e($message); ?></div>
+                                <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="contact_subject" class="form-label">Subject</label>
+                                <input type="text" class="form-control <?php $__errorArgs = ['subject'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>" id="contact_subject" name="subject" value="<?php echo e(old('subject')); ?>">
+                                <?php $__errorArgs = ['subject'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                                <div class="invalid-feedback"><?php echo e($message); ?></div>
+                                <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="contact_message" class="form-label">Message <span class="text-danger">*</span></label>
+                            <textarea class="form-control <?php $__errorArgs = ['message'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>" id="contact_message" name="message" rows="6" required><?php echo e(old('message')); ?></textarea>
+                            <?php $__errorArgs = ['message'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                            <div class="invalid-feedback"><?php echo e($message); ?></div>
+                            <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
+                        </div>
+                        <div class="mb-3">
+                            <button type="submit" class="btn btn-primary btn-lg w-100" id="contactSubmitBtn">
+                                <i class="fas fa-paper-plane"></i> Send Message
+                            </button>
+                        </div>
+                        <div id="contactFormMessage" class="alert" style="display: none;"></div>
+                    </form>
+                </div>
             </div>
         </div>
         <?php endif; ?>
@@ -196,6 +365,71 @@
 
 </script>
 <?php endif; ?>
+
+<?php if($page->page_type === 'contact'): ?>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const contactForm = document.getElementById('contactForm');
+    const submitBtn = document.getElementById('contactSubmitBtn');
+    const messageDiv = document.getElementById('contactFormMessage');
+    
+    if (contactForm) {
+        contactForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Disable submit button
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+            messageDiv.style.display = 'none';
+            
+            // Get form data
+            const formData = new FormData(contactForm);
+            
+            // Submit via AJAX
+            fetch(contactForm.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Show success message
+                    messageDiv.className = 'alert alert-success';
+                    messageDiv.innerHTML = '<i class="fas fa-check-circle"></i> ' + (data.message || 'Thank you! Your message has been sent successfully. We\'ll get back to you soon.');
+                    messageDiv.style.display = 'block';
+                    
+                    // Reset form
+                    contactForm.reset();
+                    
+                    // Scroll to message
+                    messageDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                } else {
+                    // Show error message
+                    messageDiv.className = 'alert alert-danger';
+                    messageDiv.innerHTML = '<i class="fas fa-exclamation-circle"></i> ' + (data.message || 'Something went wrong. Please try again.');
+                    messageDiv.style.display = 'block';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                messageDiv.className = 'alert alert-danger';
+                messageDiv.innerHTML = '<i class="fas fa-exclamation-circle"></i> An error occurred. Please try again.';
+                messageDiv.style.display = 'block';
+            })
+            .finally(() => {
+                // Re-enable submit button
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Send Message';
+            });
+        });
+    }
+});
+</script>
+<?php endif; ?>
 <?php $__env->stopPush(); ?>
 
 <?php $__env->startPush('styles'); ?>
@@ -275,6 +509,142 @@
     border-radius: 8px;
     overflow: hidden;
     box-shadow: var(--shadow-md, 0 0.5rem 1rem rgba(0, 0, 0, 0.15));
+}
+
+/* Contact Page Styles */
+.contact-details-card,
+.contact-form-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: var(--shadow-sm, 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075));
+    height: 100%;
+}
+
+.contact-section-title {
+    font-size: 1.75rem;
+    font-weight: 600;
+    color: var(--text-color, #333);
+    margin-bottom: 1rem;
+}
+
+.contact-section-description {
+    color: var(--text-muted, #666);
+    margin-bottom: 2rem;
+    line-height: 1.6;
+}
+
+.contact-info-list {
+    margin-bottom: 2rem;
+}
+
+.contact-info-item {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border-color, #e9ecef);
+}
+
+.contact-info-item:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.contact-info-icon {
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--primary-color, #6c5ce7);
+    color: white;
+    border-radius: 50%;
+    margin-right: 1rem;
+    flex-shrink: 0;
+}
+
+.contact-info-icon i {
+    font-size: 1.25rem;
+}
+
+.contact-info-content h5 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-color, #333);
+    margin-bottom: 0.25rem;
+}
+
+.contact-info-content a {
+    color: var(--primary-color, #6c5ce7);
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.contact-info-content a:hover {
+    color: var(--primary-color-dark, #5a4fd4);
+    text-decoration: underline;
+}
+
+.contact-info-content p {
+    color: var(--text-muted, #666);
+    margin-bottom: 0;
+    line-height: 1.6;
+}
+
+.contact-form-card .form-label {
+    font-weight: 500;
+    color: var(--text-color, #333);
+    margin-bottom: 0.5rem;
+}
+
+.contact-form-card .form-control {
+    border: 1px solid var(--border-color, #dee2e6);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.contact-form-card .form-control:focus {
+    border-color: var(--primary-color, #6c5ce7);
+    box-shadow: 0 0 0 0.2rem rgba(108, 92, 231, 0.25);
+}
+
+.contact-form-card .btn-primary {
+    background: var(--primary-color, #6c5ce7);
+    border: none;
+    padding: 0.75rem 2rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.contact-form-card .btn-primary:hover {
+    background: var(--primary-color-dark, #5a4fd4);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(108, 92, 231, 0.3);
+}
+
+.contact-form-card .btn-primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+#contactFormMessage {
+    margin-top: 1rem;
+}
+
+#contactFormMessage.alert-success {
+    background-color: #d4edda;
+    border-color: #c3e6cb;
+    color: #155724;
+}
+
+#contactFormMessage.alert-danger {
+    background-color: #f8d7da;
+    border-color: #f5c6cb;
+    color: #721c24;
 }
 
 /* Team Section Styles */

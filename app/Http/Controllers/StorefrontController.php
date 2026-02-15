@@ -16,6 +16,7 @@ use App\Models\ShippingMethod;
 use App\Models\TaxRule;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
 
 class StorefrontController extends Controller
 {
@@ -313,6 +314,61 @@ class StorefrontController extends Controller
         }
         
         return view('storefront.page', compact('tenant', 'settings', 'page'));
+    }
+
+    /**
+     * Handle contact form submission
+     */
+    public function submitContact(Request $request, $subdomain, $pageId)
+    {
+        $tenant = Tenant::where('subdomain', $subdomain)->firstOrFail();
+        $settings = SiteSettings::where('tenant_id', $tenant->id)->first();
+        $page = SitePage::where('id', $pageId)
+            ->where('tenant_id', $tenant->id)
+            ->where('page_type', 'contact')
+            ->where('is_active', true)
+            ->firstOrFail();
+        
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|max:255',
+            'phone' => 'nullable|string|max:20',
+            'subject' => 'nullable|string|max:255',
+            'message' => 'required|string|max:5000',
+        ]);
+        
+        try {
+            // Get contact email from page or settings
+            $contactEmail = $page->contact_email ?? ($settings ? $settings->contact_email : null);
+            
+            if ($contactEmail) {
+                // Send email notification
+                Mail::send([], [], function ($message) use ($validated, $contactEmail, $tenant) {
+                    $message->to($contactEmail)
+                        ->subject('New Contact Form Submission - ' . ($validated['subject'] ?? 'No Subject'))
+                        ->html(view('emails.contact-form', [
+                            'name' => $validated['name'],
+                            'email' => $validated['email'],
+                            'phone' => $validated['phone'] ?? 'N/A',
+                            'subject' => $validated['subject'] ?? 'No Subject',
+                            'message' => $validated['message'],
+                            'tenant' => $tenant,
+                        ])->render());
+                });
+            }
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Thank you! Your message has been sent successfully. We\'ll get back to you soon.'
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Contact form submission error: ' . $e->getMessage());
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Sorry, there was an error sending your message. Please try again later.'
+            ], 500);
+        }
     }
 
     /**

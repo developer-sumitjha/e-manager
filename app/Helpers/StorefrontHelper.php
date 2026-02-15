@@ -83,6 +83,7 @@ class StorefrontHelper
             'storefront.checkout.success' => $isSubdomain ? 'storefront.subdomain.checkout.success' : 'storefront.checkout.success',
             'storefront.coupon.apply' => $isSubdomain ? 'storefront.subdomain.coupon.apply' : 'storefront.coupon.apply',
             'storefront.coupon.remove' => $isSubdomain ? 'storefront.subdomain.coupon.remove' : 'storefront.coupon.remove',
+            'storefront.contact.submit' => $isSubdomain ? 'storefront.subdomain.contact.submit' : 'storefront.contact.submit',
         ];
         
         $routeName = $routeMap[$name] ?? $name;

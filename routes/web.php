@@ -90,6 +90,9 @@ $defineSubdomainRoutes = function() {
     Route::post('/checkout/process', [App\Http\Controllers\StorefrontController::class, 'processCheckout'])->name('storefront.subdomain.checkout.process');
     Route::post('/cart/coupon/apply', [App\Http\Controllers\CouponController::class, 'apply'])->name('storefront.subdomain.coupon.apply')->middleware('throttle:10,1');
     Route::post('/cart/coupon/remove', [App\Http\Controllers\CouponController::class, 'remove'])->name('storefront.subdomain.coupon.remove')->middleware('throttle:10,1');
+    
+    // Contact form submission
+    Route::post('/page/{pageId}/contact', [App\Http\Controllers\StorefrontController::class, 'submitContact'])->name('storefront.subdomain.contact.submit')->middleware('throttle:10,1');
 };
 
 // Localhost routes (for development)
@@ -441,6 +444,10 @@ Route::prefix('storefront/{subdomain}')->group(function () {
             Route::post('/cart/clear', [App\Http\Controllers\StorefrontController::class, 'clearCart'])->name('storefront.cart.clear')->middleware('throttle:10,1');
             Route::post('/cart/coupon/apply', [App\Http\Controllers\CouponController::class, 'apply'])->name('storefront.coupon.apply')->middleware('throttle:10,1');
             Route::post('/cart/coupon/remove', [App\Http\Controllers\CouponController::class, 'remove'])->name('storefront.coupon.remove')->middleware('throttle:10,1');
+    
+    // Contact form submission
+    Route::post('/page/{pageId}/contact', [App\Http\Controllers\StorefrontController::class, 'submitContact'])->name('storefront.contact.submit')->middleware('throttle:10,1');
+    
     Route::get('/checkout', [App\Http\Controllers\StorefrontController::class, 'checkout'])->name('storefront.checkout');
     Route::post('/checkout/process', [App\Http\Controllers\StorefrontController::class, 'processCheckout'])->name('storefront.checkout.process');
     Route::get('/checkout/success', [App\Http\Controllers\StorefrontController::class, 'checkoutSuccess'])->name('storefront.checkout.success');
