@@ -1,15 +1,13 @@
-@extends('layouts.storefront')
+<?php $__env->startSection('title', 'All Products — ' . $tenant->business_name); ?>
+<?php $__env->startSection('meta_description', 'Browse all products at ' . $tenant->business_name); ?>
+<?php $__env->startSection('meta_keywords', 'products, shop, ' . $tenant->business_name); ?>
 
-@section('title', 'All Products — ' . $tenant->business_name)
-@section('meta_description', 'Browse all products at ' . $tenant->business_name)
-@section('meta_keywords', 'products, shop, ' . $tenant->business_name)
-
-@section('content')
+<?php $__env->startSection('content'); ?>
 <div class="container py-4">
     <!-- Breadcrumb -->
     <nav aria-label="breadcrumb" class="mb-4">
         <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="{{ \App\Helpers\StorefrontHelper::route('storefront.preview', [$tenant->subdomain]) }}">Home</a></li>
+            <li class="breadcrumb-item"><a href="<?php echo e(\App\Helpers\StorefrontHelper::route('storefront.preview', [$tenant->subdomain])); ?>">Home</a></li>
             <li class="breadcrumb-item active" aria-current="page">All Products</li>
         </ol>
     </nav>
@@ -23,7 +21,7 @@
             </div>
             <div class="col-md-4 text-end">
                 <div class="category-stats">
-                    <span class="badge bg-primary">{{ $products->total() }} products</span>
+                    <span class="badge bg-primary"><?php echo e($products->total()); ?> products</span>
                 </div>
             </div>
         </div>
@@ -35,9 +33,9 @@
             <div class="card-body">
                 <div class="row align-items-center">
                     <div class="col-md-6">
-                        <form action="{{ \App\Helpers\StorefrontHelper::route('storefront.dynamic', [$tenant->subdomain, $archiveSlug]) }}" method="GET" class="search-form">
+                        <form action="<?php echo e(\App\Helpers\StorefrontHelper::route('storefront.dynamic', [$tenant->subdomain, $archiveSlug])); ?>" method="GET" class="search-form">
                             <div class="input-group">
-                                <input type="text" name="q" class="form-control" placeholder="Search products..." value="{{ $search }}">
+                                <input type="text" name="q" class="form-control" placeholder="Search products..." value="<?php echo e($search); ?>">
                                 <button type="submit" class="btn btn-outline-primary">
                                     <i class="fas fa-search"></i>
                                 </button>
@@ -46,19 +44,19 @@
                     </div>
                     <div class="col-md-6">
                         <div class="d-flex justify-content-end gap-2">
-                            <form action="{{ \App\Helpers\StorefrontHelper::route('storefront.dynamic', [$tenant->subdomain, $archiveSlug]) }}" method="GET" class="d-inline-block">
-                                @if($search)
-                                    <input type="hidden" name="q" value="{{ $search }}">
-                                @endif
-                                @if(request('category'))
-                                    <input type="hidden" name="category" value="{{ request('category') }}">
-                                @endif
+                            <form action="<?php echo e(\App\Helpers\StorefrontHelper::route('storefront.dynamic', [$tenant->subdomain, $archiveSlug])); ?>" method="GET" class="d-inline-block">
+                                <?php if($search): ?>
+                                    <input type="hidden" name="q" value="<?php echo e($search); ?>">
+                                <?php endif; ?>
+                                <?php if(request('category')): ?>
+                                    <input type="hidden" name="category" value="<?php echo e(request('category')); ?>">
+                                <?php endif; ?>
                                 <select name="sort" onchange="this.form.submit()" class="form-select form-select-sm d-inline-block w-auto">
-                                    <option value="new" {{ $sort == 'new' ? 'selected' : '' }}>Newest</option>
-                                    <option value="price_asc" {{ $sort == 'price_asc' ? 'selected' : '' }}>Price: Low to High</option>
-                                    <option value="price_desc" {{ $sort == 'price_desc' ? 'selected' : '' }}>Price: High to Low</option>
-                                    <option value="name_asc" {{ $sort == 'name_asc' ? 'selected' : '' }}>Name: A to Z</option>
-                                    <option value="name_desc" {{ $sort == 'name_desc' ? 'selected' : '' }}>Name: Z to A</option>
+                                    <option value="new" <?php echo e($sort == 'new' ? 'selected' : ''); ?>>Newest</option>
+                                    <option value="price_asc" <?php echo e($sort == 'price_asc' ? 'selected' : ''); ?>>Price: Low to High</option>
+                                    <option value="price_desc" <?php echo e($sort == 'price_desc' ? 'selected' : ''); ?>>Price: High to Low</option>
+                                    <option value="name_asc" <?php echo e($sort == 'name_asc' ? 'selected' : ''); ?>>Name: A to Z</option>
+                                    <option value="name_desc" <?php echo e($sort == 'name_desc' ? 'selected' : ''); ?>>Name: Z to A</option>
                                 </select>
                             </form>
                             
@@ -75,111 +73,114 @@
                 </div>
                 
                 <!-- Category Filter -->
-                @if($categories->count() > 0)
+                <?php if($categories->count() > 0): ?>
                 <div class="row mt-3">
                     <div class="col-12">
                         <div class="category-filter">
                             <label class="form-label mb-2">Filter by Category:</label>
                             <div class="d-flex flex-wrap gap-2">
-                                <a href="{{ \App\Helpers\StorefrontHelper::route('storefront.dynamic', [$tenant->subdomain, $archiveSlug]) }}{{ $search ? '?q=' . urlencode($search) : '' }}" 
-                                   class="badge {{ !request('category') ? 'bg-primary' : 'bg-secondary' }} text-decoration-none">
+                                <a href="<?php echo e(\App\Helpers\StorefrontHelper::route('storefront.dynamic', [$tenant->subdomain, $archiveSlug])); ?><?php echo e($search ? '?q=' . urlencode($search) : ''); ?>" 
+                                   class="badge <?php echo e(!request('category') ? 'bg-primary' : 'bg-secondary'); ?> text-decoration-none">
                                     All Categories
                                 </a>
-                                @foreach($categories as $category)
-                                <a href="{{ \App\Helpers\StorefrontHelper::route('storefront.dynamic', [$tenant->subdomain, $archiveSlug]) }}?category={{ $category->id }}{{ $search ? '&q=' . urlencode($search) : '' }}" 
-                                   class="badge {{ request('category') == $category->id ? 'bg-primary' : 'bg-secondary' }} text-decoration-none">
-                                    {{ $category->name }}
+                                <?php $__currentLoopData = $categories; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $category): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                <a href="<?php echo e(\App\Helpers\StorefrontHelper::route('storefront.dynamic', [$tenant->subdomain, $archiveSlug])); ?>?category=<?php echo e($category->id); ?><?php echo e($search ? '&q=' . urlencode($search) : ''); ?>" 
+                                   class="badge <?php echo e(request('category') == $category->id ? 'bg-primary' : 'bg-secondary'); ?> text-decoration-none">
+                                    <?php echo e($category->name); ?>
+
                                 </a>
-                                @endforeach
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                             </div>
                         </div>
                     </div>
                 </div>
-                @endif
+                <?php endif; ?>
             </div>
         </div>
     </div>
 
     <!-- Products Section -->
-    @if($products->count() > 0)
+    <?php if($products->count() > 0): ?>
         <!-- Search Results Info -->
-        @if($search)
+        <?php if($search): ?>
         <div class="search-results-info mb-3">
             <div class="alert alert-info">
                 <i class="fas fa-search"></i>
-                Showing {{ $products->count() }} of {{ $products->total() }} results for "<strong>{{ $search }}</strong>"
-                <a href="{{ \App\Helpers\StorefrontHelper::route('storefront.dynamic', [$tenant->subdomain, $archiveSlug]) }}" class="btn btn-sm btn-outline-primary ms-2">
+                Showing <?php echo e($products->count()); ?> of <?php echo e($products->total()); ?> results for "<strong><?php echo e($search); ?></strong>"
+                <a href="<?php echo e(\App\Helpers\StorefrontHelper::route('storefront.dynamic', [$tenant->subdomain, $archiveSlug])); ?>" class="btn btn-sm btn-outline-primary ms-2">
                     Clear Search
                 </a>
             </div>
         </div>
-        @endif
+        <?php endif; ?>
 
         <!-- Products Grid/List -->
         <div class="products-container">
             <div class="products-grid" id="productsGrid">
-                @foreach($products as $product)
-                <div class="product-card" data-product-id="{{ $product->id }}">
-                    <a href="{{ \App\Helpers\StorefrontHelper::route('storefront.product', [$tenant->subdomain, $product->slug]) }}" class="product-link">
-                        <div class="product-image{{ $settings->show_quick_view ?? false ? ' js-quick-view' : '' }}" style="cursor:pointer" title="{{ $settings->show_quick_view ?? false ? 'Quick view' : '' }}">
-                            @if($product->primary_image_url)
-                                <img src="{{ $product->primary_image_url }}" alt="{{ $product->name }}" loading="lazy">
-                            @else
+                <?php $__currentLoopData = $products; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $product): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                <div class="product-card" data-product-id="<?php echo e($product->id); ?>">
+                    <a href="<?php echo e(\App\Helpers\StorefrontHelper::route('storefront.product', [$tenant->subdomain, $product->slug])); ?>" class="product-link">
+                        <div class="product-image<?php echo e($settings->show_quick_view ?? false ? ' js-quick-view' : ''); ?>" style="cursor:pointer" title="<?php echo e($settings->show_quick_view ?? false ? 'Quick view' : ''); ?>">
+                            <?php if($product->primary_image_url): ?>
+                                <img src="<?php echo e($product->primary_image_url); ?>" alt="<?php echo e($product->name); ?>" loading="lazy">
+                            <?php else: ?>
                                 <i class="fas fa-image"></i>
-                            @endif
+                            <?php endif; ?>
                         </div>
                         <div class="product-info">
-                            <div class="product-name">{{ $product->name }}</div>
+                            <div class="product-name"><?php echo e($product->name); ?></div>
                             <div class="product-price">
-                                @if($product->sale_price && $product->sale_price < $product->price)
-                                    <span class="current-price">${{ number_format($product->sale_price, 2) }}</span>
-                                    <span class="original-price">${{ number_format($product->price, 2) }}</span>
-                                @else
-                                    <span class="current-price">${{ number_format($product->price, 2) }}</span>
-                                @endif
+                                <?php if($product->sale_price && $product->sale_price < $product->price): ?>
+                                    <span class="current-price">$<?php echo e(number_format($product->sale_price, 2)); ?></span>
+                                    <span class="original-price">$<?php echo e(number_format($product->price, 2)); ?></span>
+                                <?php else: ?>
+                                    <span class="current-price">$<?php echo e(number_format($product->price, 2)); ?></span>
+                                <?php endif; ?>
                             </div>
-                            @if($product->category)
-                                <div class="product-category text-muted small">{{ $product->category->name }}</div>
-                            @endif
+                            <?php if($product->category): ?>
+                                <div class="product-category text-muted small"><?php echo e($product->category->name); ?></div>
+                            <?php endif; ?>
                         </div>
                     </a>
-                    @if($settings->show_add_to_cart_button ?? true)
+                    <?php if($settings->show_add_to_cart_button ?? true): ?>
                     <div class="product-actions">
-                        <button class="add-to-cart-btn js-add-to-cart" data-product-id="{{ $product->id }}" 
-                                {{ !$product->isInStock() ? 'disabled' : '' }}>
+                        <button class="add-to-cart-btn js-add-to-cart" data-product-id="<?php echo e($product->id); ?>" 
+                                <?php echo e(!$product->isInStock() ? 'disabled' : ''); ?>>
                             <i class="fas fa-shopping-cart"></i>
-                            {{ $product->isInStock() ? 'Add to Cart' : 'Out of Stock' }}
+                            <?php echo e($product->isInStock() ? 'Add to Cart' : 'Out of Stock'); ?>
+
                         </button>
                     </div>
-                    @endif
+                    <?php endif; ?>
                 </div>
-                @endforeach
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
             </div>
         </div>
 
         <!-- Pagination -->
         <div class="d-flex justify-content-center mt-4">
-            {{ $products->links('pagination::bootstrap-5') }}
+            <?php echo e($products->links('pagination::bootstrap-5')); ?>
+
         </div>
-    @else
+    <?php else: ?>
         <!-- Empty State -->
         <div class="empty-state text-center py-5">
             <i class="fas fa-box-open fa-4x text-muted mb-3"></i>
             <h3>No products found</h3>
-            @if($search)
-                <p class="text-muted">No products match your search "<strong>{{ $search }}</strong>"</p>
-                <a href="{{ \App\Helpers\StorefrontHelper::route('storefront.dynamic', [$tenant->subdomain, $archiveSlug]) }}" class="btn btn-primary">
+            <?php if($search): ?>
+                <p class="text-muted">No products match your search "<strong><?php echo e($search); ?></strong>"</p>
+                <a href="<?php echo e(\App\Helpers\StorefrontHelper::route('storefront.dynamic', [$tenant->subdomain, $archiveSlug])); ?>" class="btn btn-primary">
                     View All Products
                 </a>
-            @else
+            <?php else: ?>
                 <p class="text-muted">There are no products available at the moment.</p>
-            @endif
+            <?php endif; ?>
         </div>
-    @endif
+    <?php endif; ?>
 </div>
-@endsection
+<?php $__env->stopSection(); ?>
 
-@push('styles')
+<?php $__env->startPush('styles'); ?>
 <style>
 .category-header {
     padding: 1.5rem 0;
@@ -229,9 +230,9 @@
     opacity: 0.3;
 }
 </style>
-@endpush
+<?php $__env->stopPush(); ?>
 
-@push('scripts')
+<?php $__env->startPush('scripts'); ?>
 <script>
 // View toggle functionality
 document.querySelectorAll('.view-toggle button').forEach(btn => {
@@ -276,11 +277,11 @@ document.querySelectorAll('.js-add-to-cart').forEach(btn => {
         btn.disabled = true;
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adding...';
         
-        fetch('{{ \App\Helpers\StorefrontHelper::route("storefront.cart.add", [$tenant->subdomain]) }}', {
+        fetch('<?php echo e(\App\Helpers\StorefrontHelper::route("storefront.cart.add", [$tenant->subdomain])); ?>', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>'
             },
             body: JSON.stringify({
                 product_id: productId,
@@ -317,7 +318,7 @@ document.querySelectorAll('.js-add-to-cart').forEach(btn => {
 });
 
 // Quick view functionality (if enabled)
-@if($settings->show_quick_view ?? false)
+<?php if($settings->show_quick_view ?? false): ?>
 document.querySelectorAll('.js-quick-view').forEach(item => {
     item.addEventListener('click', function(e) {
         e.preventDefault();
@@ -328,6 +329,8 @@ document.querySelectorAll('.js-quick-view').forEach(item => {
         }
     });
 });
-@endif
+<?php endif; ?>
 </script>
-@endpush
+<?php $__env->stopPush(); ?>
+
+<?php echo $__env->make('layouts.storefront', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH /Applications/XAMPP/xamppfiles/htdocs/e-manager/resources/views/storefront/products-archive.blade.php ENDPATH**/ ?>

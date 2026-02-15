@@ -195,7 +195,19 @@ class StorefrontController extends Controller
             ->avg('rating');
         $avgRating = $avgRating ? round($avgRating, 1) : null;
 
-        return view('storefront.product', compact('tenant', 'settings', 'product', 'reviews', 'avgRating'));
+        // Load related products (same category, excluding current product)
+        $relatedProducts = Product::where('tenant_id', $tenant->id)
+            ->where('is_active', true)
+            ->where('id', '!=', $product->id)
+            ->when($product->category_id, function($query) use ($product) {
+                return $query->where('category_id', $product->category_id);
+            })
+            ->with('category')
+            ->latest()
+            ->take(12)
+            ->get();
+
+        return view('storefront.product', compact('tenant', 'settings', 'product', 'reviews', 'avgRating', 'relatedProducts'));
     }
 
     /**

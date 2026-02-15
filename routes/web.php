@@ -21,11 +21,20 @@ Route::domain('{subdomain}.localhost')->group(function () {
         ]);
     });
     
+    Route::get('/cart', [App\Http\Controllers\StorefrontController::class, 'cart'])->name('storefront.subdomain.cart');
+    Route::get('/checkout', [App\Http\Controllers\StorefrontController::class, 'checkout'])->name('storefront.subdomain.checkout');
+    Route::get('/checkout/success', [App\Http\Controllers\StorefrontController::class, 'checkoutSuccess'])->name('storefront.subdomain.checkout.success');
     Route::get('/product/{slug}', [App\Http\Controllers\StorefrontController::class, 'product'])->name('storefront.subdomain.product');
     Route::get('/category/{slug}', [App\Http\Controllers\StorefrontController::class, 'category'])->name('storefront.subdomain.category');
     
     // Products archive page - dynamic route (must come after specific routes)
     Route::get('/{slug}', function($subdomain, $slug) {
+        // Exclude routes that should be handled by other routes
+        $excludedRoutes = ['cart', 'checkout', 'test-domain'];
+        if (in_array($slug, $excludedRoutes)) {
+            abort(404);
+        }
+        
         $tenant = \App\Models\Tenant::where('subdomain', $subdomain)->firstOrFail();
         $settings = \App\Models\SiteSettings::where('tenant_id', $tenant->id)->first();
         
@@ -64,20 +73,19 @@ Route::domain('{subdomain}.localhost')->group(function () {
         abort(404);
     })->name('storefront.subdomain.dynamic');
     
-    Route::get('/cart', [App\Http\Controllers\StorefrontController::class, 'cart'])->name('storefront.subdomain.cart');
     Route::post('/cart/add', [App\Http\Controllers\StorefrontController::class, 'addToCart'])->name('storefront.subdomain.cart.add')->middleware('throttle:30,1');
     Route::post('/cart/update', [App\Http\Controllers\StorefrontController::class, 'updateCart'])->name('storefront.subdomain.cart.update')->middleware('throttle:20,1');
     Route::post('/cart/remove', [App\Http\Controllers\StorefrontController::class, 'removeFromCart'])->name('storefront.subdomain.cart.remove')->middleware('throttle:20,1');
     Route::post('/cart/clear', [App\Http\Controllers\StorefrontController::class, 'clearCart'])->name('storefront.subdomain.cart.clear')->middleware('throttle:10,1');
-    Route::get('/checkout', [App\Http\Controllers\StorefrontController::class, 'checkout'])->name('storefront.subdomain.checkout');
     Route::post('/checkout/process', [App\Http\Controllers\StorefrontController::class, 'processCheckout'])->name('storefront.subdomain.checkout.process');
-    Route::get('/checkout/success', [App\Http\Controllers\StorefrontController::class, 'checkoutSuccess'])->name('storefront.subdomain.checkout.success');
     Route::post('/cart/coupon/apply', [App\Http\Controllers\CouponController::class, 'apply'])->name('storefront.subdomain.coupon.apply')->middleware('throttle:10,1');
     Route::post('/cart/coupon/remove', [App\Http\Controllers\CouponController::class, 'remove'])->name('storefront.subdomain.coupon.remove')->middleware('throttle:10,1');
 });
 
 // Public Routes - Super Admin Public Frontend (Landing Page)
-Route::any('/', function (\Illuminate\Http\Request $request) {
+// This route should only handle non-subdomain requests (main domain)
+// IMPORTANT: This must come AFTER subdomain routes to avoid conflicts
+Route::get('/', function (\Illuminate\Http\Request $request) {
     // Get hostname - try multiple methods for reliability
     $host = $request->getHost();
     $hostHeader = $request->header('Host');

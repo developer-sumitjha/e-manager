@@ -370,7 +370,17 @@ function initMobileMenu() {
 function initProductCards() {
     // Quick view functionality
     document.addEventListener('click', function(e) {
-        if (e.target.closest('.js-quick-view')) {
+        const quickViewElement = e.target.closest('.js-quick-view');
+        if (quickViewElement) {
+            // Check if this is inside a product-link - if so, use the link's href instead
+            const productLink = quickViewElement.closest('.product-link');
+            if (productLink && productLink.href && productLink.href !== '#' && !productLink.href.includes('#')) {
+                // If quick view is enabled, we could open a modal here
+                // For now, just follow the link normally (don't prevent default)
+                // Only prevent default if we're actually implementing quick view modal
+                return; // Let the link work normally
+            }
+            
             e.preventDefault();
             const card = e.target.closest('.product-card');
             const productId = card.dataset.productId;
@@ -396,9 +406,24 @@ function initProductCards() {
 
 function showQuickView(productId) {
     // This would typically open a modal with product details
-    // For now, redirect to product page
+    // For now, try to find the product link and use its href (which has the correct slug)
+    const card = document.querySelector(`.product-card[data-product-id="${productId}"]`);
+    if (card) {
+        const productLink = card.querySelector('.product-link');
+        if (productLink && productLink.href && productLink.href !== '#' && !productLink.href.includes('#')) {
+            // Use the link's href which has the correct slug-based URL
+            window.location.href = productLink.href;
+            return;
+        }
+    }
+    
+    // Fallback: construct URL (but this uses ID, not slug - should be avoided)
     const subdomain = getSubdomainFromUrl();
-    window.location.href = `/storefront/${subdomain}/product/${productId}`;
+    if (window.STOREFRONT_CONFIG && window.STOREFRONT_CONFIG.isSubdomain) {
+        window.location.href = `/product/${productId}`;
+    } else {
+        window.location.href = `/storefront/${subdomain}/product/${productId}`;
+    }
 }
 
 // Form Handling

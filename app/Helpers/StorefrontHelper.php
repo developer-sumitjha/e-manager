@@ -72,6 +72,7 @@ class StorefrontHelper
             'storefront.preview' => $isSubdomain ? 'storefront.subdomain.preview' : 'storefront.preview',
             'storefront.product' => $isSubdomain ? 'storefront.subdomain.product' : 'storefront.product',
             'storefront.category' => $isSubdomain ? 'storefront.subdomain.category' : 'storefront.category',
+            'storefront.dynamic' => $isSubdomain ? 'storefront.subdomain.dynamic' : 'storefront.dynamic',
             'storefront.cart' => $isSubdomain ? 'storefront.subdomain.cart' : 'storefront.cart',
             'storefront.cart.add' => $isSubdomain ? 'storefront.subdomain.cart.add' : 'storefront.cart.add',
             'storefront.cart.update' => $isSubdomain ? 'storefront.subdomain.cart.update' : 'storefront.cart.update',
@@ -108,8 +109,8 @@ class StorefrontHelper
                 $routeParams['subdomain'] = $currentSubdomain;
             }
             
-            // For routes with additional params (like product, category)
-            if (in_array($routeName, ['storefront.subdomain.product', 'storefront.subdomain.category'])) {
+            // For routes with additional params (like product, category, dynamic)
+            if (in_array($routeName, ['storefront.subdomain.product', 'storefront.subdomain.category', 'storefront.subdomain.dynamic'])) {
                 // Add subdomain as named parameter (required for domain routes)
                 $routeParams['subdomain'] = $currentSubdomain;
                 
@@ -157,8 +158,18 @@ class StorefrontHelper
             // If params is empty or first param is not subdomain, add it
             if (empty($params)) {
                 array_unshift($params, $currentSubdomain);
-            } elseif (isset($params[0]) && $params[0] !== $currentSubdomain) {
-                array_unshift($params, $currentSubdomain);
+            } elseif (is_array($params) && isset($params[0])) {
+                // If first param is already the subdomain, keep params as is
+                // Otherwise, if first param is not subdomain, add subdomain at the beginning
+                if ($params[0] !== $currentSubdomain) {
+                    // Only add if the first param is not already the subdomain
+                    // Check if params[0] might be a slug (not subdomain)
+                    array_unshift($params, $currentSubdomain);
+                }
+                // If params[0] === $currentSubdomain, params are already correct
+            } else {
+                // Single value param, add subdomain before it
+                $params = [$currentSubdomain, $params];
             }
         }
         
@@ -169,7 +180,10 @@ class StorefrontHelper
             if ($isSubdomain) {
                 $hasSlug = isset($params['slug']) && !empty($params['slug']);
             } else {
-                $hasSlug = isset($params[1]) && !empty($params[1]) || (isset($params[0]) && $params[0] !== $currentSubdomain && !empty($params[0]));
+                // For path-based routes, check if params[1] exists and is not empty
+                // Or if params[0] exists, is not empty, and is not the subdomain (meaning it's the slug)
+                $hasSlug = (isset($params[1]) && !empty($params[1])) || 
+                          (isset($params[0]) && !empty($params[0]) && $params[0] !== $currentSubdomain);
             }
             
             if (!$hasSlug) {
@@ -190,7 +204,10 @@ class StorefrontHelper
             if ($isSubdomain) {
                 $hasSlug = isset($params['slug']) && !empty($params['slug']);
             } else {
-                $hasSlug = isset($params[1]) && !empty($params[1]) || (isset($params[0]) && $params[0] !== $currentSubdomain && !empty($params[0]));
+                // For path-based routes, check if params[1] exists and is not empty
+                // Or if params[0] exists, is not empty, and is not the subdomain (meaning it's the slug)
+                $hasSlug = (isset($params[1]) && !empty($params[1])) || 
+                          (isset($params[0]) && !empty($params[0]) && $params[0] !== $currentSubdomain);
             }
             
             if (!$hasSlug) {
