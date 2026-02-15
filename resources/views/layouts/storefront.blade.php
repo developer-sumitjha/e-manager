@@ -68,7 +68,7 @@
             <div class="header-content">
                 <!-- Logo -->
                 <div class="logo-section">
-                    <a href="{{ route('storefront.preview', $tenant->subdomain) }}" class="logo">
+                    <a href="{{ \App\Helpers\StorefrontHelper::route('storefront.preview', [$tenant->subdomain]) }}" class="logo">
                         @if($settings->logo)
                             <img src="{{ $settings->logo_url ?? asset('storage/' . $settings->logo) }}" alt="{{ $settings->site_name ?? $tenant->business_name }}">
                         @else
@@ -161,7 +161,7 @@
                             <button class="search-icon-btn" id="searchToggleBtn" aria-label="Search">
                                 <i class="fas fa-search"></i>
                             </button>
-                            <form class="search-form" id="searchForm" method="GET" action="{{ route('storefront.preview', $tenant->subdomain) }}">
+                            <form class="search-form" id="searchForm" method="GET" action="{{ \App\Helpers\StorefrontHelper::route('storefront.preview', [$tenant->subdomain]) }}">
                                 <div class="search-input-group">
                                     <input type="text" name="q" value="{{ request('q') }}" placeholder="Search products..." class="search-input" id="searchInput">
                                     <button type="submit" class="search-btn">
@@ -380,7 +380,7 @@
                 <div class="footer-section">
                     <h6>Quick Links</h6>
                     <ul>
-                        <li><a href="{{ route('storefront.preview', $tenant->subdomain) }}">Home</a></li>
+                        <li><a href="{{ \App\Helpers\StorefrontHelper::route('storefront.preview', [$tenant->subdomain]) }}">Home</a></li>
                         <li><a href="#products">Products</a></li>
                         <li><a href="#about">About Us</a></li>
                         <li><a href="#contact">Contact</a></li>
